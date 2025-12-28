@@ -1,0 +1,20 @@
+{
+  "defenseCards": [
+    {
+      "cardName": "특전사",
+      "moveSpeed": 2,
+      "cost": 0,
+      "specialEffect": "",
+      "attack": 20,
+      "attackSpeed": 3
+    },
+    {
+      "cardName": "박격포",
+      "moveSpeed": 1,
+      "cost": 0,
+      "specialEffect": "스플레쉬데미지",
+      "attack": 50,
+      "attackSpeed": 1
+    }
+  ]
+}

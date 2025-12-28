@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ecbba26f2fe4ad4e97796a048adaad4, type: 3}
+  m_Name: "A007_\uC218\uB9AC\uAE30\uC0AC"
+  m_EditorClassIdentifier: 
+  cardId: 7
+  cardName: "\uC218\uB9AC\uAE30\uC0AC"
+  moveSpeed: 2
+  cost: 2
+  cardImage: {fileID: 0}
+  cardType: 1
+  health: 50
+  defense: 0
+  attack: 0
+  attackSpeed: 0
+  specialEffect: 

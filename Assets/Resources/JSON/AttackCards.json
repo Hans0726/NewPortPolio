@@ -1,0 +1,68 @@
+{
+  "attackCards": [
+    {
+      "cardName": "다람쥐",
+      "moveSpeed": 3,
+      "cost": 0,
+      "specialEffect": "",
+      "health": 50,
+      "defense": 0
+    },
+    {
+      "cardName": "골렘",
+      "moveSpeed": 1,
+      "cost": 1,
+      "specialEffect": "",
+      "health": 200,
+      "defense": 15
+    },
+    {
+      "cardName": "철갑기병",
+      "moveSpeed": 4,
+      "cost": 1,
+      "specialEffect": "",
+      "health": 75,
+      "defense": 10
+    },
+    {xkd
+      "cardName": "스케이팅선수",
+      "moveSpeed": 3,
+      "cost": 1,
+      "specialEffect": "주변 유닛의 이동속도 증가",
+      "health": 50,
+      "defense": 0
+    },
+    {
+      "cardName": "방패병",
+      "moveSpeed": 1.5,
+      "cost": 1,
+      "specialEffect": "주변 유닛의 방어력 증가",
+      "health": 100,
+      "defense": 20
+    },
+    {
+      "cardName": "비행기",
+      "moveSpeed": 3.5,
+      "cost": 2,
+      "specialEffect": "",
+      "health": 150,
+      "defense": 5
+    },
+    {
+      "cardName": "탱크",
+      "moveSpeed": 2,
+      "cost": 2,
+      "specialEffect": "",
+      "health": 250,
+      "defense": 20
+    },
+    {
+      "cardName": "수리기사",
+      "moveSpeed": 2,
+      "cost": 2,
+      "specialEffect": "주변 유닛의 체력회복",
+      "health": 50,
+      "defense": 0
+    }
+  ]
+}

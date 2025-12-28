@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: b8df015e8478d30458e028811cbdb5e8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _cardPrefab: {fileID: 2794538270071190390, guid: cd992d7918830fa4bb11a89f4405aeff, type: 3}
+  - _cardInDeckPrefab: {fileID: 8706597560530761133, guid: fe3a43e3cc94f5a479fa9a2e3ed04c97, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
