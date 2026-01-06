@@ -12,7 +12,7 @@ using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerEnterHandler, IPointerExitHandler
 {
 
     // CardData를 직접 참조하여 UI를 설정
@@ -147,6 +147,24 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         bool isInteractable = currentCost >= Convert.ToInt32(_textCost.text);
         CanvasGroup.interactable = isInteractable;
         _playableEffect.SetActive(isInteractable);
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        // ★ 드래그 중이면 호버 이벤트 무시
+        if (InGameUIManager.Instance != null && !InGameUIManager.Instance.IsDragging)
+        {
+            InGameUIManager.Instance.SetHoveredCard(this);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        // ★ 드래그 중이면 호버 해제 이벤트 무시
+        if (InGameUIManager.Instance != null && !InGameUIManager.Instance.IsDragging)
+        {
+            InGameUIManager.Instance.ClearHoveredCard(this);
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)

@@ -6,6 +6,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using DG.Tweening;
 
+public static class GameConfig
+{
+    // 에디터에서만 변경 가능한 런타임 플래그
+    public static bool ENABLE_TEST_MODE = true;
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;

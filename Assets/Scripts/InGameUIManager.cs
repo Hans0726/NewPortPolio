@@ -55,6 +55,9 @@ public class InGameUIManager : MonoBehaviour
     private CardUI _draggedCard = null;
     private bool _isHandExpanded = false;
 
+    // ★ 드래그 상태 확인용 프로퍼티
+    public bool IsDragging => _draggedCard != null;
+
     // 오브젝트 풀링
     [SerializeField] private Transform _cardPoolContainer;
     private List<GameObject> _cardUIPool = new List<GameObject>();
@@ -87,28 +90,20 @@ public class InGameUIManager : MonoBehaviour
 
     void Start()
     {
-        // GameManager가 없다는 것은 이 씬에서 바로 시작했다는 의미
-        if (GameManager.Instance == null)
+        if (GameConfig.ENABLE_TEST_MODE)
         {
-            // --- 테스트 모드 초기화 흐름 ---
             Debug.LogWarning("--- RUNNING IN TEST MODE ---");
 
-            // 1. 데이터 매니저(CardManager) 테스트 초기화
-            if (InGameCardManager.Instance != null)
-            {
-                InGameCardManager.Instance.TestInitialize(); // 테스트 덱 생성 및 셔플
-            }
-            else { Debug.LogError("TEST MODE: InGameCardManager instance not found!"); }
-
-            // 2. UI 매니저 초기화 (이벤트 구독)
-            Initialize(); // 자신의 초기화 함수 호출
-
-            // 3. 오프닝 시퀀스 시작
-            // 오프닝 시퀀스가 끝나면 DrawInitialHand가 호출되어야 함
-            ShowOpeningSequence();
+            // 데이터 매니저(CardManager) 테스트 초기화
+            InGameCardManager.Instance.TestInitialize(); // 테스트 덱 생성 및 셔플
         }
-        // else: 실제 모드에서는 GameManager가 LoadInGameSceneAndInitialize에서
-        // 각 매니저의 Initialize 함수를 순서대로 호출해 줄 것이므로, 여기서는 아무것도 안 함.
+
+         // UI 매니저 초기화 (이벤트 구독)
+         Initialize(); // 자신의 초기화 함수 호출
+
+         // 오프닝 시퀀스 시작, 오프닝 시퀀스가 끝나면 DrawInitialHand가 호출되어야 함
+         ShowOpeningSequence();
+   
     }
 
     public void Initialize()
@@ -138,6 +133,17 @@ public class InGameUIManager : MonoBehaviour
         {
             Debug.LogError("Opening sequence UI elements are not assigned in InGameUIManager!");
             yield break;
+        }
+
+        if (GameConfig.ENABLE_TEST_MODE)
+        {
+            // 테스트 모드: 애니메이션 스킵, 바로 드로우
+            Debug.Log("InGameUIManager: Test Mode - Skipping Opening Sequence");
+            if (InGameCardManager.Instance != null)
+            {
+                InGameCardManager.Instance.DrawInitialHand();
+            }
+            yield break;  // 코루틴 종료
         }
 
         _openingSequenceCanvasGroup.alpha = 0f;
@@ -269,49 +275,41 @@ public class InGameUIManager : MonoBehaviour
     {
         if (_currentHandState != HandState.InInteraction) return;
 
-        // --- 1. 마우스 아래에 있는 '핸드 카드' 찾기 ---
-        _hoveredCard = null; // 매 프레임 초기화
-        PointerEventData pointerData = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(pointerData, results);
+        // ★★★ 변경: 레이캐스트 제거! CardUI의 이벤트로 _hoveredCard를 관리 ★★★
+        // 이제 _hoveredCard는 CardUI.OnPointerEnter/Exit에서 설정됨
 
-        foreach (RaycastResult result in results)
-        {
-            CardUI cardUI = result.gameObject.GetComponentInParent<CardUI>();
-            // 레이캐스트된 UI가 _activeHandCardRoots에 포함된 것인지 확인 (핸드 카드인지 판별)
-            if (cardUI != null && _activeHandCardRoots.Contains(cardUI.RootGameObject))
-            {
-                _hoveredCard = cardUI;
-                break; // 가장 위에 있는 카드 하나만 인정
-            }
-        }
-
-        // --- 2. 핸드의 목표 상태(확대/축소) 결정 ---
-        // ★★★ 핵심 변경: 호버된 카드가 '하나라도 있으면' 핸드는 확장된 상태가 목표 ★★★
+        // --- 1. 핸드의 목표 상태(확대/축소) 결정 ---
         bool targetExpandedState = (_hoveredCard != null || _draggedCard != null);
-
-        // ★★★ 부드러운 전환을 위해 Lerp 사용 (선택 사항이지만 추천) ★★★
-        // 현재 상태(_isHandExpanded)를 목표 상태(targetExpandedState)로 점진적으로 변경할 수 있음
-        // 하지만 지금은 즉시 변경하는 것이 더 간단
         _isHandExpanded = targetExpandedState;
 
-
-        // --- 3. UI 업데이트 ---
+        // --- 2. UI 업데이트 ---
         AnimateHandToTargetState();
     }
 
+    // ★★★ 새로운 메서드: CardUI에서 호버 상태 설정 ★★★
+    public void SetHoveredCard(CardUI cardUI)
+    {
+        _hoveredCard = cardUI;
+    }
+
+    public void ClearHoveredCard(CardUI cardUI)
+    {
+        if (_hoveredCard == cardUI)
+        {
+            _hoveredCard = null;
+        }
+    }
 
     private void AnimateHandToTargetState()
     {
         int cardCount = _activeHandCardRoots.Count;
 
         // --- 1. 렌더링 순서(Sibling Index) 설정 ---
-        // 드로우 순서(_activeHandCardRoots의 순서)를 기본 렌더링 순서로 사용
         for (int i = 0; i < cardCount; i++)
         {
             _activeHandCardRoots[i].transform.SetSiblingIndex(i);
         }
-        // 만약 호버된 카드가 있다면, 그 카드만 맨 위로 올림
+
         if (_isHandExpanded && _hoveredCard)
         {
             GameObject card = _hoveredCard.RootGameObject;
@@ -324,16 +322,15 @@ public class InGameUIManager : MonoBehaviour
 
         for (int i = 0; i < cardCount; i++)
         {
-            GameObject cardRootGO = _activeHandCardRoots[i]; // 드로우 순서대로 가져옴
+            GameObject cardRootGO = _activeHandCardRoots[i];
             Transform cardTransform = cardRootGO.transform;
             CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
 
-            // 목표 위치/회전/크기 계산
             float targetAngle = startAngle + i * _spreadAngle;
             float targetX = startX + i * _cardSpacing;
 
             float cardHeight = cardUI.RectTransform.rect.height;
-            float rotationRadius = cardHeight * 0.5f; // 회전 반지름
+            float rotationRadius = cardHeight * 0.5f;
             float radianAngle = Mathf.Abs(targetAngle) * Mathf.Deg2Rad;
             float yRiseDueToRotation = (1 - Mathf.Cos(radianAngle)) * rotationRadius;
 
@@ -344,19 +341,17 @@ public class InGameUIManager : MonoBehaviour
                 targetY = _baseYPosition - (yRiseDueToRotation * _arcCorrectionFactor);
                 if (cardUI == _hoveredCard)
                 {
-                    targetY += _hoverYOffset;
+                    targetY = _baseYPosition + _hoverYOffset;
                 }
             }
-            else // 축소된 상태일 때
+            else
             {
-                // 축소 시에도 부채꼴 모양을 유지하되, 전체적인 기준 높이만 낮춤
                 targetY = _collapsedYPosition - (yRiseDueToRotation * _arcCorrectionFactor);
             }
 
-
-            // 회전 및 크기 설정 (이전과 동일)
             Quaternion targetRotation = Quaternion.Euler(0, 0, -targetAngle);
             Vector2 targetScale = _isHandExpanded ? _expandedCardScale : _collapsedCardScale;
+
             if (_isHandExpanded && cardUI == _hoveredCard)
             {
                 targetScale *= _hoverScaleMultiplier;
@@ -384,15 +379,17 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardDrag(PointerEventData eventData)
     {
-        RectTransform parentRect = _mainCanvas.transform as RectTransform;
+        if (_draggedCard == null) return; // ★ null 체크 추가
+        
+     RectTransform parentRect = _mainCanvas.transform as RectTransform;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parentRect,
-                eventData.position,
-                _mainCanvas.worldCamera, // Screen Space-Camera 모드일 때
-                out localPoint))
-        {
-            _draggedCard.RootGameObject.transform.localPosition = localPoint;
+     parentRect,
+  eventData.position,
+    _mainCanvas.worldCamera, // Screen Space-Camera 모드일 때
+ out localPoint))
+     {
+     _draggedCard.RootGameObject.transform.localPosition = localPoint;
         }
     }
 
