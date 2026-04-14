@@ -276,6 +276,12 @@ public class InGameUIManager : MonoBehaviour
     {
         if (_currentHandState != HandState.InInteraction) return;
 
+        // ★ 팝업이 열려있으면 카드 애니메이션 스킵 (사용자 상호작용 차단)
+        if (_cardSelectPopup != null && _cardSelectPopup.IsOpen)
+        {
+            return;
+        }
+
         // ★★★ 변경: 레이캐스트 제거! CardUI의 이벤트로 _hoveredCard를 관리 ★★★
         // 이제 _hoveredCard는 CardUI.OnPointerEnter/Exit에서 설정됨
 

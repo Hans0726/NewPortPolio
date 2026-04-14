@@ -15,6 +15,10 @@ public class UIPopup : MonoBehaviour
     [SerializeField]
     protected float _animationDuration = 0.5f;
 
+    // ★ 팝업이 현재 열려있는지 추적
+    private bool _isOpen = false;
+    public bool IsOpen => _isOpen;
+
     protected virtual void Start()
     {
         _btnClose.onClick.AddListener(ClosePopup);
@@ -22,6 +26,7 @@ public class UIPopup : MonoBehaviour
 
     public virtual void OpenPopup()
     {
+        _isOpen = true;
         _panel.SetActive(true);
         _panel.transform.localScale = Vector3.zero;
         _panel.transform.DOScale(Vector3.one, _animationDuration);
@@ -30,6 +35,10 @@ public class UIPopup : MonoBehaviour
     protected virtual void ClosePopup()
     {
         _panel.transform.DOScale(Vector3.zero, _animationDuration)
-            .OnComplete(() => _panel.SetActive(false));
+            .OnComplete(() =>
+            {
+                _panel.SetActive(false);
+                _isOpen = false;
+            });
     }
 }

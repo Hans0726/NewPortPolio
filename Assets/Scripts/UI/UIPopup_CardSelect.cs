@@ -25,26 +25,30 @@ public class UIPopup_CardSelect : UIPopup
         _onChoice = onChoice;
         cardUI.RootGameObject.SetActive(false); // 원본 카드 숨김
 
-        //// ★ 기존 복제본 정리
-        //if (_displayedCardInstance != null)
-        //    Destroy(_displayedCardInstance);
+        // ★ 기존 복제본 정리
+        if (_displayedCardInstance != null)
+            Destroy(_displayedCardInstance);
 
-        //// ★ 부모 없이 생성한 후 수동으로 배치
-        //_displayedCardInstance = Instantiate(cardUI.RootGameObject);
-        //_displayedCardInstance.name = "DisplayedCard_Copy";
+        // ★ 부모 없이 생성한 후 수동으로 배치
+        _displayedCardInstance = Instantiate(cardUI.RootGameObject);
+        _displayedCardInstance.name = "DisplayedCard_Copy";
+        _displayedCardInstance.SetActive(true);
 
-        //// ★ RectTransform 초기화
-        //RectTransform displayRect = _displayedCardInstance.GetComponent<RectTransform>();
+        // ★ RectTransform 초기화 및 Stretch 설정
+        RectTransform displayRect = _displayedCardInstance.GetComponent<RectTransform>();
 
-        //// ★ 부모로 설정 (DontDestroyOnLoad 문제 회피)
-        //displayRect.SetParent(_cardDisplayContainer, false);
-        //displayRect.anchoredPosition = Vector2.zero; // 컨테이너 중앙
-        //displayRect.localScale = new Vector3(0.5f, 0.5f, 1f); // 반으로 축소
+        // ★ 부모로 설정
+        displayRect.SetParent(_cardDisplayContainer, false);
 
-        //// ★ 상호작용 비활성화
-        //CanvasGroup displayCanvasGroup = _displayedCardInstance.GetComponent<CanvasGroup>();
-        //if (displayCanvasGroup != null)
-        //    displayCanvasGroup.interactable = false;
+        // 1. localPosition 초기화
+        displayRect.localPosition = Vector3.zero;
+        displayRect.localScale =    Vector3.one; // 스케일 초기화
+        _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // 자식 카드의 스케일도 초기화
+
+        // ★ 상호작용 비활성화
+        CanvasGroup displayCanvasGroup = _displayedCardInstance.GetComponent<CanvasGroup>();
+        if (displayCanvasGroup != null)
+            displayCanvasGroup.interactable = false;
 
         base.OpenPopup();
     }
