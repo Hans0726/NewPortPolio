@@ -35,6 +35,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private RectTransform _dropZone; // 드래그 드롭 판단 영역
     [SerializeField] private TextMeshProUGUI _costText;
     [SerializeField] private Canvas _mainCanvas;
+    [SerializeField] private UIPopup_CardSelect _cardSelectPopup;
 
     [Header("Layout Settings")]
     [SerializeField] private float _spreadAngle = 10f;
@@ -98,12 +99,12 @@ public class InGameUIManager : MonoBehaviour
             InGameCardManager.Instance.TestInitialize(); // 테스트 덱 생성 및 셔플
         }
 
-         // UI 매니저 초기화 (이벤트 구독)
-         Initialize(); // 자신의 초기화 함수 호출
+        // UI 매니저 초기화 (이벤트 구독)
+        Initialize(); // 자신의 초기화 함수 호출
 
-         // 오프닝 시퀀스 시작, 오프닝 시퀀스가 끝나면 DrawInitialHand가 호출되어야 함
-         ShowOpeningSequence();
-   
+        // 오프닝 시퀀스 시작, 오프닝 시퀀스가 끝나면 DrawInitialHand가 호출되어야 함
+        ShowOpeningSequence();
+
     }
 
     public void Initialize()
@@ -202,7 +203,7 @@ public class InGameUIManager : MonoBehaviour
         {
             Debug.Log("Initial draw animation (to center) finished.");
             _currentHandState = HandState.InInteraction; // 이제 LateUpdate 제어 시작
-            
+
         });
     }
     #endregion
@@ -380,16 +381,16 @@ public class InGameUIManager : MonoBehaviour
     public void OnCardDrag(PointerEventData eventData)
     {
         if (_draggedCard == null) return; // ★ null 체크 추가
-        
-     RectTransform parentRect = _mainCanvas.transform as RectTransform;
+
+        RectTransform parentRect = _mainCanvas.transform as RectTransform;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
      parentRect,
   eventData.position,
     _mainCanvas.worldCamera, // Screen Space-Camera 모드일 때
  out localPoint))
-     {
-     _draggedCard.RootGameObject.transform.localPosition = localPoint;
+        {
+            _draggedCard.RootGameObject.transform.localPosition = localPoint;
         }
     }
 
@@ -398,22 +399,66 @@ public class InGameUIManager : MonoBehaviour
         if (_draggedCard == null) return;
         _draggedCard.CanvasGroup.blocksRaycasts = true;
 
-        // 드롭 영역 확인
-        if (RectTransformUtility.RectangleContainsScreenPoint(_dropZone, eventData.position))
+        // ★ 간단한 방법: 드래그 중인 카드의 현재 부모 확인
+        // 드래그 중에 _mainCanvas로 이동했으므로, 드롭 시에 부모를 확인
+        bool isDraggedToCanvas = _draggedCard.RootGameObject.transform.parent == _mainCanvas.transform;
+
+        if (isDraggedToCanvas)
         {
-            Debug.Log($"Card {_draggedCard.CurrentCardData.cardName} Played!");
-            // 실제 카드 사용 로직
-            InGameCardManager.Instance.PlayCardFromHand(_draggedCard.CurrentCardData);
-            RemoveCardFromHandView(_draggedCard.RootGameObject);
+            // 드래그 중이었으므로 팝업 띄우기
+            Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
+            _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
         }
         else
         {
-            // 핸드로 복귀
-            _activeHandCardRoots.Add(cardUI.RootGameObject);
-            _draggedCard.transform.SetParent(_handContainer, true);
-            _draggedCard.SetPlayableState(GameTurnManager.Instance.CurrentCost);
+            // 이미 핸드로 돌아갔으므로 무시
+            Debug.Log("[OnCardEndDrag] Card already in hand");
         }
+
         _draggedCard = null;
+    }
+
+    private void OnCardSelectionChoice(CardData card, bool isDraw)
+    {
+        if (isDraw)
+        {
+            // 카드 뽑기
+            UseCard(card);
+        }
+        else
+        {
+            // 덱에 추가
+            AddCardToDeck(card);
+        }
+
+        // UI에서 제거
+        RemoveCardFromHandView(_draggedCard.RootGameObject);
+    }
+
+    private void UseCard(CardData card)
+    {
+        // 코스트 차감
+        GameTurnManager.Instance.CurrentCost -= card.cost;
+
+        if (card.cardType == CardType.Attack)
+        {
+            // ★ 공격 카드: 오른쪽 목록에만 표시
+            InGameCardManager.Instance.AddSelectedAttackCard(card);
+            Debug.Log($"Attack card selected: {card.cardName}");
+        }
+        else if (card.cardType == CardType.Defense)
+        {
+            // ★ 수비 카드: 배치 모드 활성화
+            InGameCardManager.Instance.AddSelectedDefenseCard(card);
+            Debug.Log($"Defense card selected: {card.cardName}");
+        }
+    }
+
+    private void AddCardToDeck(CardData card)
+    {
+        // 원래 덱에 카드 추가 (다음 사이클 때 뽑을 수 있도록)
+        InGameCardManager.Instance.AddCardToDeckForNextCycle(card);
+        Debug.Log($"Card added to next cycle deck: {card.cardName}");
     }
 
     private void UpdateCardInteractableStates(int currentCost)

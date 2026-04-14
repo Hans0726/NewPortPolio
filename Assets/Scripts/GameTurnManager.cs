@@ -40,4 +40,8 @@ public class GameTurnManager : MonoBehaviour
         
     }
 
+    public void DeductCost(int amount)
+    {
+        CurrentCost = Mathf.Max(0, CurrentCost - amount);
+    }
 }

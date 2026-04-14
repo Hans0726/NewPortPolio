@@ -27,6 +27,13 @@ public class InGameCardManager : MonoBehaviour
     public event Action<CardData> OnCardPlayed; // 카드를 사용했을 때
     public event Action OnInitialHandDrawn;     // 초기 핸드 드로우가 '완료'되었을 때
 
+    private List<CardData> _selectedAttackCards = new List<CardData>();  // 이 턴에 뽑은 공격 카드
+    private List<CardData> _selectedDefenseCards = new List<CardData>(); // 이 턴에 뽑은 수비 카드
+    private List<CardData> _cardsToAddNextCycle = new List<CardData>();  // 다음 사이클에 추가할 카드
+
+    public List<CardData> SelectedAttackCards => _selectedAttackCards;
+    public List<CardData> SelectedDefenseCards => _selectedDefenseCards;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -204,5 +211,39 @@ public class InGameCardManager : MonoBehaviour
         }
         Debug.LogWarning($"Card {cardToPlay.cardName} not found in hand.");
         return false;
+    }
+
+    public void AddSelectedAttackCard(CardData card)
+    {
+        _selectedAttackCards.Add(card);
+        Debug.Log($"[InGameCardManager] Attack card added to selection: {card.cardName}");
+    }
+
+    public void AddSelectedDefenseCard(CardData card)
+    {
+        _selectedDefenseCards.Add(card);
+        Debug.Log($"[InGameCardManager] Defense card added to selection: {card.cardName}");
+    }
+
+    public void AddCardToDeckForNextCycle(CardData card)
+    {
+        _cardsToAddNextCycle.Add(card);
+        Debug.Log($"[InGameCardManager] Card added to next cycle deck: {card.cardName}");
+    }
+
+    // 턴 종료 시 호출 (다음 덱 준비)
+    public void PrepareNextCycleDeck()
+    {
+        _playerDiscardPile.AddRange(_cardsToAddNextCycle);
+        _cardsToAddNextCycle.Clear();
+        Debug.Log("[InGameCardManager] Next cycle deck prepared");
+    }
+
+    // 턴 초기화 (새 턴 시작 시)
+    public void ResetTurnSelection()
+    {
+        _selectedAttackCards.Clear();
+        _selectedDefenseCards.Clear();
+        Debug.Log("[InGameCardManager] Turn selection reset");
     }
 }
