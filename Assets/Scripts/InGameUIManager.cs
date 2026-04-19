@@ -276,15 +276,6 @@ public class InGameUIManager : MonoBehaviour
     {
         if (_currentHandState != HandState.InInteraction) return;
 
-        // ★ 팝업이 열려있으면 카드 애니메이션 스킵 (사용자 상호작용 차단)
-        if (_cardSelectPopup != null && _cardSelectPopup.IsOpen)
-        {
-            return;
-        }
-
-        // ★★★ 변경: 레이캐스트 제거! CardUI의 이벤트로 _hoveredCard를 관리 ★★★
-        // 이제 _hoveredCard는 CardUI.OnPointerEnter/Exit에서 설정됨
-
         // --- 1. 핸드의 목표 상태(확대/축소) 결정 ---
         bool targetExpandedState = (_hoveredCard != null || _draggedCard != null);
         _isHandExpanded = targetExpandedState;
@@ -376,6 +367,12 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardBeginDrag(CardUI cardUI)
     {
+        // ★ 팝업이 열려있으면 카드 애니메이션 스킵 (사용자 상호작용 차단)
+        if (_cardSelectPopup != null && _cardSelectPopup.IsOpen)
+        {
+            return;
+        }
+
         _activeHandCardRoots.Remove(cardUI.RootGameObject); // 핸드에서 잠시 제거
         _draggedCard = cardUI;
         _draggedCard.RootGameObject.transform.rotation = Quaternion.identity; // 회전 초기화
@@ -406,22 +403,37 @@ public class InGameUIManager : MonoBehaviour
         _draggedCard.CanvasGroup.blocksRaycasts = true;
 
         // ★ 간단한 방법: 드래그 중인 카드의 현재 부모 확인
-        // 드래그 중에 _mainCanvas로 이동했으므로, 드롭 시에 부모를 확인
+      // 드래그 중에 _mainCanvas로 이동했으므로, 드롭 시에 부모를 확인
         bool isDraggedToCanvas = _draggedCard.RootGameObject.transform.parent == _mainCanvas.transform;
 
         if (isDraggedToCanvas)
-        {
+   {
             // 드래그 중이었으므로 팝업 띄우기
-            Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
+   Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
+   
+            // ★ 팝업을 열기 전에 카드의 원본 부모/위치 정보 저장
+   // (현재는 _mainCanvas에 있지만, 원래 핸드 위치로 돌아가야 함)
+  int cardIndexInHand = _activeHandCardRoots.IndexOf(_draggedCard.RootGameObject);
+  _cardSelectPopup.SetOriginalCardInfo(_handContainer, cardIndexInHand, _draggedCard);
             _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
         }
         else
-        {
-            // 이미 핸드로 돌아갔으므로 무시
+      {
+     // 이미 핸드로 돌아갔으므로 무시
             Debug.Log("[OnCardEndDrag] Card already in hand");
         }
 
-        _draggedCard = null;
+  _draggedCard = null;
+    }
+
+    // ★ 팝업에서 호출: 카드가 핸드로 복원되었으므로 _activeHandCardRoots에 다시 추가
+    public void RestoreCardToHand(GameObject cardRoot, int originalIndex)
+    {
+        if (cardRoot != null && !_activeHandCardRoots.Contains(cardRoot))
+      {
+    _activeHandCardRoots.Insert(originalIndex, cardRoot);
+  Debug.Log($"[InGameUIManager] Card restored to hand at index {originalIndex}");
+ }
     }
 
     private void OnCardSelectionChoice(CardData card, bool isDraw)

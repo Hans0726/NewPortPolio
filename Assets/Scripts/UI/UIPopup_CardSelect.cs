@@ -10,6 +10,10 @@ public class UIPopup_CardSelect : UIPopup
     [SerializeField] private Button _btnDraw;
 
     private GameObject _displayedCardInstance; // 팝업에 표시 중인 카드 복제본
+    private CardUI _originalCardUI; // 원본 카드 UI 참조
+    private Transform _originalParent; // ★ 원본 카드의 부모 (핸드 컨테이너)
+    private int _originalSiblingIndex; // ★ 원본 카드의 sibling index (n번째 위치)
+    private GameObject _draggedCardRoot; // ★ 드래그된 카드의 루트 오브젝트 (복원 시 사용)
     private Action<CardData, bool> _onChoice; // card, isDraw(true) or addToDeck(false)
 
     protected override void Start()
@@ -20,9 +24,22 @@ public class UIPopup_CardSelect : UIPopup
         _btnDraw.onClick.AddListener(OnDrawClicked);
     }
 
+    /// <summary>
+    /// ★ 팝업을 열기 전에 카드의 원본 부모 정보를 미리 설정합니다.
+    /// (드래그 전의 정확한 위치 정보를 보존하기 위함)
+    /// </summary>
+    public void SetOriginalCardInfo(Transform originalParent, int siblingIndex, CardUI draggedCardUI)
+    {
+        _originalParent = originalParent;
+        _originalSiblingIndex = siblingIndex;
+        _draggedCardRoot = draggedCardUI.RootGameObject; // ★ 카드 루트 객체 저장
+    }
+
     public void OpenPopup(CardUI cardUI, Action<CardData, bool> onChoice)
     {
         _onChoice = onChoice;
+        _originalCardUI = cardUI; // ★ 원본 카드 UI 저장
+        
         cardUI.RootGameObject.SetActive(false); // 원본 카드 숨김
 
         // ★ 기존 복제본 정리
@@ -41,10 +58,11 @@ public class UIPopup_CardSelect : UIPopup
         displayRect.SetParent(_cardDisplayContainer, false);
 
         // 1. localPosition 초기화
+        float scaleFactor = _cardDisplayContainer.GetComponent<RectTransform>().rect.height / displayRect.rect.height;
         displayRect.localPosition = Vector3.zero;
-        displayRect.localScale =    Vector3.one; // 스케일 초기화
+        displayRect.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
         _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // 자식 카드의 스케일도 초기화
-
+        
         // ★ 상호작용 비활성화
         CanvasGroup displayCanvasGroup = _displayedCardInstance.GetComponent<CanvasGroup>();
         if (displayCanvasGroup != null)
@@ -68,6 +86,20 @@ public class UIPopup_CardSelect : UIPopup
     protected override void ClosePopup()
     {
         base.ClosePopup();
+        
+        // ★ 원본 카드를 원래 위치로 복원 (취소한 경우)
+        if (_originalCardUI != null && _originalCardUI.RootGameObject != null && _originalParent != null)
+        {
+            // 원본 카드를 원래 부모로 돌려보냄
+            _originalCardUI.RootGameObject.transform.SetParent(_originalParent, false);
+            // 원래 sibling index로 복원 (n번째 위치)
+            _originalCardUI.RootGameObject.transform.SetSiblingIndex(_originalSiblingIndex);
+            // 원본 카드 다시 활성화
+            _originalCardUI.RootGameObject.SetActive(true);
+            
+            // ★ InGameUIManager의 _activeHandCardRoots에 다시 추가
+            InGameUIManager.Instance.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
+         }
         
         // 팝업 닫을 때 복제본 정리
         if (_displayedCardInstance != null)
