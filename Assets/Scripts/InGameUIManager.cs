@@ -36,6 +36,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _costText;
     [SerializeField] private Canvas _mainCanvas;
     [SerializeField] private UIPopup_CardSelect _cardSelectPopup;
+    [SerializeField] private GameObject _blockingPanel;
 
     [Header("Layout Settings")]
     [SerializeField] private float _spreadAngle = 10f;
@@ -277,7 +278,8 @@ public class InGameUIManager : MonoBehaviour
         if (_currentHandState != HandState.InInteraction) return;
 
         // --- 1. 핸드의 목표 상태(확대/축소) 결정 ---
-        bool targetExpandedState = (_hoveredCard != null || _draggedCard != null);
+        // 블로킹 패널이 활성화된 상태에서는 절대 핸드가 확장되지 않도록 보장
+        bool targetExpandedState = ((_hoveredCard != null || _draggedCard != null) && _blockingPanel.gameObject.activeSelf == false);
         _isHandExpanded = targetExpandedState;
 
         // --- 2. UI 업데이트 ---
@@ -367,12 +369,6 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardBeginDrag(CardUI cardUI)
     {
-        // ★ 팝업이 열려있으면 카드 애니메이션 스킵 (사용자 상호작용 차단)
-        if (_cardSelectPopup != null && _cardSelectPopup.IsOpen)
-        {
-            return;
-        }
-
         _activeHandCardRoots.Remove(cardUI.RootGameObject); // 핸드에서 잠시 제거
         _draggedCard = cardUI;
         _draggedCard.RootGameObject.transform.rotation = Quaternion.identity; // 회전 초기화
@@ -407,33 +403,33 @@ public class InGameUIManager : MonoBehaviour
         bool isDraggedToCanvas = _draggedCard.RootGameObject.transform.parent == _mainCanvas.transform;
 
         if (isDraggedToCanvas)
-   {
+        {
             // 드래그 중이었으므로 팝업 띄우기
-   Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
-   
+            Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
+
             // ★ 팝업을 열기 전에 카드의 원본 부모/위치 정보 저장
-   // (현재는 _mainCanvas에 있지만, 원래 핸드 위치로 돌아가야 함)
-  int cardIndexInHand = _activeHandCardRoots.IndexOf(_draggedCard.RootGameObject);
-  _cardSelectPopup.SetOriginalCardInfo(_handContainer, cardIndexInHand, _draggedCard);
+            // (현재는 _mainCanvas에 있지만, 원래 핸드 위치로 돌아가야 함)
+            int cardIndexInHand = _activeHandCardRoots.IndexOf(_draggedCard.RootGameObject);
+            _cardSelectPopup.SetOriginalCardInfo(_handContainer, cardIndexInHand, _draggedCard);
             _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
         }
         else
-      {
-     // 이미 핸드로 돌아갔으므로 무시
+        {
+            // 이미 핸드로 돌아갔으므로 무시
             Debug.Log("[OnCardEndDrag] Card already in hand");
         }
 
-  _draggedCard = null;
+        _draggedCard = null;
     }
 
     // ★ 팝업에서 호출: 카드가 핸드로 복원되었으므로 _activeHandCardRoots에 다시 추가
     public void RestoreCardToHand(GameObject cardRoot, int originalIndex)
     {
         if (cardRoot != null && !_activeHandCardRoots.Contains(cardRoot))
-      {
-    _activeHandCardRoots.Insert(originalIndex, cardRoot);
-  Debug.Log($"[InGameUIManager] Card restored to hand at index {originalIndex}");
- }
+        {
+            _activeHandCardRoots.Insert(originalIndex, cardRoot);
+            Debug.Log($"[InGameUIManager] Card restored to hand at index {originalIndex}");
+        }
     }
 
     private void OnCardSelectionChoice(CardData card, bool isDraw)

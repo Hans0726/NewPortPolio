@@ -63,12 +63,14 @@ public class UIPopup_CardSelect : UIPopup
         displayRect.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
         _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // 자식 카드의 스케일도 초기화
         
-        // ★ 상호작용 비활성화
-        CanvasGroup displayCanvasGroup = _displayedCardInstance.GetComponent<CanvasGroup>();
-        if (displayCanvasGroup != null)
-            displayCanvasGroup.interactable = false;
+        // ★ CardUI 컴포넌트의 이벤트 핸들러를 비활성화하여 호버 이벤트 방지
+        CardUI displayedCardUI = _displayedCardInstance.GetComponentInChildren<CardUI>();
+        if (displayedCardUI != null)
+        {
+            displayedCardUI.enabled = false; // CardUI 스크립트 비활성화
+        }
 
-        base.OpenPopup();
+        base.OpenPopup(true);
     }
 
     private void OnAddToDeckClicked()

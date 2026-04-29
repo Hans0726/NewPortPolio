@@ -259,4 +259,11 @@ MonoBehaviour:
   _panel: {fileID: 4240080851067424413}
   _btnClose: {fileID: 2969232269961709144}
   _animationDuration: 0.5
+  _blockingPanel: {fileID: 6184177588668416477}
   _txtMatching: {fileID: 3535655977637160331}
+--- !u!1 &6184177588668416477 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6353159973079382904, guid: 0f4a2c8971a4791458fc8d8c2952ed8c,
+    type: 3}
+  m_PrefabInstance: {fileID: 1006670608410557093}
+  m_PrefabAsset: {fileID: 0}

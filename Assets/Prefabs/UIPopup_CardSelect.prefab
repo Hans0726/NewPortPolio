@@ -792,12 +792,19 @@ MonoBehaviour:
   _panel: {fileID: 1406078015102474168}
   _btnClose: {fileID: 27156375596818301}
   _animationDuration: 0.5
+  _blockingPanel: {fileID: 8972915728603109624}
   _cardDisplayContainer: {fileID: 8736596520985703793}
   _btnAddToDeck: {fileID: 8550687152330174464}
   _btnDraw: {fileID: 3816571933466501444}
 --- !u!224 &5261720307903374402 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7902028145510647746, guid: 0f4a2c8971a4791458fc8d8c2952ed8c,
+    type: 3}
+  m_PrefabInstance: {fileID: 2642704807450059648}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8972915728603109624 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6353159973079382904, guid: 0f4a2c8971a4791458fc8d8c2952ed8c,
     type: 3}
   m_PrefabInstance: {fileID: 2642704807450059648}
   m_PrefabAsset: {fileID: 0}
