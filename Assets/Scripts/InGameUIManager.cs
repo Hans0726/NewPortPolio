@@ -52,14 +52,19 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private Vector2 _collapsedCardScale = new Vector2(0.8f, 0.8f);
     [SerializeField] private float _lerpSpeed = 10f;
 
+    [Header("PlayerInfoPanel_TopLeft")]
+    [SerializeField] private TextMeshProUGUI _playerCurrentCost;
+
     // --- 상태 변수 ---
     private CardUI _hoveredCard = null;
     private CardUI _draggedCard = null;
     private bool _isHandExpanded = false;
+    private int _draggedCardOriginalIndex = -1; // ★ 드래그된 카드의 원래 인덱스 저장
 
     // ★ 드래그 상태 확인용 프로퍼티
     public bool IsDragging => _draggedCard != null;
 
+    [Space(10)]
     // 오브젝트 풀링
     [SerializeField] private Transform _cardPoolContainer;
     private List<GameObject> _cardUIPool = new List<GameObject>();
@@ -369,6 +374,9 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardBeginDrag(CardUI cardUI)
     {
+        // ★ 드래그 전 원래 인덱스 저장
+       _draggedCardOriginalIndex = _activeHandCardRoots.IndexOf(cardUI.RootGameObject);
+        
         _activeHandCardRoots.Remove(cardUI.RootGameObject); // 핸드에서 잠시 제거
         _draggedCard = cardUI;
         _draggedCard.RootGameObject.transform.rotation = Quaternion.identity; // 회전 초기화
@@ -384,10 +392,10 @@ public class InGameUIManager : MonoBehaviour
         RectTransform parentRect = _mainCanvas.transform as RectTransform;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-     parentRect,
-  eventData.position,
-    _mainCanvas.worldCamera, // Screen Space-Camera 모드일 때
- out localPoint))
+            parentRect,
+            eventData.position,
+            _mainCanvas.worldCamera, // Screen Space-Camera 모드일 때
+            out localPoint))
         {
             _draggedCard.RootGameObject.transform.localPosition = localPoint;
         }
@@ -399,7 +407,7 @@ public class InGameUIManager : MonoBehaviour
         _draggedCard.CanvasGroup.blocksRaycasts = true;
 
         // ★ 간단한 방법: 드래그 중인 카드의 현재 부모 확인
-      // 드래그 중에 _mainCanvas로 이동했으므로, 드롭 시에 부모를 확인
+        // 드래그 중에 _mainCanvas로 이동했으므로, 드롭 시에 부모를 확인
         bool isDraggedToCanvas = _draggedCard.RootGameObject.transform.parent == _mainCanvas.transform;
 
         if (isDraggedToCanvas)
@@ -408,9 +416,8 @@ public class InGameUIManager : MonoBehaviour
             Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
 
             // ★ 팝업을 열기 전에 카드의 원본 부모/위치 정보 저장
-            // (현재는 _mainCanvas에 있지만, 원래 핸드 위치로 돌아가야 함)
-            int cardIndexInHand = _activeHandCardRoots.IndexOf(_draggedCard.RootGameObject);
-            _cardSelectPopup.SetOriginalCardInfo(_handContainer, cardIndexInHand, _draggedCard);
+            // 드래그 전 저장된 원래 인덱스 사용
+            _cardSelectPopup.SetOriginalCardInfo(_handContainer, _draggedCardOriginalIndex, _draggedCard);
             _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
         }
         else
@@ -420,6 +427,8 @@ public class InGameUIManager : MonoBehaviour
         }
 
         _draggedCard = null;
+        _hoveredCard = null;
+        _draggedCardOriginalIndex = -1; // ★ 인덱스 초기화
     }
 
     // ★ 팝업에서 호출: 카드가 핸드로 복원되었으므로 _activeHandCardRoots에 다시 추가
@@ -427,8 +436,10 @@ public class InGameUIManager : MonoBehaviour
     {
         if (cardRoot != null && !_activeHandCardRoots.Contains(cardRoot))
         {
-            _activeHandCardRoots.Insert(originalIndex, cardRoot);
-            Debug.Log($"[InGameUIManager] Card restored to hand at index {originalIndex}");
+            // ★ 인덱스가 범위를 벗어나면 리스트의 끝에 추가
+            int clampedIndex = Mathf.Min(originalIndex, _activeHandCardRoots.Count);
+            _activeHandCardRoots.Insert(clampedIndex, cardRoot);
+            Debug.Log($"[InGameUIManager] Card restored to hand at index {clampedIndex}");
         }
     }
 
@@ -479,12 +490,32 @@ public class InGameUIManager : MonoBehaviour
     {
         foreach (var cardRootGO in _activeHandCardRoots)
         {
-            CardUI cardUI = cardRootGO.GetComponent<CardUI>();
+            CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
             if (cardUI != null && cardUI.CurrentCardData != null)
             {
                 bool canAfford = currentCost >= cardUI.CurrentCardData.cost;
                 cardUI.SetPlayableState(canAfford);
             }
         }
+        _playerCurrentCost.text = $"{currentCost}";
+        Debug.Log($"Updated card interactable states based on current cost: {currentCost}");
+    }
+
+    // 핸드의 활성화된 카드 중 하나의 파티클 시간 반환
+    public float GetHandPlayableEffectTime()
+    {
+        foreach (var cardRootGO in _activeHandCardRoots)
+        {
+            CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
+            if (cardUI != null && cardUI.CurrentCardData != null)
+            {
+                // 카드의 플레이 가능 상태가 true일 때만 시간 추가
+                if (cardUI.IsPlayableEffectActive)
+                {
+                    return cardUI.PlayableEffectPS.time;
+                }
+            }
+        }
+        return 0f;
     }
 }

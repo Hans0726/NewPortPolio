@@ -452,6 +452,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 706678322}
   - {fileID: 1453403690}
   - {fileID: 36587099}
   - {fileID: 1782756313}
@@ -459,7 +460,6 @@ RectTransform:
   - {fileID: 1001788155}
   - {fileID: 359736195}
   - {fileID: 2114520042}
-  - {fileID: 706678322}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3734,6 +3734,7 @@ MonoBehaviour:
   _expandedCardScale: {x: 1, y: 1}
   _collapsedCardScale: {x: 0.5, y: 0.5}
   _lerpSpeed: 10
+  _playerCurrentCost: {fileID: 841697588}
   _cardPoolContainer: {fileID: 437923702}
 --- !u!4 &437923702
 Transform:

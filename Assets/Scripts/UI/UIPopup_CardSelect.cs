@@ -57,17 +57,18 @@ public class UIPopup_CardSelect : UIPopup
         // ★ 부모로 설정
         displayRect.SetParent(_cardDisplayContainer, false);
 
-        // 1. localPosition 초기화
+        // localPosition 초기화
         float scaleFactor = _cardDisplayContainer.GetComponent<RectTransform>().rect.height / displayRect.rect.height;
         displayRect.localPosition = Vector3.zero;
         displayRect.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
         _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // 자식 카드의 스케일도 초기화
-        
-        // ★ CardUI 컴포넌트의 이벤트 핸들러를 비활성화하여 호버 이벤트 방지
+
+
+        // 팝업에서 카드 상호작용 불가능하도록 설정
         CardUI displayedCardUI = _displayedCardInstance.GetComponentInChildren<CardUI>();
         if (displayedCardUI != null)
         {
-            displayedCardUI.enabled = false; // CardUI 스크립트 비활성화
+            displayedCardUI.enabled = false;
         }
 
         base.OpenPopup(true);
@@ -98,11 +99,15 @@ public class UIPopup_CardSelect : UIPopup
             _originalCardUI.RootGameObject.transform.SetSiblingIndex(_originalSiblingIndex);
             // 원본 카드 다시 활성화
             _originalCardUI.RootGameObject.SetActive(true);
-            
+
+            // ★ 핸드의 다른 카드들의 파티클 시간을 동기화
+            float handParticleTime = InGameUIManager.Instance.GetHandPlayableEffectTime();
+            _originalCardUI.SetPlayableEffectTime(handParticleTime);
+
             // ★ InGameUIManager의 _activeHandCardRoots에 다시 추가
             InGameUIManager.Instance.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
-         }
-        
+        }
+
         // 팝업 닫을 때 복제본 정리
         if (_displayedCardInstance != null)
             Destroy(_displayedCardInstance);

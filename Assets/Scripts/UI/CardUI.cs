@@ -53,6 +53,9 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     [Header("Effects")]
     [SerializeField] private GameObject _playableEffect;
+    public bool IsPlayableEffectActive => _playableEffect != null && _playableEffect.activeSelf;
+    [SerializeField] private ParticleSystem _playableEffectPS;
+    public ParticleSystem PlayableEffectPS => _playableEffectPS;
 
     // 클릭 시 호출될 액션 (UIPopup_Deck에서 설정)
     public Action<CardUI> OnOwnedCardClicked;   // 로비 덱 카드 UI 용
@@ -147,6 +150,22 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         bool isInteractable = currentCost >= Convert.ToInt32(_textCost.text);
         CanvasGroup.interactable = isInteractable;
         _playableEffect.SetActive(isInteractable);
+    }
+
+    /// <summary>
+    /// ★ 파티클 시스템을 특정 시간부터 재생 (동기화용)
+    /// </summary>
+    public void SetPlayableEffectTime(float time)
+    {
+        if (_playableEffect == null) return;
+        _playableEffect.SetActive(true);
+
+        if (_playableEffectPS != null)
+        {
+            _playableEffectPS.Stop();
+            _playableEffectPS.Simulate(time, withChildren: true, restart: true, fixedTimeStep: true);
+            _playableEffectPS.Play();
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)

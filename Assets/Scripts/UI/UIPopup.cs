@@ -14,7 +14,7 @@ public class UIPopup : MonoBehaviour
     protected Button _btnClose;
     [SerializeField]
     protected float _animationDuration = 0.5f;
-    private GameObject blockingPanel = null;
+    private GameObject _blockingPanel = null;
     protected virtual void Start()
     {
         _btnClose.onClick.AddListener(ClosePopup);
@@ -26,22 +26,22 @@ public class UIPopup : MonoBehaviour
     protected void SetupBlockingPanel(bool enableBlocking)
     {
         // 이미 셋업되어있다면 리턴
-        if (blockingPanel != null)
+        if (_blockingPanel != null && _blockingPanel.gameObject.activeSelf == true)
             return;
 
 
         string className = this.GetType().Name;
 
-        blockingPanel = transform.parent.Find("BlockingPanel").gameObject;
+        _blockingPanel = transform.parent.Find("BlockingPanel").gameObject;
 
         // BlockingPanel 널 체크
-        if (blockingPanel == null)
+        if (_blockingPanel == null)
         {
             Debug.LogWarning($"[{className}] BlockingPanel이 할당되지 않았습니다!");
             return;
         }
 
-        blockingPanel.SetActive(true);
+        _blockingPanel.SetActive(true);
     }
 
     public virtual void OpenPopup()
@@ -67,7 +67,7 @@ public class UIPopup : MonoBehaviour
             .OnComplete(() =>
             {
                 _panel.SetActive(false);
-                blockingPanel.SetActive(false);
+                _blockingPanel.SetActive(false);
             });
     }
 }

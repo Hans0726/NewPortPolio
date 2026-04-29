@@ -357,6 +357,7 @@ MonoBehaviour:
   _textCostInDeck: {fileID: 8016980072752604789}
   _textNameInDeck: {fileID: 8851655840504997913}
   _playableEffect: {fileID: 5075013204627563707}
+  _playableEffectPS: {fileID: 3988384130641337429}
 --- !u!1 &974131265446030287
 GameObject:
   m_ObjectHideFlags: 0
@@ -2246,6 +2247,12 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a71be3e7990efb040a07565c43cbb198, type: 3}
+--- !u!198 &3988384130641337429 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 6679182840704168355, guid: a71be3e7990efb040a07565c43cbb198,
+    type: 3}
+  m_PrefabInstance: {fileID: 7775657564794056182}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5075013204627563652 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3280519133390621042, guid: a71be3e7990efb040a07565c43cbb198,
