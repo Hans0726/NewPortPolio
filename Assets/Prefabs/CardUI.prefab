@@ -1737,6 +1737,11 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 2319904205370560433, guid: a71be3e7990efb040a07565c43cbb198,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3280519133223516628, guid: a71be3e7990efb040a07565c43cbb198,
         type: 3}
       propertyPath: ShapeModule.type
@@ -1991,6 +1996,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6679182840704168355, guid: a71be3e7990efb040a07565c43cbb198,
+        type: 3}
+      propertyPath: looping
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6679182840704168355, guid: a71be3e7990efb040a07565c43cbb198,
         type: 3}

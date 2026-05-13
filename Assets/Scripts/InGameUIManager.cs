@@ -512,7 +512,7 @@ public class InGameUIManager : MonoBehaviour
                 // 카드의 플레이 가능 상태가 true일 때만 시간 추가
                 if (cardUI.IsPlayableEffectActive)
                 {
-                    return cardUI.PlayableEffectPS.time;
+                    return cardUI.PlayableEffectPS.totalTime;
                 }
             }
         }

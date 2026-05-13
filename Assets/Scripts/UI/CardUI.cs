@@ -162,8 +162,7 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
         if (_playableEffectPS != null)
         {
-            _playableEffectPS.Stop();
-            _playableEffectPS.Simulate(time, withChildren: true, restart: true, fixedTimeStep: true);
+            _playableEffectPS.Simulate(time, true, true);
             _playableEffectPS.Play();
         }
     }
