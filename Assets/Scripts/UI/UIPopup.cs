@@ -21,11 +21,11 @@ public class UIPopup : MonoBehaviour
     }
 
     /// <summary>
-    /// ºí·ÎÅ· ÆĞ³ÎÀ» ÀüÃ¼ È­¸é Å©±â·Î ¼³Á¤ (On/Off °¡´É)
+    /// ë¸”ë¡œí‚¹ íŒ¨ë„ì„ ì „ì²´ í™”ë©´ í¬ê¸°ë¡œ ì„¤ì • (On/Off ê°€ëŠ¥)
     /// </summary>
     protected void SetupBlockingPanel(bool enableBlocking)
     {
-        // ÀÌ¹Ì ¼Â¾÷µÇ¾îÀÖ´Ù¸é ¸®ÅÏ
+        // ì´ë¯¸ ì…‹ì—…ë˜ì–´ìˆë‹¤ë©´ ë¦¬í„´
         if (_blockingPanel != null && _blockingPanel.gameObject.activeSelf == true)
             return;
 
@@ -34,10 +34,10 @@ public class UIPopup : MonoBehaviour
 
         _blockingPanel = transform.parent.Find("BlockingPanel").gameObject;
 
-        // BlockingPanel ³Î Ã¼Å©
+        // BlockingPanel ë„ ì²´í¬
         if (_blockingPanel == null)
         {
-            Debug.LogWarning($"[{className}] BlockingPanelÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù!");
+            Debug.LogWarning($"[{className}] BlockingPanelì´ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!");
             return;
         }
 

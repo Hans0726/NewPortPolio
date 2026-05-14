@@ -12,18 +12,18 @@ public class LobbyCardManager : MonoBehaviour
 
     [SerializeField] private CardDatabase _cardDatabase;
 
-    // ÇÃ·¹ÀÌ¾î°¡ ¼ÒÀ¯ÇÑ ¸ğµç Ä«µåÀÇ CardData SO ÂüÁ¶ ¸®½ºÆ®
+    // í”Œë ˆì´ì–´ê°€ ì†Œìœ í•œ ëª¨ë“  ì¹´ë“œì˜ CardData SO ì°¸ì¡° ë¦¬ìŠ¤íŠ¸
     private List<CardData> _ownedPlayerCards = new List<CardData>();
     public List<CardData> OwnedPlayerCards { get { return _ownedPlayerCards; } }
 
-    // ÇÃ·¹ÀÌ¾îÀÇ ÇöÀç µ¦¿¡ Æ÷ÇÔµÈ Ä«µå ID ¸®½ºÆ® (IngameCardManager·Î Àü´ŞµÉ Á¤º¸)
+    // í”Œë ˆì´ì–´ì˜ í˜„ì¬ ë±ì— í¬í•¨ëœ ì¹´ë“œ ID ë¦¬ìŠ¤íŠ¸ (IngameCardManagerë¡œ ì „ë‹¬ë  ì •ë³´)
     private List<short> _currentDeckCardIds = new List<short>();
     public List<short> CurrentDeckCardIds { get { return _currentDeckCardIds; } }
     public int NumCardInDeck => _currentDeckCardIds.Count;
 
     [SerializeField] private GameObject _cardPrefab;
 
-    // µ¦ ±¸¼º º¯°æ ½Ã UIPopup_Deck¿¡ ¾Ë¸± ÀÌº¥Æ®
+    // ë± êµ¬ì„± ë³€ê²½ ì‹œ UIPopup_Deckì— ì•Œë¦´ ì´ë²¤íŠ¸
     public event Action OnDeckCompositionChanged;
 
     void Awake()
@@ -37,7 +37,7 @@ public class LobbyCardManager : MonoBehaviour
         _instance = this;
     }
 
-    // ¼­¹ö·ÎºÎÅÍ ¹ŞÀº S_PlayerDeckInfo ÆĞÅ¶À¸·Î ¼ÒÀ¯ Ä«µå Á¤º¸ ÃÊ±âÈ­
+    // ì„œë²„ë¡œë¶€í„° ë°›ì€ S_PlayerDeckInfo íŒ¨í‚·ìœ¼ë¡œ ì†Œìœ  ì¹´ë“œ ì •ë³´ ì´ˆê¸°í™”
     public void InitializePlayerDeck(S_PlayerDeckInfo packet)
     {
         _ownedPlayerCards.Clear();
@@ -49,21 +49,21 @@ public class LobbyCardManager : MonoBehaviour
             return;
         }
 
-        // CardDatabase¿¡¼­ cardId·Î CardData SO¸¦ Ã£¾Æ¿È
+        // CardDatabaseì—ì„œ cardIdë¡œ CardData SOë¥¼ ì°¾ì•„ì˜´
         _cardDatabase.Initialize();
 
-        foreach (S_PlayerDeckInfo.Card cardInfoFromServer in packet.cards) // ÆĞÅ¶ ÇÊµå¸íÀº ½ÇÁ¦ Á¤ÀÇ¿¡ ¸Â°Ô
+        foreach (S_PlayerDeckInfo.Card cardInfoFromServer in packet.cards) // íŒ¨í‚· í•„ë“œëª…ì€ ì‹¤ì œ ì •ì˜ì— ë§ê²Œ
         {
 
             CardData cardDataSO = _cardDatabase.GetCardDataById(cardInfoFromServer.cardId);
 
             if (cardDataSO != null)
             {
-                _ownedPlayerCards.Add(cardDataSO); // ¼ÒÀ¯ÇÑ Ä«µå ¸ñ·Ï¿¡ SO ÂüÁ¶ Ãß°¡
+                _ownedPlayerCards.Add(cardDataSO); // ì†Œìœ í•œ ì¹´ë“œ ëª©ë¡ì— SO ì°¸ì¡° ì¶”ê°€
 
                 if (cardInfoFromServer.isInDeck)
                 {
-                    _currentDeckCardIds.Add(cardDataSO.cardId); // µ¦¿¡ Æ÷ÇÔµÈ Ä«µå ID Ãß°¡
+                    _currentDeckCardIds.Add(cardDataSO.cardId); // ë±ì— í¬í•¨ëœ ì¹´ë“œ ID ì¶”ê°€
                 }
             }
             else
@@ -74,7 +74,7 @@ public class LobbyCardManager : MonoBehaviour
 
         Debug.Log($"Player cards initialized. Owned: {_ownedPlayerCards.Count}, In Deck: {NumCardInDeck}");
 
-        // ÀÌ ½ÃÁ¡¿¡¼­ _currentDeckCardIds ¸®½ºÆ®¸¦ IngameCardManager¿¡°Ô Àü´ŞÇÒ ÁØºñ°¡ µÊ
+        // ì´ ì‹œì ì—ì„œ _currentDeckCardIds ë¦¬ìŠ¤íŠ¸ë¥¼ IngameCardManagerì—ê²Œ ì „ë‹¬í•  ì¤€ë¹„ê°€ ë¨
     }
 
     public bool TryAddCardToDeck(short cardId)
@@ -98,10 +98,10 @@ public class LobbyCardManager : MonoBehaviour
         if (_currentDeckCardIds.Contains(cardId))
         {
             _currentDeckCardIds.Remove(cardId);
-            OnDeckCompositionChanged?.Invoke(); // UI °»½Å ¾Ë¸²
+            OnDeckCompositionChanged?.Invoke(); // UI ê°±ì‹  ì•Œë¦¼
             return true;
         }
-        return false; // µ¦¿¡ ¾ø´Â Ä«µå
+        return false; // ë±ì— ì—†ëŠ” ì¹´ë“œ
     }
 
     public void SendUpdatedDeckToServer()

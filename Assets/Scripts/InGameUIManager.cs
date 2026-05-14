@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using DG.Tweening; // ¿©ÀüÈ÷ °³º° ¼Ò¸ê ¾Ö´Ï¸ŞÀÌ¼Ç µî¿¡ »ç¿ë °¡´É
+using DG.Tweening; // ì—¬ì „íˆ ê°œë³„ ì†Œë©¸ ì• ë‹ˆë©”ì´ì…˜ ë“±ì— ì‚¬ìš© ê°€ëŠ¥
 using System.Collections;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
@@ -12,12 +12,12 @@ public class InGameUIManager : MonoBehaviour
 {
     public static InGameUIManager Instance { get; private set; }
 
-    // --- »óÅÂ ±¸ºĞÀ» À§ÇÑ enum ---
+    // --- ìƒíƒœ êµ¬ë¶„ì„ ìœ„í•œ enum ---
     public enum HandState
     {
-        Idle,           // ¾Æ¹«°Íµµ ¾È ÇÏ´Â »óÅÂ
-        InitialDrawing, // ÃÊ±â µå·Î¿ì ¾Ö´Ï¸ŞÀÌ¼Ç Áß
-        InInteraction   // ÀÏ¹İÀûÀÎ »óÈ£ÀÛ¿ë »óÅÂ (LateUpdate Á¦¾î)
+        Idle,           // ì•„ë¬´ê²ƒë„ ì•ˆ í•˜ëŠ” ìƒíƒœ
+        InitialDrawing, // ì´ˆê¸° ë“œë¡œìš° ì• ë‹ˆë©”ì´ì…˜ ì¤‘
+        InInteraction   // ì¼ë°˜ì ì¸ ìƒí˜¸ì‘ìš© ìƒíƒœ (LateUpdate ì œì–´)
     }
     private HandState _currentHandState = HandState.Idle;
 
@@ -32,7 +32,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private Transform _handContainer;
     [SerializeField] private GameObject _cardUIPrefab;
     [SerializeField] private RectTransform _deckPosition;
-    [SerializeField] private RectTransform _dropZone; // µå·¡±× µå·Ó ÆÇ´Ü ¿µ¿ª
+    [SerializeField] private RectTransform _dropZone; // ë“œë˜ê·¸ ë“œë¡­ íŒë‹¨ ì˜ì—­
     [SerializeField] private TextMeshProUGUI _costText;
     [SerializeField] private Canvas _mainCanvas;
     [SerializeField] private UIPopup_CardSelect _cardSelectPopup;
@@ -45,7 +45,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private float _collapsedYPosition = -50f;
     [SerializeField] private float _hoverScaleMultiplier = 1.2f;
     [SerializeField] private float _hoverYOffset = 50f;
-    [SerializeField] private float _arcCorrectionFactor = 5f; // ¾ÆÄ¡ ¸ğ¾ç º¸Á¤ °è¼ö
+    [SerializeField] private float _arcCorrectionFactor = 5f; // ì•„ì¹˜ ëª¨ì–‘ ë³´ì • ê³„ìˆ˜
 
     [Header("Animation Settings")]
     [SerializeField] private Vector2 _expandedCardScale = Vector2.one;
@@ -55,21 +55,22 @@ public class InGameUIManager : MonoBehaviour
     [Header("PlayerInfoPanel_TopLeft")]
     [SerializeField] private TextMeshProUGUI _playerCurrentCost;
 
-    // --- »óÅÂ º¯¼ö ---
+    // --- ìƒíƒœ ë³€ìˆ˜ ---
     private CardUI _hoveredCard = null;
     private CardUI _draggedCard = null;
+    private GameObject _pendingSelectedCardRoot = null;
     private bool _isHandExpanded = false;
-    private int _draggedCardOriginalIndex = -1; // ¡Ú µå·¡±×µÈ Ä«µåÀÇ ¿ø·¡ ÀÎµ¦½º ÀúÀå
+    private int _draggedCardOriginalIndex = -1; // â˜… ë“œë˜ê·¸ëœ ì¹´ë“œì˜ ì›ë˜ ì¸ë±ìŠ¤ ì €ì¥
 
-    // ¡Ú µå·¡±× »óÅÂ È®ÀÎ¿ë ÇÁ·ÎÆÛÆ¼
+    // â˜… ë“œë˜ê·¸ ìƒíƒœ í™•ì¸ìš© í”„ë¡œí¼í‹°
     public bool IsDragging => _draggedCard != null;
 
     [Space(10)]
-    // ¿ÀºêÁ§Æ® Ç®¸µ
+    // ì˜¤ë¸Œì íŠ¸ í’€ë§
     [SerializeField] private Transform _cardPoolContainer;
     private List<GameObject> _cardUIPool = new List<GameObject>();
     private List<GameObject> _activeHandCardRoots = new List<GameObject>();
-    private const int INITIAL_POOL_SIZE = 15; // ÃÖ´ë ÇÚµå ¼ö + ¿©À¯ºĞ
+    private const int INITIAL_POOL_SIZE = 15; // ìµœëŒ€ í•¸ë“œ ìˆ˜ + ì—¬ìœ ë¶„
 
 
     void Awake()
@@ -101,14 +102,14 @@ public class InGameUIManager : MonoBehaviour
         {
             Debug.LogWarning("--- RUNNING IN TEST MODE ---");
 
-            // µ¥ÀÌÅÍ ¸Å´ÏÀú(CardManager) Å×½ºÆ® ÃÊ±âÈ­
-            InGameCardManager.Instance.TestInitialize(); // Å×½ºÆ® µ¦ »ı¼º ¹× ¼ÅÇÃ
+            // ë°ì´í„° ë§¤ë‹ˆì €(CardManager) í…ŒìŠ¤íŠ¸ ì´ˆê¸°í™”
+            InGameCardManager.Instance.TestInitialize(); // í…ŒìŠ¤íŠ¸ ë± ìƒì„± ë° ì…”í”Œ
         }
 
-        // UI ¸Å´ÏÀú ÃÊ±âÈ­ (ÀÌº¥Æ® ±¸µ¶)
-        Initialize(); // ÀÚ½ÅÀÇ ÃÊ±âÈ­ ÇÔ¼ö È£Ãâ
+        // UI ë§¤ë‹ˆì € ì´ˆê¸°í™” (ì´ë²¤íŠ¸ êµ¬ë…)
+        Initialize(); // ìì‹ ì˜ ì´ˆê¸°í™” í•¨ìˆ˜ í˜¸ì¶œ
 
-        // ¿ÀÇÁ´× ½ÃÄö½º ½ÃÀÛ, ¿ÀÇÁ´× ½ÃÄö½º°¡ ³¡³ª¸é DrawInitialHand°¡ È£ÃâµÇ¾î¾ß ÇÔ
+        // ì˜¤í”„ë‹ ì‹œí€€ìŠ¤ ì‹œì‘, ì˜¤í”„ë‹ ì‹œí€€ìŠ¤ê°€ ëë‚˜ë©´ DrawInitialHandê°€ í˜¸ì¶œë˜ì–´ì•¼ í•¨
         ShowOpeningSequence();
 
     }
@@ -144,18 +145,18 @@ public class InGameUIManager : MonoBehaviour
 
         if (GameConfig.ENABLE_TEST_MODE)
         {
-            // Å×½ºÆ® ¸ğµå: ¾Ö´Ï¸ŞÀÌ¼Ç ½ºÅµ, ¹Ù·Î µå·Î¿ì
+            // í…ŒìŠ¤íŠ¸ ëª¨ë“œ: ì• ë‹ˆë©”ì´ì…˜ ìŠ¤í‚µ, ë°”ë¡œ ë“œë¡œìš°
             Debug.Log("InGameUIManager: Test Mode - Skipping Opening Sequence");
             if (InGameCardManager.Instance != null)
             {
                 InGameCardManager.Instance.DrawInitialHand();
             }
-            yield break;  // ÄÚ·çÆ¾ Á¾·á
+            yield break;  // ì½”ë£¨í‹´ ì¢…ë£Œ
         }
 
         _openingSequenceCanvasGroup.alpha = 0f;
         _openingSequenceCanvasGroup.gameObject.SetActive(true);
-        _openingSequenceText.text = "Á¦ÇÑ ½Ã°£ ³»¿¡ ÀüÅõ¸¦ ÁØºñÇÏ¼¼¿ä!";
+        _openingSequenceText.text = "ì œí•œ ì‹œê°„ ë‚´ì— ì „íˆ¬ë¥¼ ì¤€ë¹„í•˜ì„¸ìš”!";
 
         Debug.Log("InGameUIManager: Opening Sequence Fading In");
         _openingSequenceCanvasGroup.DOFade(1f, _openingFadeDuration);
@@ -176,14 +177,14 @@ public class InGameUIManager : MonoBehaviour
         });
     }
 
-    // ¡Ú¡Ú¡Ú ÃÊ±â µå·Î¿ì Ã³¸® ÇÔ¼ö (DOTween Sequence¸¸ ´ã´ç) ¡Ú¡Ú¡Ú
+    // â˜…â˜…â˜… ì´ˆê¸° ë“œë¡œìš° ì²˜ë¦¬ í•¨ìˆ˜ (DOTween Sequenceë§Œ ë‹´ë‹¹) â˜…â˜…â˜…
     private void HandleInitialHandDrawn()
     {
-        _currentHandState = HandState.InitialDrawing; // »óÅÂ º¯°æ
+        _currentHandState = HandState.InitialDrawing; // ìƒíƒœ ë³€ê²½
 
         List<CardData> initialHandData = InGameCardManager.Instance.PlayerHand;
 
-        // ÀÌÀü¿¡ È°¼ºÈ­µÈ Ä«µå°¡ ÀÖ´Ù¸é Á¤¸®
+        // ì´ì „ì— í™œì„±í™”ëœ ì¹´ë“œê°€ ìˆë‹¤ë©´ ì •ë¦¬
         foreach (var go in _activeHandCardRoots) ReturnCardUIRootToPool(go);
         _activeHandCardRoots.Clear();
 
@@ -200,7 +201,7 @@ public class InGameUIManager : MonoBehaviour
             newCardGO.SetActive(true);
             newCardUI.SetPlayableState(GameTurnManager.Instance.CurrentCost);
 
-            // Áß¾Ó¿¡ ¸ğÀÌ´Â ¾Ö´Ï¸ŞÀÌ¼Ç
+            // ì¤‘ì•™ì— ëª¨ì´ëŠ” ì• ë‹ˆë©”ì´ì…˜
             seq.Insert(i * 0.1f, cardTransform.DOMove(_handContainer.position, 0.5f).SetEase(Ease.OutQuad));
             seq.Insert(i * 0.1f, cardTransform.DOScale(_collapsedCardScale, 0.5f));
         }
@@ -208,7 +209,7 @@ public class InGameUIManager : MonoBehaviour
         seq.OnComplete(() =>
         {
             Debug.Log("Initial draw animation (to center) finished.");
-            _currentHandState = HandState.InInteraction; // ÀÌÁ¦ LateUpdate Á¦¾î ½ÃÀÛ
+            _currentHandState = HandState.InInteraction; // ì´ì œ LateUpdate ì œì–´ ì‹œì‘
 
         });
     }
@@ -256,7 +257,7 @@ public class InGameUIManager : MonoBehaviour
         CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
         if (cardUI != null)
         {
-            cardUI.InitializeDisplay(drawnCard); // uiManager ÂüÁ¶ Àü´Ş Á¦°Å
+            cardUI.InitializeDisplay(drawnCard); // uiManager ì°¸ì¡° ì „ë‹¬ ì œê±°
             _activeHandCardRoots.Add(cardRootGO);
         }
         else
@@ -268,12 +269,12 @@ public class InGameUIManager : MonoBehaviour
         return cardUI;
     }
 
-    // Ä«µå Á¦°Å Ã³¸®
+    // ì¹´ë“œ ì œê±° ì²˜ë¦¬
     private void RemoveCardFromHandView(GameObject playedCard)
     {
         _activeHandCardRoots.Remove(playedCard);
 
-        // »ç¶óÁö´Â ¾Ö´Ï¸ŞÀÌ¼Ç ÈÄ Ç®·Î ¹İÈ¯
+        // ì‚¬ë¼ì§€ëŠ” ì• ë‹ˆë©”ì´ì…˜ í›„ í’€ë¡œ ë°˜í™˜
         playedCard.transform.DOScale(Vector3.zero, 0.3f).SetEase(Ease.InBack)
             .OnComplete(() => ReturnCardUIRootToPool(playedCard));
     }
@@ -282,16 +283,16 @@ public class InGameUIManager : MonoBehaviour
     {
         if (_currentHandState != HandState.InInteraction) return;
 
-        // --- 1. ÇÚµåÀÇ ¸ñÇ¥ »óÅÂ(È®´ë/Ãà¼Ò) °áÁ¤ ---
-        // ºí·ÎÅ· ÆĞ³ÎÀÌ È°¼ºÈ­µÈ »óÅÂ¿¡¼­´Â Àı´ë ÇÚµå°¡ È®ÀåµÇÁö ¾Êµµ·Ï º¸Àå
+        // --- 1. í•¸ë“œì˜ ëª©í‘œ ìƒíƒœ(í™•ëŒ€/ì¶•ì†Œ) ê²°ì • ---
+        // ë¸”ë¡œí‚¹ íŒ¨ë„ì´ í™œì„±í™”ëœ ìƒíƒœì—ì„œëŠ” ì ˆëŒ€ í•¸ë“œê°€ í™•ì¥ë˜ì§€ ì•Šë„ë¡ ë³´ì¥
         bool targetExpandedState = ((_hoveredCard != null || _draggedCard != null) && _blockingPanel.gameObject.activeSelf == false);
         _isHandExpanded = targetExpandedState;
 
-        // --- 2. UI ¾÷µ¥ÀÌÆ® ---
+        // --- 2. UI ì—…ë°ì´íŠ¸ ---
         AnimateHandToTargetState();
     }
 
-    // ¡Ú¡Ú¡Ú »õ·Î¿î ¸Ş¼­µå: CardUI¿¡¼­ È£¹ö »óÅÂ ¼³Á¤ ¡Ú¡Ú¡Ú
+    // â˜…â˜…â˜… ìƒˆë¡œìš´ ë©”ì„œë“œ: CardUIì—ì„œ í˜¸ë²„ ìƒíƒœ ì„¤ì • â˜…â˜…â˜…
     public void SetHoveredCard(CardUI cardUI)
     {
         _hoveredCard = cardUI;
@@ -309,7 +310,7 @@ public class InGameUIManager : MonoBehaviour
     {
         int cardCount = _activeHandCardRoots.Count;
 
-        // --- 1. ·»´õ¸µ ¼ø¼­(Sibling Index) ¼³Á¤ ---
+        // --- 1. ë Œë”ë§ ìˆœì„œ(Sibling Index) ì„¤ì • ---
         for (int i = 0; i < cardCount; i++)
         {
             _activeHandCardRoots[i].transform.SetSiblingIndex(i);
@@ -321,7 +322,7 @@ public class InGameUIManager : MonoBehaviour
             card.transform.SetAsLastSibling();
         }
 
-        // --- 2. ·¹ÀÌ¾Æ¿ô °è»ê ¹× ¾Ö´Ï¸ŞÀÌ¼Ç ---
+        // --- 2. ë ˆì´ì•„ì›ƒ ê³„ì‚° ë° ì• ë‹ˆë©”ì´ì…˜ ---
         float startAngle = -(cardCount - 1) / 2.0f * _spreadAngle;
         float startX = -(cardCount - 1) / 2.0f * _cardSpacing;
 
@@ -365,7 +366,7 @@ public class InGameUIManager : MonoBehaviour
 
             Vector3 targetPosition = new Vector3(targetX, targetY, 0);
 
-            // Lerp·Î ºÎµå·´°Ô ÀÌµ¿
+            // Lerpë¡œ ë¶€ë“œëŸ½ê²Œ ì´ë™
             cardTransform.localPosition = Vector3.Lerp(cardTransform.localPosition, targetPosition, Time.deltaTime * _lerpSpeed);
             cardTransform.localRotation = Quaternion.Slerp(cardTransform.localRotation, targetRotation, Time.deltaTime * _lerpSpeed);
             cardTransform.localScale = Vector3.Lerp(cardTransform.localScale, targetScale, Time.deltaTime * _lerpSpeed);
@@ -374,27 +375,27 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardBeginDrag(CardUI cardUI)
     {
-        // ¡Ú µå·¡±× Àü ¿ø·¡ ÀÎµ¦½º ÀúÀå
+        // â˜… ë“œë˜ê·¸ ì „ ì›ë˜ ì¸ë±ìŠ¤ ì €ì¥
        _draggedCardOriginalIndex = _activeHandCardRoots.IndexOf(cardUI.RootGameObject);
         
-        _activeHandCardRoots.Remove(cardUI.RootGameObject); // ÇÚµå¿¡¼­ Àá½Ã Á¦°Å
+        _activeHandCardRoots.Remove(cardUI.RootGameObject); // í•¸ë“œì—ì„œ ì ì‹œ ì œê±°
         _draggedCard = cardUI;
-        _draggedCard.RootGameObject.transform.rotation = Quaternion.identity; // È¸Àü ÃÊ±âÈ­
-        _draggedCard.RootGameObject.transform.SetParent(_mainCanvas.transform, true); // Äµ¹ö½º·Î ÀÌµ¿
+        _draggedCard.RootGameObject.transform.rotation = Quaternion.identity; // íšŒì „ ì´ˆê¸°í™”
+        _draggedCard.RootGameObject.transform.SetParent(_mainCanvas.transform, true); // ìº”ë²„ìŠ¤ë¡œ ì´ë™
 
         _draggedCard.CanvasGroup.blocksRaycasts = false;
     }
 
     public void OnCardDrag(PointerEventData eventData)
     {
-        if (_draggedCard == null) return; // ¡Ú null Ã¼Å© Ãß°¡
+        if (_draggedCard == null) return; // â˜… null ì²´í¬ ì¶”ê°€
 
         RectTransform parentRect = _mainCanvas.transform as RectTransform;
         Vector2 localPoint;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
             parentRect,
             eventData.position,
-            _mainCanvas.worldCamera, // Screen Space-Camera ¸ğµåÀÏ ¶§
+            _mainCanvas.worldCamera, // Screen Space-Camera ëª¨ë“œì¼ ë•Œ
             out localPoint))
         {
             _draggedCard.RootGameObject.transform.localPosition = localPoint;
@@ -406,37 +407,38 @@ public class InGameUIManager : MonoBehaviour
         if (_draggedCard == null) return;
         _draggedCard.CanvasGroup.blocksRaycasts = true;
 
-        // ¡Ú °£´ÜÇÑ ¹æ¹ı: µå·¡±× ÁßÀÎ Ä«µåÀÇ ÇöÀç ºÎ¸ğ È®ÀÎ
-        // µå·¡±× Áß¿¡ _mainCanvas·Î ÀÌµ¿ÇßÀ¸¹Ç·Î, µå·Ó ½Ã¿¡ ºÎ¸ğ¸¦ È®ÀÎ
+        // â˜… ê°„ë‹¨í•œ ë°©ë²•: ë“œë˜ê·¸ ì¤‘ì¸ ì¹´ë“œì˜ í˜„ì¬ ë¶€ëª¨ í™•ì¸
+        // ë“œë˜ê·¸ ì¤‘ì— _mainCanvasë¡œ ì´ë™í–ˆìœ¼ë¯€ë¡œ, ë“œë¡­ ì‹œì— ë¶€ëª¨ë¥¼ í™•ì¸
         bool isDraggedToCanvas = _draggedCard.RootGameObject.transform.parent == _mainCanvas.transform;
 
         if (isDraggedToCanvas)
         {
-            // µå·¡±× ÁßÀÌ¾úÀ¸¹Ç·Î ÆË¾÷ ¶ç¿ì±â
+            // ë“œë˜ê·¸ ì¤‘ì´ì—ˆìœ¼ë¯€ë¡œ íŒì—… ë„ìš°ê¸°
             Debug.Log("[OnCardEndDrag] Card dropped - showing selection popup");
+            _pendingSelectedCardRoot = _draggedCard.RootGameObject;
 
-            // ¡Ú ÆË¾÷À» ¿­±â Àü¿¡ Ä«µåÀÇ ¿øº» ºÎ¸ğ/À§Ä¡ Á¤º¸ ÀúÀå
-            // µå·¡±× Àü ÀúÀåµÈ ¿ø·¡ ÀÎµ¦½º »ç¿ë
+            // â˜… íŒì—…ì„ ì—´ê¸° ì „ì— ì¹´ë“œì˜ ì›ë³¸ ë¶€ëª¨/ìœ„ì¹˜ ì •ë³´ ì €ì¥
+            // ë“œë˜ê·¸ ì „ ì €ì¥ëœ ì›ë˜ ì¸ë±ìŠ¤ ì‚¬ìš©
             _cardSelectPopup.SetOriginalCardInfo(_handContainer, _draggedCardOriginalIndex, _draggedCard);
             _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
         }
         else
         {
-            // ÀÌ¹Ì ÇÚµå·Î µ¹¾Æ°¬À¸¹Ç·Î ¹«½Ã
+            // ì´ë¯¸ í•¸ë“œë¡œ ëŒì•„ê°”ìœ¼ë¯€ë¡œ ë¬´ì‹œ
             Debug.Log("[OnCardEndDrag] Card already in hand");
         }
 
         _draggedCard = null;
         _hoveredCard = null;
-        _draggedCardOriginalIndex = -1; // ¡Ú ÀÎµ¦½º ÃÊ±âÈ­
+        _draggedCardOriginalIndex = -1; // â˜… ì¸ë±ìŠ¤ ì´ˆê¸°í™”
     }
 
-    // ¡Ú ÆË¾÷¿¡¼­ È£Ãâ: Ä«µå°¡ ÇÚµå·Î º¹¿øµÇ¾úÀ¸¹Ç·Î _activeHandCardRoots¿¡ ´Ù½Ã Ãß°¡
+    // â˜… íŒì—…ì—ì„œ í˜¸ì¶œ: ì¹´ë“œê°€ í•¸ë“œë¡œ ë³µì›ë˜ì—ˆìœ¼ë¯€ë¡œ _activeHandCardRootsì— ë‹¤ì‹œ ì¶”ê°€
     public void RestoreCardToHand(GameObject cardRoot, int originalIndex)
     {
         if (cardRoot != null && !_activeHandCardRoots.Contains(cardRoot))
         {
-            // ¡Ú ÀÎµ¦½º°¡ ¹üÀ§¸¦ ¹ş¾î³ª¸é ¸®½ºÆ®ÀÇ ³¡¿¡ Ãß°¡
+            // â˜… ì¸ë±ìŠ¤ê°€ ë²”ìœ„ë¥¼ ë²—ì–´ë‚˜ë©´ ë¦¬ìŠ¤íŠ¸ì˜ ëì— ì¶”ê°€
             int clampedIndex = Mathf.Min(originalIndex, _activeHandCardRoots.Count);
             _activeHandCardRoots.Insert(clampedIndex, cardRoot);
             Debug.Log($"[InGameUIManager] Card restored to hand at index {clampedIndex}");
@@ -447,33 +449,37 @@ public class InGameUIManager : MonoBehaviour
     {
         if (isDraw)
         {
-            // Ä«µå »Ì±â
+            // ì¹´ë“œ ë½‘ê¸°
             UseCard(card);
         }
         else
         {
-            // µ¦¿¡ Ãß°¡
+            // ë±ì— ì¶”ê°€
             AddCardToDeck(card);
         }
 
-        // UI¿¡¼­ Á¦°Å
-        RemoveCardFromHandView(_draggedCard.RootGameObject);
+        // UIì—ì„œ ì œê±°
+        if (_pendingSelectedCardRoot != null)
+        {
+            RemoveCardFromHandView(_pendingSelectedCardRoot);
+            _pendingSelectedCardRoot = null;
+        }
     }
 
     private void UseCard(CardData card)
     {
-        // ÄÚ½ºÆ® Â÷°¨
+        // ì½”ìŠ¤íŠ¸ ì°¨ê°
         GameTurnManager.Instance.CurrentCost -= card.cost;
 
         if (card.cardType == CardType.Attack)
         {
-            // ¡Ú °ø°İ Ä«µå: ¿À¸¥ÂÊ ¸ñ·Ï¿¡¸¸ Ç¥½Ã
+            // â˜… ê³µê²© ì¹´ë“œ: ì˜¤ë¥¸ìª½ ëª©ë¡ì—ë§Œ í‘œì‹œ
             InGameCardManager.Instance.AddSelectedAttackCard(card);
             Debug.Log($"Attack card selected: {card.cardName}");
         }
         else if (card.cardType == CardType.Defense)
         {
-            // ¡Ú ¼öºñ Ä«µå: ¹èÄ¡ ¸ğµå È°¼ºÈ­
+            // â˜… ìˆ˜ë¹„ ì¹´ë“œ: ë°°ì¹˜ ëª¨ë“œ í™œì„±í™”
             InGameCardManager.Instance.AddSelectedDefenseCard(card);
             Debug.Log($"Defense card selected: {card.cardName}");
         }
@@ -481,7 +487,7 @@ public class InGameUIManager : MonoBehaviour
 
     private void AddCardToDeck(CardData card)
     {
-        // ¿ø·¡ µ¦¿¡ Ä«µå Ãß°¡ (´ÙÀ½ »çÀÌÅ¬ ¶§ »ÌÀ» ¼ö ÀÖµµ·Ï)
+        // ì›ë˜ ë±ì— ì¹´ë“œ ì¶”ê°€ (ë‹¤ìŒ ì‚¬ì´í´ ë•Œ ë½‘ì„ ìˆ˜ ìˆë„ë¡)
         InGameCardManager.Instance.AddCardToDeckForNextCycle(card);
         Debug.Log($"Card added to next cycle deck: {card.cardName}");
     }
@@ -501,7 +507,7 @@ public class InGameUIManager : MonoBehaviour
         Debug.Log($"Updated card interactable states based on current cost: {currentCost}");
     }
 
-    // ÇÚµåÀÇ È°¼ºÈ­µÈ Ä«µå Áß ÇÏ³ªÀÇ ÆÄÆ¼Å¬ ½Ã°£ ¹İÈ¯
+    // í•¸ë“œì˜ í™œì„±í™”ëœ ì¹´ë“œ ì¤‘ í•˜ë‚˜ì˜ íŒŒí‹°í´ ì‹œê°„ ë°˜í™˜
     public float GetHandPlayableEffectTime()
     {
         foreach (var cardRootGO in _activeHandCardRoots)
@@ -509,7 +515,7 @@ public class InGameUIManager : MonoBehaviour
             CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
             if (cardUI != null && cardUI.CurrentCardData != null)
             {
-                // Ä«µåÀÇ ÇÃ·¹ÀÌ °¡´É »óÅÂ°¡ trueÀÏ ¶§¸¸ ½Ã°£ Ãß°¡
+                // ì¹´ë“œì˜ í”Œë ˆì´ ê°€ëŠ¥ ìƒíƒœê°€ trueì¼ ë•Œë§Œ ì‹œê°„ ì¶”ê°€
                 if (cardUI.IsPlayableEffectActive)
                 {
                     return cardUI.PlayableEffectPS.totalTime;

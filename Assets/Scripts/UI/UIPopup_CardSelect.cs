@@ -5,66 +5,68 @@ using System;
 
 public class UIPopup_CardSelect : UIPopup
 {
-    [SerializeField] private Transform _cardDisplayContainer; // ÆË¾÷ ³»ºÎ Ä«µå Ç¥½Ã ¿µ¿ª
+    [SerializeField] private Transform _cardDisplayContainer; // íŒì—… ë‚´ë¶€ ì¹´ë“œ í‘œì‹œ ì˜ì—­
     [SerializeField] private Button _btnAddToDeck;
     [SerializeField] private Button _btnDraw;
 
-    private GameObject _displayedCardInstance; // ÆË¾÷¿¡ Ç¥½Ã ÁßÀÎ Ä«µå º¹Á¦º»
-    private CardUI _originalCardUI; // ¿øº» Ä«µå UI ÂüÁ¶
-    private Transform _originalParent; // ¡Ú ¿øº» Ä«µåÀÇ ºÎ¸ğ (ÇÚµå ÄÁÅ×ÀÌ³Ê)
-    private int _originalSiblingIndex; // ¡Ú ¿øº» Ä«µåÀÇ sibling index (n¹øÂ° À§Ä¡)
-    private GameObject _draggedCardRoot; // ¡Ú µå·¡±×µÈ Ä«µåÀÇ ·çÆ® ¿ÀºêÁ§Æ® (º¹¿ø ½Ã »ç¿ë)
+    private GameObject _displayedCardInstance; // íŒì—…ì— í‘œì‹œ ì¤‘ì¸ ì¹´ë“œ ë³µì œë³¸
+    private CardUI _originalCardUI; // ì›ë³¸ ì¹´ë“œ UI ì°¸ì¡°
+    private Transform _originalParent; // â˜… ì›ë³¸ ì¹´ë“œì˜ ë¶€ëª¨ (í•¸ë“œ ì»¨í…Œì´ë„ˆ)
+    private int _originalSiblingIndex; // â˜… ì›ë³¸ ì¹´ë“œì˜ sibling index (në²ˆì§¸ ìœ„ì¹˜)
+    private GameObject _draggedCardRoot; // â˜… ë“œë˜ê·¸ëœ ì¹´ë“œì˜ ë£¨íŠ¸ ì˜¤ë¸Œì íŠ¸ (ë³µì› ì‹œ ì‚¬ìš©)
     private Action<CardData, bool> _onChoice; // card, isDraw(true) or addToDeck(false)
+    private bool _choiceConfirmed;
 
     protected override void Start()
     {
-        base.Start(); // UIPopupÀÇ Start È£Ãâ (_btnClose ¼³Á¤)
+        base.Start(); // UIPopupì˜ Start í˜¸ì¶œ (_btnClose ì„¤ì •)
 
         _btnAddToDeck.onClick.AddListener(OnAddToDeckClicked);
         _btnDraw.onClick.AddListener(OnDrawClicked);
     }
 
     /// <summary>
-    /// ¡Ú ÆË¾÷À» ¿­±â Àü¿¡ Ä«µåÀÇ ¿øº» ºÎ¸ğ Á¤º¸¸¦ ¹Ì¸® ¼³Á¤ÇÕ´Ï´Ù.
-    /// (µå·¡±× ÀüÀÇ Á¤È®ÇÑ À§Ä¡ Á¤º¸¸¦ º¸Á¸ÇÏ±â À§ÇÔ)
+    /// â˜… íŒì—…ì„ ì—´ê¸° ì „ì— ì¹´ë“œì˜ ì›ë³¸ ë¶€ëª¨ ì •ë³´ë¥¼ ë¯¸ë¦¬ ì„¤ì •í•©ë‹ˆë‹¤.
+    /// (ë“œë˜ê·¸ ì „ì˜ ì •í™•í•œ ìœ„ì¹˜ ì •ë³´ë¥¼ ë³´ì¡´í•˜ê¸° ìœ„í•¨)
     /// </summary>
     public void SetOriginalCardInfo(Transform originalParent, int siblingIndex, CardUI draggedCardUI)
     {
         _originalParent = originalParent;
         _originalSiblingIndex = siblingIndex;
-        _draggedCardRoot = draggedCardUI.RootGameObject; // ¡Ú Ä«µå ·çÆ® °´Ã¼ ÀúÀå
+        _draggedCardRoot = draggedCardUI.RootGameObject; // â˜… ì¹´ë“œ ë£¨íŠ¸ ê°ì²´ ì €ì¥
     }
 
     public void OpenPopup(CardUI cardUI, Action<CardData, bool> onChoice)
     {
         _onChoice = onChoice;
-        _originalCardUI = cardUI; // ¡Ú ¿øº» Ä«µå UI ÀúÀå
+        _originalCardUI = cardUI; // â˜… ì›ë³¸ ì¹´ë“œ UI ì €ì¥
+        _choiceConfirmed = false;
         
-        cardUI.RootGameObject.SetActive(false); // ¿øº» Ä«µå ¼û±è
+        cardUI.RootGameObject.SetActive(false); // ì›ë³¸ ì¹´ë“œ ìˆ¨ê¹€
 
-        // ¡Ú ±âÁ¸ º¹Á¦º» Á¤¸®
+        // â˜… ê¸°ì¡´ ë³µì œë³¸ ì •ë¦¬
         if (_displayedCardInstance != null)
             Destroy(_displayedCardInstance);
 
-        // ¡Ú ºÎ¸ğ ¾øÀÌ »ı¼ºÇÑ ÈÄ ¼öµ¿À¸·Î ¹èÄ¡
+        // â˜… ë¶€ëª¨ ì—†ì´ ìƒì„±í•œ í›„ ìˆ˜ë™ìœ¼ë¡œ ë°°ì¹˜
         _displayedCardInstance = Instantiate(cardUI.RootGameObject);
         _displayedCardInstance.name = "DisplayedCard_Copy";
         _displayedCardInstance.SetActive(true);
 
-        // ¡Ú RectTransform ÃÊ±âÈ­ ¹× Stretch ¼³Á¤
+        // â˜… RectTransform ì´ˆê¸°í™” ë° Stretch ì„¤ì •
         RectTransform displayRect = _displayedCardInstance.GetComponent<RectTransform>();
 
-        // ¡Ú ºÎ¸ğ·Î ¼³Á¤
+        // â˜… ë¶€ëª¨ë¡œ ì„¤ì •
         displayRect.SetParent(_cardDisplayContainer, false);
 
-        // localPosition ÃÊ±âÈ­
+        // localPosition ì´ˆê¸°í™”
         float scaleFactor = _cardDisplayContainer.GetComponent<RectTransform>().rect.height / displayRect.rect.height;
         displayRect.localPosition = Vector3.zero;
         displayRect.localScale = new Vector3(scaleFactor, scaleFactor, 1f);
-        _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // ÀÚ½Ä Ä«µåÀÇ ½ºÄÉÀÏµµ ÃÊ±âÈ­
+        _displayedCardInstance.transform.GetChild(0).localScale = Vector3.one; // ìì‹ ì¹´ë“œì˜ ìŠ¤ì¼€ì¼ë„ ì´ˆê¸°í™”
 
 
-        // ÆË¾÷¿¡¼­ Ä«µå »óÈ£ÀÛ¿ë ºÒ°¡´ÉÇÏµµ·Ï ¼³Á¤
+        // íŒì—…ì—ì„œ ì¹´ë“œ ìƒí˜¸ì‘ìš© ë¶ˆê°€ëŠ¥í•˜ë„ë¡ ì„¤ì •
         CardUI displayedCardUI = _displayedCardInstance.GetComponentInChildren<CardUI>();
         if (displayedCardUI != null)
         {
@@ -76,13 +78,28 @@ public class UIPopup_CardSelect : UIPopup
 
     private void OnAddToDeckClicked()
     {
-        _onChoice?.Invoke(_displayedCardInstance.GetComponent<CardUI>().CurrentCardData, false);
-        base.ClosePopup();
+        ConfirmChoice(false);
     }
 
     private void OnDrawClicked()
     {
-        _onChoice?.Invoke(_displayedCardInstance.GetComponent<CardUI>().CurrentCardData, true);
+        ConfirmChoice(true);
+    }
+
+    private void ConfirmChoice(bool isDraw)
+    {
+        CardUI displayedCardUI = _displayedCardInstance != null
+            ? _displayedCardInstance.GetComponentInChildren<CardUI>(true)
+            : null;
+
+        if (displayedCardUI == null || displayedCardUI.CurrentCardData == null)
+        {
+            Debug.LogError("[UIPopup_CardSelect] Displayed card data is missing.");
+            return;
+        }
+
+        _choiceConfirmed = true;
+        _onChoice?.Invoke(displayedCardUI.CurrentCardData, isDraw);
         base.ClosePopup();
     }
 
@@ -90,26 +107,33 @@ public class UIPopup_CardSelect : UIPopup
     {
         base.ClosePopup();
         
-        // ¡Ú ¿øº» Ä«µå¸¦ ¿ø·¡ À§Ä¡·Î º¹¿ø (Ãë¼ÒÇÑ °æ¿ì)
-        if (_originalCardUI != null && _originalCardUI.RootGameObject != null && _originalParent != null)
+        // â˜… ì›ë³¸ ì¹´ë“œë¥¼ ì›ë˜ ìœ„ì¹˜ë¡œ ë³µì› (ì·¨ì†Œí•œ ê²½ìš°)
+        if (!_choiceConfirmed && _originalCardUI != null && _originalCardUI.RootGameObject != null && _originalParent != null)
         {
-            // ¿øº» Ä«µå¸¦ ¿ø·¡ ºÎ¸ğ·Î µ¹·Áº¸³¿
+            // ì›ë³¸ ì¹´ë“œë¥¼ ì›ë˜ ë¶€ëª¨ë¡œ ëŒë ¤ë³´ëƒ„
             _originalCardUI.RootGameObject.transform.SetParent(_originalParent, false);
-            // ¿ø·¡ sibling index·Î º¹¿ø (n¹øÂ° À§Ä¡)
+            // ì›ë˜ sibling indexë¡œ ë³µì› (në²ˆì§¸ ìœ„ì¹˜)
             _originalCardUI.RootGameObject.transform.SetSiblingIndex(_originalSiblingIndex);
-            // ¿øº» Ä«µå ´Ù½Ã È°¼ºÈ­
+            // ì›ë³¸ ì¹´ë“œ ë‹¤ì‹œ í™œì„±í™”
             _originalCardUI.RootGameObject.SetActive(true);
 
-            // ¡Ú ÇÚµåÀÇ ´Ù¸¥ Ä«µåµéÀÇ ÆÄÆ¼Å¬ ½Ã°£À» µ¿±âÈ­
+            // â˜… í•¸ë“œì˜ ë‹¤ë¥¸ ì¹´ë“œë“¤ì˜ íŒŒí‹°í´ ì‹œê°„ì„ ë™ê¸°í™”
             float handParticleTime = InGameUIManager.Instance.GetHandPlayableEffectTime();
             _originalCardUI.SetPlayableEffectTime(handParticleTime);
 
-            // ¡Ú InGameUIManagerÀÇ _activeHandCardRoots¿¡ ´Ù½Ã Ãß°¡
+            // â˜… InGameUIManagerì˜ _activeHandCardRootsì— ë‹¤ì‹œ ì¶”ê°€
             InGameUIManager.Instance.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
         }
 
-        // ÆË¾÷ ´İÀ» ¶§ º¹Á¦º» Á¤¸®
+        // íŒì—… ë‹«ì„ ë•Œ ë³µì œë³¸ ì •ë¦¬
         if (_displayedCardInstance != null)
             Destroy(_displayedCardInstance);
+
+        _displayedCardInstance = null;
+        _originalCardUI = null;
+        _originalParent = null;
+        _draggedCardRoot = null;
+        _onChoice = null;
+        _choiceConfirmed = false;
     }
 }

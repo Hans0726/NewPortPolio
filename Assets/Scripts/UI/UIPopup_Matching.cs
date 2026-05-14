@@ -16,13 +16,15 @@ public class UIPopup_Matching : UIPopup
     protected override void Start()
     {
         base.Start();
-        _timerCoroutine = StartCoroutine(UpdateTimer());
     }
 
     public override void OpenPopup()
     {
         base.OpenPopup();
         MatchingEvent.OnMatchingStatusChanged += UpdateStatusText;
+        _currentTime = TimeSpan.Zero;
+        _isMatching = true;
+        _timerCoroutine = StartCoroutine(UpdateTimer());
 
         C_PlayerMatchingReq matchingReq = new C_PlayerMatchingReq();
         NetworkMananger.Instance.Send(matchingReq.Serialize());
@@ -31,12 +33,21 @@ public class UIPopup_Matching : UIPopup
     protected override void ClosePopup()
     {
         base.ClosePopup();
-        StopCoroutine(_timerCoroutine);
+        bool shouldCancelMatching = _isMatching;
+        _isMatching = false;
+
+        if (_timerCoroutine != null)
+        {
+            StopCoroutine(_timerCoroutine);
+        }
         _timerCoroutine = null;
         MatchingEvent.OnMatchingStatusChanged -= UpdateStatusText;
 
-        C_PlayerMatchingReqCancel matchingReqCancel = new C_PlayerMatchingReqCancel();
-        NetworkMananger.Instance.Send(matchingReqCancel.Serialize());
+        if (shouldCancelMatching)
+        {
+            C_PlayerMatchingReqCancel matchingReqCancel = new C_PlayerMatchingReqCancel();
+            NetworkMananger.Instance.Send(matchingReqCancel.Serialize());
+        }
     }
 
     private IEnumerator UpdateTimer()
@@ -45,7 +56,7 @@ public class UIPopup_Matching : UIPopup
         {
             yield return new WaitForSeconds(1f);
             _currentTime = _currentTime.Add(TimeSpan.FromSeconds(1));
-            _txtMatching.text = string.Format("¸ÅÄª Áß...\n{0:D2}:{1:D2}", _currentTime.Minutes, _currentTime.Seconds);
+            _txtMatching.text = string.Format("ë§¤ì¹­ ì¤‘...\n{0:D2}:{1:D2}", _currentTime.Minutes, _currentTime.Seconds);
         }
 
         yield return new WaitForSeconds(1f);
@@ -67,9 +78,13 @@ public class UIPopup_Matching : UIPopup
     {
         _txtMatching.text = txt;
 
-        if (txt.Contains("¼º°ø"))
+        if (txt.Contains("ì„±ê³µ"))
         {
-            StopCoroutine(_timerCoroutine);
+            if (_timerCoroutine != null)
+            {
+                StopCoroutine(_timerCoroutine);
+                _timerCoroutine = null;
+            }
             _isMatching = false;
         }
             

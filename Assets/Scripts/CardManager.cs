@@ -2,14 +2,14 @@ using System.Collections.Generic;
 
 public class CardManager
 {
-    private List<CardData> _deck = new List<CardData>(); // ½ÇÁ¦ °ÔÀÓ¿¡ »ç¿ëÇÒ µ¦
-    private List<CardData> _hand = new List<CardData>(); // ÇöÀç ¼Õ¿¡ µé°í ÀÖ´Â Ä«µå
-    public List<CardData> Hand { get { return _hand; } } // ´Ù¸¥ ½ºÅ©¸³Æ®(UI µî)¿¡¼­ ÇÚµå Á¤º¸¸¦ ÀĞ±â À§ÇÑ ÇÁ·ÎÆÛÆ¼
+    private List<CardData> _deck = new List<CardData>(); // ì‹¤ì œ ê²Œì„ì— ì‚¬ìš©í•  ë±
+    private List<CardData> _hand = new List<CardData>(); // í˜„ì¬ ì†ì— ë“¤ê³  ìˆëŠ” ì¹´ë“œ
+    public List<CardData> Hand { get { return _hand; } } // ë‹¤ë¥¸ ìŠ¤í¬ë¦½íŠ¸(UI ë“±)ì—ì„œ í•¸ë“œ ì •ë³´ë¥¼ ì½ê¸° ìœ„í•œ í”„ë¡œí¼í‹°
     private List<CardData> _discardPile = new List<CardData>();
 
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ ½Ã ¼­¹ö·ÎºÎÅÍ ¹ŞÀº µ¦ Ä«µå ID ¸®½ºÆ®¸¦ ±â¹İÀ¸·Î _deck ¸®½ºÆ®¸¦ Ã¤¿ì´Â ÇÔ¼ö
+    /// ê²Œì„ ì‹œì‘ ì‹œ ì„œë²„ë¡œë¶€í„° ë°›ì€ ë± ì¹´ë“œ ID ë¦¬ìŠ¤íŠ¸ë¥¼ ê¸°ë°˜ìœ¼ë¡œ _deck ë¦¬ìŠ¤íŠ¸ë¥¼ ì±„ìš°ëŠ” í•¨ìˆ˜
     /// </summary>
     /// <param name="deckCardIds"></param>
     public void InitializeDeck(List<short> deckCardIds)
@@ -18,7 +18,7 @@ public class CardManager
     }
 
     /// <summary>
-    /// _deck ¸®½ºÆ®¸¦ ·£´ıÇÏ°Ô ¼¯½À´Ï´Ù.System.RandomÀÌ³ª UnityEngine.RandomÀ» »ç¿ëÇÏ¿© ±¸Çö(Fisher-Yates ¾Ë°í¸®Áò µî)
+    /// _deck ë¦¬ìŠ¤íŠ¸ë¥¼ ëœë¤í•˜ê²Œ ì„ìŠµë‹ˆë‹¤.System.Randomì´ë‚˜ UnityEngine.Randomì„ ì‚¬ìš©í•˜ì—¬ êµ¬í˜„(Fisher-Yates ì•Œê³ ë¦¬ì¦˜ ë“±)
     /// </summary>
     public void ShuffleDeck()
     {
@@ -26,7 +26,7 @@ public class CardManager
     }
 
     /// <summary>
-    /// _deck¿¡¼­ ÁöÁ¤µÈ ¼ö¸¸Å­ Ä«µå¸¦ »Ì¾Æ _hand ¸®½ºÆ®¿¡ Ãß°¡ÇÏ°í, _deck¿¡¼­´Â Á¦°ÅÇÕ´Ï´Ù.µ¦ÀÌ ºñ¸é _discardPileÀ» ¼¯¾î _deckÀ¸·Î °¡Á®¿À´Â ·ÎÁ÷µµ Ãß°¡ÇÒ ¼ö ÀÖ½À´Ï´Ù.
+    /// _deckì—ì„œ ì§€ì •ëœ ìˆ˜ë§Œí¼ ì¹´ë“œë¥¼ ë½‘ì•„ _hand ë¦¬ìŠ¤íŠ¸ì— ì¶”ê°€í•˜ê³ , _deckì—ì„œëŠ” ì œê±°í•©ë‹ˆë‹¤.ë±ì´ ë¹„ë©´ _discardPileì„ ì„ì–´ _deckìœ¼ë¡œ ê°€ì ¸ì˜¤ëŠ” ë¡œì§ë„ ì¶”ê°€í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.
     /// </summary>
     public void DrawCards(int count)
     {
@@ -34,7 +34,7 @@ public class CardManager
     }
 
     /// <summary>
-    ///  ÇÚµå¿¡¼­ Ä«µå¸¦ »ç¿ëÇÏ´Â ·ÎÁ÷(ÇÚµå¿¡¼­ Á¦°Å, ÇÊ¿ä½Ã _discardPile¿¡ Ãß°¡ µî)
+    ///  í•¸ë“œì—ì„œ ì¹´ë“œë¥¼ ì‚¬ìš©í•˜ëŠ” ë¡œì§(í•¸ë“œì—ì„œ ì œê±°, í•„ìš”ì‹œ _discardPileì— ì¶”ê°€ ë“±)
     /// </summary>
     public void PlayCard(CardData card)
     {

@@ -28,29 +28,29 @@ public class DefenseCard : Card
 }
 
 
-// ÀÌ ¼Ó¼ºÀ» Ãß°¡ÇØ¾ß À¯´ÏÆ¼ ¿¡µğÅÍ¿¡¼­ ¿¡¼Â ÆÄÀÏ »ı¼ºÀÌ °¡´ÉÇØÁı´Ï´Ù!
+// ì´ ì†ì„±ì„ ì¶”ê°€í•´ì•¼ ìœ ë‹ˆí‹° ì—ë””í„°ì—ì„œ ì—ì…‹ íŒŒì¼ ìƒì„±ì´ ê°€ëŠ¥í•´ì§‘ë‹ˆë‹¤!
 [CreateAssetMenu(fileName = "New CardData", menuName = "Card Data", order = 1)]
 public class CardData : ScriptableObject
 {
-    [Header("±âº» Á¤º¸")]
-    public short cardId;                // Ä«µå °íÀ¯ ID (¼­¹ö¿Í ¿¬µ¿ ½Ã Áß¿ä)
-    public string cardName = "Ä«µå ÀÌ¸§";
-    public float moveSpeed = 1.0f;      // ÀÌµ¿ ¼Óµµ (°ø°İ/¹æ¾î °øÅë °¡´É)
+    [Header("ê¸°ë³¸ ì •ë³´")]
+    public short cardId;                // ì¹´ë“œ ê³ ìœ  ID (ì„œë²„ì™€ ì—°ë™ ì‹œ ì¤‘ìš”)
+    public string cardName = "ì¹´ë“œ ì´ë¦„";
+    public float moveSpeed = 1.0f;      // ì´ë™ ì†ë„ (ê³µê²©/ë°©ì–´ ê³µí†µ ê°€ëŠ¥)
     public int cost = 1;
 
-    public Sprite cardImage;            // Ä«µå ÀÌ¹ÌÁö
+    public Sprite cardImage;            // ì¹´ë“œ ì´ë¯¸ì§€
     public CardType cardType;
 
-    [Header("°ø°İ Ä«µå ½ºÅÈ")]
-    public int health = 10;             // ±âº» Ã¼·Â (°ø°İ Ä«µå¿ë)
-    public int defense = 0;             // ±âº» ¹æ¾î·Â (°ø°İ Ä«µå¿ë)
+    [Header("ê³µê²© ì¹´ë“œ ìŠ¤íƒ¯")]
+    public int health = 10;             // ê¸°ë³¸ ì²´ë ¥ (ê³µê²© ì¹´ë“œìš©)
+    public int defense = 0;             // ê¸°ë³¸ ë°©ì–´ë ¥ (ê³µê²© ì¹´ë“œìš©)
 
-    [Header("¹æ¾î Ä«µå ½ºÅÈ")]
-    public int attack = 5;              // ±âº» °ø°İ·Â (¹æ¾î Ä«µå¿ë)
-    public float attackSpeed = 1.0f;    // ±âº» °ø°İ ¼Óµµ (¹æ¾î Ä«µå¿ë)
+    [Header("ë°©ì–´ ì¹´ë“œ ìŠ¤íƒ¯")]
+    public int attack = 5;              // ê¸°ë³¸ ê³µê²©ë ¥ (ë°©ì–´ ì¹´ë“œìš©)
+    public float attackSpeed = 1.0f;    // ê¸°ë³¸ ê³µê²© ì†ë„ (ë°©ì–´ ì¹´ë“œìš©)
 
-    [Header("Æ¯¼ö È¿°ú")]
-    public string specialEffect = ""; // Æ¯¼ö È¿°ú (¹®ÀÚ¿­ ¶Ç´Â enum µî)
+    [Header("íŠ¹ìˆ˜ íš¨ê³¼")]
+    public string specialEffect = ""; // íŠ¹ìˆ˜ íš¨ê³¼ (ë¬¸ìì—´ ë˜ëŠ” enum ë“±)
 
     private void OnEnable()
     {

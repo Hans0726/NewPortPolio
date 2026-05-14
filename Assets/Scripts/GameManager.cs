@@ -8,7 +8,7 @@ using DG.Tweening;
 
 public static class GameConfig
 {
-    // ¿¡µğÅÍ¿¡¼­¸¸ º¯°æ °¡´ÉÇÑ ·±Å¸ÀÓ ÇÃ·¡±×
+    // ì—ë””í„°ì—ì„œë§Œ ë³€ê²½ ê°€ëŠ¥í•œ ëŸ°íƒ€ì„ í”Œë˜ê·¸
     public static bool ENABLE_TEST_MODE = true;
 }
 
@@ -16,16 +16,16 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    // ·Îºñ¿¡¼­ ÀÎ°ÔÀÓÀ¸·Î Àü´ŞÇÒ µ¦ Á¤º¸
+    // ë¡œë¹„ì—ì„œ ì¸ê²Œì„ìœ¼ë¡œ ì „ë‹¬í•  ë± ì •ë³´
     private List<short> _playerDeckToCarryOver;
     public List<short> PlayerDeckToCarryOver => _playerDeckToCarryOver;
 
 
     [Header("In-Game Start Animation UI")]
-    public GameObject startSequencePanel;           // ¹İÅõ¸í °ËÀº»ö ÆĞ³Î (ÀÎ½ºÆåÅÍ¿¡¼­ ÇÒ´ç)
-    public TextMeshProUGUI startSequenceText;       // "Á¦ÇÑ ½Ã°£ ³»¿¡..." ÅØ½ºÆ® (ÀÎ½ºÆåÅÍ¿¡¼­ ÇÒ´ç)
-                                                    // Canvas GroupÀ» »ç¿ëÇÏ¸é ÆĞ³Î°ú ÅØ½ºÆ® ¾ËÆÄ¸¦ ÇÑ ¹ø¿¡ Á¦¾îÇÏ±â ÁÁÀ½
-    public CanvasGroup startSequenceCanvasGroup;    // ÆĞ³ÎÀÇ Canvas Group (¾ËÆÄ Á¦¾î¿ë)
+    public GameObject startSequencePanel;           // ë°˜íˆ¬ëª… ê²€ì€ìƒ‰ íŒ¨ë„ (ì¸ìŠ¤í™í„°ì—ì„œ í• ë‹¹)
+    public TextMeshProUGUI startSequenceText;       // "ì œí•œ ì‹œê°„ ë‚´ì—..." í…ìŠ¤íŠ¸ (ì¸ìŠ¤í™í„°ì—ì„œ í• ë‹¹)
+                                                    // Canvas Groupì„ ì‚¬ìš©í•˜ë©´ íŒ¨ë„ê³¼ í…ìŠ¤íŠ¸ ì•ŒíŒŒë¥¼ í•œ ë²ˆì— ì œì–´í•˜ê¸° ì¢‹ìŒ
+    public CanvasGroup startSequenceCanvasGroup;    // íŒ¨ë„ì˜ Canvas Group (ì•ŒíŒŒ ì œì–´ìš©)
     public float startSequenceFadeDuration = 1.0f;
     public float startSequenceDisplayDuration = 2.0f;
 
@@ -40,16 +40,16 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    // ·Îºñ¿¡¼­ µ¦ ÆíÁı ¿Ï·á ÈÄ È£Ãâ
+    // ë¡œë¹„ì—ì„œ ë± í¸ì§‘ ì™„ë£Œ í›„ í˜¸ì¶œ
     public void SetDeckForNextGame(List<short> deckCardIds)
     {
-        _playerDeckToCarryOver = new List<short>(deckCardIds); // ¹æ¾îÀû º¹»ç
+        _playerDeckToCarryOver = new List<short>(deckCardIds); // ë°©ì–´ì  ë³µì‚¬
         Debug.Log($"GameManager: Deck set for next game with {_playerDeckToCarryOver.Count} cards.");
     }
 
     public void MatchingSuccess()
     {
-        // ·Îºñ¿¡¼­ ÃÖÁ¾ µ¦ Á¤º¸¸¦ °¡Á®¿Í¼­ ¼³Á¤ (¿¹½Ã: LobbyCardManager¿¡¼­ È£Ãâ)
+        // ë¡œë¹„ì—ì„œ ìµœì¢… ë± ì •ë³´ë¥¼ ê°€ì ¸ì™€ì„œ ì„¤ì • (ì˜ˆì‹œ: LobbyCardManagerì—ì„œ í˜¸ì¶œ)
         if (LobbyCardManager.Instance != null)
         {
             SetDeckForNextGame(LobbyCardManager.Instance.CurrentDeckCardIds);
@@ -59,21 +59,21 @@ public class GameManager : MonoBehaviour
             Debug.LogError("LobbyCardManager instance not found when trying to set deck for game!");
         }
 
-        UIPopup_Matching.MatchingEvent.TriggerMatchingStatusChanged("¸ÅÄª ¼º°ø");
-        StartCoroutine(LoadInGameSceneAndInitialize()); // ÇÔ¼ö ÀÌ¸§ º¯°æ
+        UIPopup_Matching.MatchingEvent.TriggerMatchingStatusChanged("ë§¤ì¹­ ì„±ê³µ");
+        StartCoroutine(LoadInGameSceneAndInitialize()); // í•¨ìˆ˜ ì´ë¦„ ë³€ê²½
     }
 
     public void MatchingReqOk()
     {
-        UIPopup_Matching.MatchingEvent.TriggerMatchingStatusChanged("¸ÅÄª ½ÃÀÛ");
+        UIPopup_Matching.MatchingEvent.TriggerMatchingStatusChanged("ë§¤ì¹­ ì‹œì‘");
     }
 
     private IEnumerator LoadInGameSceneAndInitialize()
     {
         Debug.Log("Matching success. Moving to InGame scene in 3 seconds...");
-        yield return new WaitForSeconds(3f); // ¸ÅÄª ¼º°ø UI Ç¥½Ã ½Ã°£ µî
+        yield return new WaitForSeconds(3f); // ë§¤ì¹­ ì„±ê³µ UI í‘œì‹œ ì‹œê°„ ë“±
 
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("B_InGame"); // ¾À ÀÌ¸§ È®ÀÎ
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("B_InGame"); // ì”¬ ì´ë¦„ í™•ì¸
         while (!asyncLoad.isDone)
         {
             yield return null;
@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("InGame scene loaded.");
 
 
-        // 1. µ¥ÀÌÅÍ ¸Å´ÏÀú(CardManager) ¸ÕÀú ÃÊ±âÈ­
+        // 1. ë°ì´í„° ë§¤ë‹ˆì €(CardManager) ë¨¼ì € ì´ˆê¸°í™”
         if (InGameCardManager.Instance != null)
         {
             InGameCardManager.Instance.Initialize(_playerDeckToCarryOver);
@@ -89,7 +89,7 @@ public class GameManager : MonoBehaviour
         else Debug.LogError("InGameCardManager instance not found!");
 
 
-        // 2. UI ¸Å´ÏÀú ÃÊ±âÈ­ (ÀÌº¥Æ® ±¸µ¶)
+        // 2. UI ë§¤ë‹ˆì € ì´ˆê¸°í™” (ì´ë²¤íŠ¸ êµ¬ë…)
         if (InGameUIManager.Instance != null)
         {
             InGameUIManager.Instance.Initialize();
@@ -97,11 +97,11 @@ public class GameManager : MonoBehaviour
         else Debug.LogError("InGameUIManager instance not found!");
 
 
-        // 3. ¿ÀÇÁ´× ½ÃÄö½º ½ÃÀÛ
-        // ¿ÀÇÁ´× ½ÃÄö½º°¡ ³¡³ª¸é ±× OnComplete Äİ¹é¿¡¼­ InGameCardManager.Instance.DrawInitialHand()¸¦ È£Ãâ
+        // 3. ì˜¤í”„ë‹ ì‹œí€€ìŠ¤ ì‹œì‘
+        // ì˜¤í”„ë‹ ì‹œí€€ìŠ¤ê°€ ëë‚˜ë©´ ê·¸ OnComplete ì½œë°±ì—ì„œ InGameCardManager.Instance.DrawInitialHand()ë¥¼ í˜¸ì¶œ
         if (InGameUIManager.Instance != null)
         {
-            InGameUIManager.Instance.ShowOpeningSequence(); // ShowOpeningSequence ³»ºÎ¿¡¼­ DrawInitialHand¸¦ Æ®¸®°ÅÇÏµµ·Ï ¼öÁ¤
+            InGameUIManager.Instance.ShowOpeningSequence(); // ShowOpeningSequence ë‚´ë¶€ì—ì„œ DrawInitialHandë¥¼ íŠ¸ë¦¬ê±°í•˜ë„ë¡ ìˆ˜ì •
         }
     }
 }

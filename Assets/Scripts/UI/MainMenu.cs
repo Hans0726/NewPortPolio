@@ -10,13 +10,13 @@ using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
-    [Header("½ÃÀÛ ¸Ş´º")]
+    [Header("ì‹œì‘ ë©”ë‰´")]
     [SerializeField] private Button btnGameStart;
     [SerializeField] private Button btnDeck;
     [SerializeField] private Button btnOption;
     [SerializeField] private Button btnQuit;
 
-    [Space(5), Header("¿É¼Ç")]
+    [Space(5), Header("ì˜µì…˜")]
     [SerializeField] private UIPopup_Matching gameStart;
     [SerializeField] private UIPopup option;
     [SerializeField] private UIPopup_Deck deck;
@@ -57,12 +57,12 @@ public class MainMenu : MonoBehaviour
         toggleSfxMute.onValueChanged.AddListener((bool isOn) => { SetMute(isOn, "SFX"); });
     }
 
-    #region È­¸é¸ğµå, ÇØ»óµµ
+    #region í™”ë©´ëª¨ë“œ, í•´ìƒë„
     private void SetupDropdowns()
     {
         dropdownDisplayMode.onValueChanged.AddListener(SetDisplayMode);
 
-        // resolutions´Â ¿©±â¼­ ÇÑ ¹ø¸¸ °¡Á®¿Í¼­ »ç¿ë (¸â¹ö º¯¼ö¿¡ ÀúÀåÇØµÎ°í ÀçÈ°¿ë)
+        // resolutionsëŠ” ì—¬ê¸°ì„œ í•œ ë²ˆë§Œ ê°€ì ¸ì™€ì„œ ì‚¬ìš© (ë©¤ë²„ ë³€ìˆ˜ì— ì €ì¥í•´ë‘ê³  ì¬í™œìš©)
         resolutions = Screen.resolutions;
         if (resolutions == null || resolutions.Length == 0)
         {
@@ -70,37 +70,37 @@ public class MainMenu : MonoBehaviour
             return;
         }
 
-        dropdownResolution.options.Clear(); // ±âÁ¸ ¿É¼Ç ¸ğµÎ Á¦°Å
+        dropdownResolution.options.Clear(); // ê¸°ì¡´ ì˜µì…˜ ëª¨ë‘ ì œê±°
 
         List<string> uniqueResolutionStrings = new List<string>();
-        List<Resolution> uniqueResolutionsForSelection = new List<Resolution>(); // ½ÇÁ¦ ¼±ÅÃ¿¡ »ç¿ëÇÒ Resolution °´Ã¼ ¸®½ºÆ®
+        List<Resolution> uniqueResolutionsForSelection = new List<Resolution>(); // ì‹¤ì œ ì„ íƒì— ì‚¬ìš©í•  Resolution ê°ì²´ ë¦¬ìŠ¤íŠ¸
 
-        // ÇØ»óµµ¸¦ ¿ª¼øÀ¸·Î ¼øÈ¸ÇÏ¸é¼­ °íÀ¯ÇÑ "³Êºñ x ³ôÀÌ" ¹®ÀÚ¿­¸¸ Ãß°¡
-        // Screen.resolutions´Â º¸Åë ³·Àº ÇØ»óµµºÎÅÍ ³ôÀº ÇØ»óµµ ¼øÀ¸·Î Á¤·ÄµÇ¾î ÀÖÀ½
-        // µÚ¿¡¼­ºÎÅÍ ¼øÈ¸ÇÏ¸é °°Àº ÇØ»óµµ Áß °¡Àå ³ôÀº ÁÖ»çÀ²À» °¡Áø °ÍÀ» ¸ÕÀú ¸¸³ª°Ô µÉ °¡´É¼ºÀÌ ³ôÀ½ (Ç×»ó º¸ÀåµÇÁø ¾ÊÀ½)
+        // í•´ìƒë„ë¥¼ ì—­ìˆœìœ¼ë¡œ ìˆœíšŒí•˜ë©´ì„œ ê³ ìœ í•œ "ë„ˆë¹„ x ë†’ì´" ë¬¸ìì—´ë§Œ ì¶”ê°€
+        // Screen.resolutionsëŠ” ë³´í†µ ë‚®ì€ í•´ìƒë„ë¶€í„° ë†’ì€ í•´ìƒë„ ìˆœìœ¼ë¡œ ì •ë ¬ë˜ì–´ ìˆìŒ
+        // ë’¤ì—ì„œë¶€í„° ìˆœíšŒí•˜ë©´ ê°™ì€ í•´ìƒë„ ì¤‘ ê°€ì¥ ë†’ì€ ì£¼ì‚¬ìœ¨ì„ ê°€ì§„ ê²ƒì„ ë¨¼ì € ë§Œë‚˜ê²Œ ë  ê°€ëŠ¥ì„±ì´ ë†’ìŒ (í•­ìƒ ë³´ì¥ë˜ì§„ ì•ŠìŒ)
         for (int i = resolutions.Length - 1; i >= 0; i--)
         {
             Resolution currentRes = resolutions[i];
             string option = currentRes.width + " x " + currentRes.height;
 
-            // ÀÌ¹Ì Ãß°¡µÈ "³Êºñ x ³ôÀÌ" ¹®ÀÚ¿­ÀÎÁö È®ÀÎ
+            // ì´ë¯¸ ì¶”ê°€ëœ "ë„ˆë¹„ x ë†’ì´" ë¬¸ìì—´ì¸ì§€ í™•ì¸
             if (!uniqueResolutionStrings.Contains(option))
             {
                 uniqueResolutionStrings.Add(option);
-                uniqueResolutionsForSelection.Add(currentRes); // ÇØ´ç Resolution °´Ã¼µµ ÀúÀå
+                uniqueResolutionsForSelection.Add(currentRes); // í•´ë‹¹ Resolution ê°ì²´ë„ ì €ì¥
             }
         }
 
-        // À¯´ÏÆ¼ ¿¡µğÅÍ¿¡¼­´Â resolutions ¼ø¼­°¡ ºôµå¿Í ´Ù¸¦ ¼ö ÀÖÀ¸¹Ç·Î,
-        // ¹®ÀÚ¿­ ¸®½ºÆ®¸¦ ´Ù½Ã Á¤·ÄÇÏ°Å³ª, uniqueResolutionsForSelection¸¦ ³Êºñ/³ôÀÌ ±âÁØÀ¸·Î Á¤·ÄÇÒ ¼ö ÀÖÀ½.
-        // ¿©±â¼­´Â ÀÏ´Ü Ãß°¡µÈ ¼ø¼­´ë·Î »ç¿ë (º¸Åë ³ôÀº ÇØ»óµµ°¡ ¸ÕÀú Ãß°¡µÊ)
-        // ÇÊ¿äÇÏ´Ù¸é uniqueResolutionStrings.Sort() ¶Ç´Â Reverse() µîÀ» »ç¿ë
+        // ìœ ë‹ˆí‹° ì—ë””í„°ì—ì„œëŠ” resolutions ìˆœì„œê°€ ë¹Œë“œì™€ ë‹¤ë¥¼ ìˆ˜ ìˆìœ¼ë¯€ë¡œ,
+        // ë¬¸ìì—´ ë¦¬ìŠ¤íŠ¸ë¥¼ ë‹¤ì‹œ ì •ë ¬í•˜ê±°ë‚˜, uniqueResolutionsForSelectionë¥¼ ë„ˆë¹„/ë†’ì´ ê¸°ì¤€ìœ¼ë¡œ ì •ë ¬í•  ìˆ˜ ìˆìŒ.
+        // ì—¬ê¸°ì„œëŠ” ì¼ë‹¨ ì¶”ê°€ëœ ìˆœì„œëŒ€ë¡œ ì‚¬ìš© (ë³´í†µ ë†’ì€ í•´ìƒë„ê°€ ë¨¼ì € ì¶”ê°€ë¨)
+        // í•„ìš”í•˜ë‹¤ë©´ uniqueResolutionStrings.Sort() ë˜ëŠ” Reverse() ë“±ì„ ì‚¬ìš©
 
-        dropdownResolution.AddOptions(uniqueResolutionStrings); // µå·Ó´Ù¿î¿¡ °íÀ¯ÇÑ ÇØ»óµµ ¹®ÀÚ¿­ Ãß°¡
-        dropdownResolution.onValueChanged.RemoveAllListeners(); // ±âÁ¸ ¸®½º³Ê Á¦°Å (Áßº¹ ¹æÁö)
-        dropdownResolution.onValueChanged.AddListener(index => SetResolutionByIndex(index, uniqueResolutionsForSelection)); // ¼öÁ¤µÈ ¸®½º³Ê ¿¬°á
+        dropdownResolution.AddOptions(uniqueResolutionStrings); // ë“œë¡­ë‹¤ìš´ì— ê³ ìœ í•œ í•´ìƒë„ ë¬¸ìì—´ ì¶”ê°€
+        dropdownResolution.onValueChanged.RemoveAllListeners(); // ê¸°ì¡´ ë¦¬ìŠ¤ë„ˆ ì œê±° (ì¤‘ë³µ ë°©ì§€)
+        dropdownResolution.onValueChanged.AddListener(index => SetResolutionByIndex(index, uniqueResolutionsForSelection)); // ìˆ˜ì •ëœ ë¦¬ìŠ¤ë„ˆ ì—°ê²°
 
-        // ÇöÀç ÇØ»óµµ¿¡ ¸Â´Â µå·Ó´Ù¿î °ª ¼³Á¤ (¼±ÅÃ »çÇ×)
+        // í˜„ì¬ í•´ìƒë„ì— ë§ëŠ” ë“œë¡­ë‹¤ìš´ ê°’ ì„¤ì • (ì„ íƒ ì‚¬í•­)
         int currentResolutionIndex = -1;
         string currentScreenOption = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
         for (int i = 0; i < uniqueResolutionStrings.Count; ++i)
@@ -114,11 +114,11 @@ public class MainMenu : MonoBehaviour
         if (currentResolutionIndex != -1)
         {
             dropdownResolution.value = currentResolutionIndex;
-            dropdownResolution.RefreshShownValue(); // ÇöÀç ¼±ÅÃµÈ °ªÀ¸·Î UI ¾÷µ¥ÀÌÆ®
+            dropdownResolution.RefreshShownValue(); // í˜„ì¬ ì„ íƒëœ ê°’ìœ¼ë¡œ UI ì—…ë°ì´íŠ¸
         }
     }
 
-    // SetResolution ÇÔ¼ö¸¦ ÀÎµ¦½º¿Í ÇÔ²² °íÀ¯ ÇØ»óµµ ¸®½ºÆ®¸¦ ¹Şµµ·Ï ¼öÁ¤
+    // SetResolution í•¨ìˆ˜ë¥¼ ì¸ë±ìŠ¤ì™€ í•¨ê»˜ ê³ ìœ  í•´ìƒë„ ë¦¬ìŠ¤íŠ¸ë¥¼ ë°›ë„ë¡ ìˆ˜ì •
     public void SetResolutionByIndex(int uniqueResolutionListIndex, List<Resolution> uniqueResolutions)
     {
         if (uniqueResolutionListIndex < 0 || uniqueResolutionListIndex >= uniqueResolutions.Count)
@@ -129,9 +129,9 @@ public class MainMenu : MonoBehaviour
 
         Resolution selectedRes = uniqueResolutions[uniqueResolutionListIndex];
 
-        // ÇöÀç ÇØ»óµµ¿Í ´Ù¸¦ °æ¿ì¿¡¸¸ º¯°æ (ºÒÇÊ¿äÇÑ º¯°æ ¹æÁö)
-        // ÁÖ»çÀ²Àº selectedRes¿¡ Æ÷ÇÔµÈ °ªÀ» »ç¿ëÇÏ°Å³ª, Screen.currentResolution.refreshRate¸¦ À¯ÁöÇÒ ¼ö ÀÖÀ½
-        // ¿©±â¼­´Â selectedRes¿¡ Æ÷ÇÔµÈ ÁÖ»çÀ² »ç¿ë
+        // í˜„ì¬ í•´ìƒë„ì™€ ë‹¤ë¥¼ ê²½ìš°ì—ë§Œ ë³€ê²½ (ë¶ˆí•„ìš”í•œ ë³€ê²½ ë°©ì§€)
+        // ì£¼ì‚¬ìœ¨ì€ selectedResì— í¬í•¨ëœ ê°’ì„ ì‚¬ìš©í•˜ê±°ë‚˜, Screen.currentResolution.refreshRateë¥¼ ìœ ì§€í•  ìˆ˜ ìˆìŒ
+        // ì—¬ê¸°ì„œëŠ” selectedResì— í¬í•¨ëœ ì£¼ì‚¬ìœ¨ ì‚¬ìš©
         if (Screen.width != selectedRes.width || Screen.height != selectedRes.height || Screen.currentResolution.refreshRateRatio.value != selectedRes.refreshRateRatio.value)
         {
             Debug.Log($"Setting resolution to: {selectedRes.width}x{selectedRes.height} @ {selectedRes.refreshRateRatio}Hz");
@@ -145,13 +145,13 @@ public class MainMenu : MonoBehaviour
     {
         switch (displayModeIndex)
         {
-            case 0: // ÀüÃ¼ È­¸é
+            case 0: // ì „ì²´ í™”ë©´
                 Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
                 break;
-            case 1: // Ã¢ ¸ğµå
+            case 1: // ì°½ ëª¨ë“œ
                 Screen.fullScreenMode = FullScreenMode.Windowed;
                 break;
-            case 2: // Å×µÎ¸® ¾ø´Â Ã¢ ¸ğµå
+            case 2: // í…Œë‘ë¦¬ ì—†ëŠ” ì°½ ëª¨ë“œ
                 Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
                 break;
         }
@@ -159,21 +159,32 @@ public class MainMenu : MonoBehaviour
 
     #endregion
 
-    #region À½·®
+    #region ìŒëŸ‰
     public void SetVolume(float volume, string type)
     {
-        audioMixer.SetFloat(type, Mathf.Log10(volume) * 20);
+        audioMixer.SetFloat(type, SliderValueToDecibel(volume));
     }
 
     public void SetMute(bool mute, string type)
     {
-        float volume = mute ? -80f : sliderMasterVolume.value;
-        audioMixer.SetFloat(type, Mathf.Log10(volume) * 20);
+        float volume = type switch
+        {
+            "BGM" => sliderBgmVolume.value,
+            "SFX" => sliderSfxVolume.value,
+            _ => sliderMasterVolume.value
+        };
+
+        audioMixer.SetFloat(type, mute ? -80f : SliderValueToDecibel(volume));
+    }
+
+    private float SliderValueToDecibel(float volume)
+    {
+        return Mathf.Log10(Mathf.Max(volume, 0.0001f)) * 20f;
     }
 
     private void LoadVolumeSettings()
     {
-        // ÀúÀåµÈ ¼³Á¤ °ª ·Îµå
+        // ì €ì¥ëœ ì„¤ì • ê°’ ë¡œë“œ
         float masterVolume, bgmVolume, sfxVolume;
         audioMixer.GetFloat("Master", out masterVolume);
         audioMixer.GetFloat("BGM", out bgmVolume);

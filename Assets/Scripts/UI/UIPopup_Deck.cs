@@ -14,7 +14,7 @@ public class UIPopup_Deck : UIPopup
     [SerializeField] private Transform _deckCardContainer;
 
     [Header("[Card Prefab]")]
-    [SerializeField] private GameObject _cardUIRootPrefab; // CardUIÀÇ ·çÆ® ÇÁ¸®ÆÕ
+    [SerializeField] private GameObject _cardUIRootPrefab; // CardUIì˜ ë£¨íŠ¸ í”„ë¦¬íŒ¹
 
     [Header("[Filter Buttons]")]
     [SerializeField] private Button _btnShowAll;
@@ -33,16 +33,16 @@ public class UIPopup_Deck : UIPopup
 
     private List<GameObject> _cardUIRootPool = new List<GameObject>();
 
-    // È°¼ºÈ­µÈ CardUIÀÇ ·çÆ® ¿ÀºêÁ§Æ®¸¦ CardData¿Í ¸ÅÇÎ (ºü¸¥ ÂüÁ¶ ¹× »óÅÂ °ü¸®¿ë)
+    // í™œì„±í™”ëœ CardUIì˜ ë£¨íŠ¸ ì˜¤ë¸Œì íŠ¸ë¥¼ CardDataì™€ ë§¤í•‘ (ë¹ ë¥¸ ì°¸ì¡° ë° ìƒíƒœ ê´€ë¦¬ìš©)
     private Dictionary<CardData, GameObject> _activeCardRootsMap = new Dictionary<CardData, GameObject>();
 
     private CardType _currentFilterType = CardType.UnDefined;
     protected override void Start()
     {
         base.Start();
-        // InitializeObjectPoolÀº LobbyCardManagerÀÇ µ¥ÀÌÅÍ°¡ ÁØºñµÈ ÈÄ È£ÃâµÇµµ·Ï º¯°æ °í·Á
-        // ¶Ç´Â LobbyCardManager¿¡¼­ µ¥ÀÌÅÍ ·Îµå ¿Ï·á ÀÌº¥Æ®¸¦ ¹ß»ı½ÃÄÑ ±×¶§ ÃÊ±âÈ­
-        // ¿©±â¼­´Â OnEnable¿¡¼­ InitialDisplay°¡ È£ÃâµÉ ¶§ Ç®ÀÌ ºñ¾îÀÖÀ¸¸é Ã¤¿ì´Â ¹æ½ÄÀ¸·Î º¯°æ
+        // InitializeObjectPoolì€ LobbyCardManagerì˜ ë°ì´í„°ê°€ ì¤€ë¹„ëœ í›„ í˜¸ì¶œë˜ë„ë¡ ë³€ê²½ ê³ ë ¤
+        // ë˜ëŠ” LobbyCardManagerì—ì„œ ë°ì´í„° ë¡œë“œ ì™„ë£Œ ì´ë²¤íŠ¸ë¥¼ ë°œìƒì‹œì¼œ ê·¸ë•Œ ì´ˆê¸°í™”
+        // ì—¬ê¸°ì„œëŠ” OnEnableì—ì„œ InitialDisplayê°€ í˜¸ì¶œë  ë•Œ í’€ì´ ë¹„ì–´ìˆìœ¼ë©´ ì±„ìš°ëŠ” ë°©ì‹ìœ¼ë¡œ ë³€ê²½
 
         _btnShowAll.onClick.AddListener(() => { _currentFilterType = CardType.UnDefined; _currentPageOwned = 0; RefreshAllCardDisplays(); });
         _btnShowAttackCard.onClick.AddListener(() => { _currentFilterType = CardType.Attack; _currentPageOwned = 0; RefreshAllCardDisplays(); });
@@ -77,19 +77,19 @@ public class UIPopup_Deck : UIPopup
     private void OnEnable()
     {
         _currentPageOwned = 0;
-        ObjectPoolInitialized(); // Ç® ÃÊ±âÈ­ º¸Àå
-        RefreshAllCardDisplays();    // ÆË¾÷ È°¼ºÈ­ ½Ã ÀüÃ¼ UI »óÅÂ °»½Å
+        ObjectPoolInitialized(); // í’€ ì´ˆê¸°í™” ë³´ì¥
+        RefreshAllCardDisplays();    // íŒì—… í™œì„±í™” ì‹œ ì „ì²´ UI ìƒíƒœ ê°±ì‹ 
     }
 
     private void ObjectPoolInitialized()
     {
-        if (LobbyCardManager.Instance == null || LobbyCardManager.Instance.OwnedPlayerCards == null) // OwnedPlayerCards´Â ¸ğµç Ä«µå ¸¶½ºÅÍ ¸®½ºÆ®
+        if (LobbyCardManager.Instance == null || LobbyCardManager.Instance.OwnedPlayerCards == null) // OwnedPlayerCardsëŠ” ëª¨ë“  ì¹´ë“œ ë§ˆìŠ¤í„° ë¦¬ìŠ¤íŠ¸
         {
             Debug.LogError("[ObjectPoolInitialized] LobbyCardManager or its master card list is null.");
             return;
         }
 
-        // Ç® Å©±â´Â °ÔÀÓ ³» ¸ğµç Ä«µå Á¾·ùÀÇ ¼ö¸¸Å­ ÇÊ¿ä
+        // í’€ í¬ê¸°ëŠ” ê²Œì„ ë‚´ ëª¨ë“  ì¹´ë“œ ì¢…ë¥˜ì˜ ìˆ˜ë§Œí¼ í•„ìš”
         int requiredPoolSize = LobbyCardManager.Instance.OwnedPlayerCards.Count;
 
         if (_cardUIRootPool.Count < requiredPoolSize)
@@ -104,16 +104,16 @@ public class UIPopup_Deck : UIPopup
             }
         }
 
-        // _activeCardRootsMap Ã¤¿ì´Â ·ÎÁ÷ (¸ğµç Ä«µå ¸¶½ºÅÍ¿¡ ´ëÇØ UI ·çÆ® ¹Ì¸® »ı¼º ¹× ¸ÅÇÎ)
+        // _activeCardRootsMap ì±„ìš°ëŠ” ë¡œì§ (ëª¨ë“  ì¹´ë“œ ë§ˆìŠ¤í„°ì— ëŒ€í•´ UI ë£¨íŠ¸ ë¯¸ë¦¬ ìƒì„± ë° ë§¤í•‘)
         if (_activeCardRootsMap.Count != requiredPoolSize)
         {
-            foreach (var go in _activeCardRootsMap.Values) go.SetActive(false); // ±âÁ¸ ¸Ê °´Ã¼ ºñÈ°¼ºÈ­
+            foreach (var go in _activeCardRootsMap.Values) go.SetActive(false); // ê¸°ì¡´ ë§µ ê°ì²´ ë¹„í™œì„±í™”
             _activeCardRootsMap.Clear();
             foreach (var pooledGO in _cardUIRootPool) pooledGO.SetActive(false);
 
             for (int i = 0; i < LobbyCardManager.Instance.OwnedPlayerCards.Count; i++)
             {
-                CardData cardData = LobbyCardManager.Instance.OwnedPlayerCards[i]; // ¸ğµç Ä«µå ¸¶½ºÅÍ ¼øÈ¸
+                CardData cardData = LobbyCardManager.Instance.OwnedPlayerCards[i]; // ëª¨ë“  ì¹´ë“œ ë§ˆìŠ¤í„° ìˆœíšŒ
                 if (i < _cardUIRootPool.Count)
                 {
                     GameObject cardRootGO = _cardUIRootPool[i];
@@ -121,9 +121,9 @@ public class UIPopup_Deck : UIPopup
                     if (cardUI != null)
                     {
                         cardUI.InitializeDisplay(cardData);
-                        cardUI.OnOwnedCardClicked = HandleOwnedCardClicked; // ¿ŞÂÊ ¸ñ·Ï¿¡¼­ Å¬¸¯
-                        cardUI.OnDeckCardClicked = HandleDeckCardClicked;   // ¿À¸¥ÂÊ ¸ñ·Ï¿¡¼­ Å¬¸¯
-                        _activeCardRootsMap[cardData] = cardRootGO; // ¸ğµç Ä«µå¿¡ ´ëÇØ ¸ÊÇÎ
+                        cardUI.OnOwnedCardClicked = HandleOwnedCardClicked; // ì™¼ìª½ ëª©ë¡ì—ì„œ í´ë¦­
+                        cardUI.OnDeckCardClicked = HandleDeckCardClicked;   // ì˜¤ë¥¸ìª½ ëª©ë¡ì—ì„œ í´ë¦­
+                        _activeCardRootsMap[cardData] = cardRootGO; // ëª¨ë“  ì¹´ë“œì— ëŒ€í•´ ë§µí•‘
                     }
                     else Debug.LogError($"CardUI component not found on pooled object for {cardData.cardName}");
                 }
@@ -136,12 +136,12 @@ public class UIPopup_Deck : UIPopup
     }
 
 
-    // UI¸¦ ÇÑ ¹ø¿¡ ¸ğµÎ °»½ÅÇÏ´Â ÇÔ¼ö (ÃÊ±âÈ­, ÇÊÅÍ/ÆäÀÌÁö º¯°æ ½Ã)
+    // UIë¥¼ í•œ ë²ˆì— ëª¨ë‘ ê°±ì‹ í•˜ëŠ” í•¨ìˆ˜ (ì´ˆê¸°í™”, í•„í„°/í˜ì´ì§€ ë³€ê²½ ì‹œ)
     private void RefreshAllCardDisplays()
     {
         if (LobbyCardManager.Instance == null) return;
 
-        // ¸ğµç _activeCardRootsMapÀÇ UIµéÀ» ÀÏ´Ü ºñÈ°¼ºÈ­ÇÏ°í Ç® ÄÁÅ×ÀÌ³Ê·Î (Á¤¸®)
+        // ëª¨ë“  _activeCardRootsMapì˜ UIë“¤ì„ ì¼ë‹¨ ë¹„í™œì„±í™”í•˜ê³  í’€ ì»¨í…Œì´ë„ˆë¡œ (ì •ë¦¬)
         foreach (var kvp in _activeCardRootsMap)
         {
             if (kvp.Value != null)
@@ -151,97 +151,97 @@ public class UIPopup_Deck : UIPopup
             }
         }
 
-        // === ¼ÒÀ¯ Ä«µå ¸ñ·Ï ±×¸®±â ½ÃÀÛ ===
+        // === ì†Œìœ  ì¹´ë“œ ëª©ë¡ ê·¸ë¦¬ê¸° ì‹œì‘ ===
         List<CardData> cardsForOwnedDisplay = GetFilteredOwnedCardsForDisplay();
         int startIndex = _currentPageOwned * CARDS_PER_PAGE_OWNED;
         int endIndex = Mathf.Min(startIndex + CARDS_PER_PAGE_OWNED, cardsForOwnedDisplay.Count);
 
-        for (int i = 0; i < (endIndex - startIndex); i++) // ½ÇÁ¦ Ç¥½ÃÇÒ °³¼ö¸¸Å­¸¸ ·çÇÁ
+        for (int i = 0; i < (endIndex - startIndex); i++) // ì‹¤ì œ í‘œì‹œí•  ê°œìˆ˜ë§Œí¼ë§Œ ë£¨í”„
         {
             CardData cardData = cardsForOwnedDisplay[startIndex + i];
             if (_activeCardRootsMap.TryGetValue(cardData, out GameObject cardRootGO) && cardRootGO != null)
             {
                 cardRootGO.transform.SetParent(_ownedCardContainer, false);
-                cardRootGO.transform.SetSiblingIndex(i); // ¼ÒÀ¯ Ä«µå ¸ñ·Ï ³»¿¡¼­ÀÇ ¼ø¼­
+                cardRootGO.transform.SetSiblingIndex(i); // ì†Œìœ  ì¹´ë“œ ëª©ë¡ ë‚´ì—ì„œì˜ ìˆœì„œ
                 CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
                 if (cardUI != null) cardUI.UpdateView(false);
                 cardRootGO.SetActive(true);
             }
         }
-        // === ¼ÒÀ¯ Ä«µå ¸ñ·Ï ±×¸®±â ³¡ ===
+        // === ì†Œìœ  ì¹´ë“œ ëª©ë¡ ê·¸ë¦¬ê¸° ë ===
 
-        // === µ¦ Ä«µå ¸ñ·Ï ±×¸®±â ½ÃÀÛ ===
-        // `CurrentDeckCardIds`´Â ÀÌ¹Ì ID ¼øÀ¸·Î Á¤·ÄµÇ¾î ÀÖ´Ù°í °¡Á¤ÇÏ°Å³ª, ¿©±â¼­ `OrderBy` »ç¿ë
+        // === ë± ì¹´ë“œ ëª©ë¡ ê·¸ë¦¬ê¸° ì‹œì‘ ===
+        // `CurrentDeckCardIds`ëŠ” ì´ë¯¸ ID ìˆœìœ¼ë¡œ ì •ë ¬ë˜ì–´ ìˆë‹¤ê³  ê°€ì •í•˜ê±°ë‚˜, ì—¬ê¸°ì„œ `OrderBy` ì‚¬ìš©
         foreach (short cardId in LobbyCardManager.Instance.CurrentDeckCardIds.OrderBy(id => id))
         {
             CardData cardData = LobbyCardManager.Instance.OwnedPlayerCards.FirstOrDefault(c => c.cardId == cardId);
             if (cardData != null && _activeCardRootsMap.TryGetValue(cardData, out GameObject cardRootGO) && cardRootGO != null)
             {
                 cardRootGO.transform.SetParent(_deckCardContainer, false);
-                // SetSiblingIndex´Â SortDeckContainerChildren¿¡¼­ Ã³¸®ÇÏ¹Ç·Î ¿©±â¼­´Â »ı·« °¡´É
+                // SetSiblingIndexëŠ” SortDeckContainerChildrenì—ì„œ ì²˜ë¦¬í•˜ë¯€ë¡œ ì—¬ê¸°ì„œëŠ” ìƒëµ ê°€ëŠ¥
                 CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
                 if (cardUI != null) cardUI.UpdateView(true);
                 cardRootGO.SetActive(true);
             }
         }
-        SortDeckContainerChildren(); // µ¦ ¸ñ·Ï ÃÖÁ¾ Á¤·Ä (ÇÊ¼ö)
+        SortDeckContainerChildren(); // ë± ëª©ë¡ ìµœì¢… ì •ë ¬ (í•„ìˆ˜)
 
         UpdateDeckCountText();
         UpdateArrowButtons(cardsForOwnedDisplay.Count);
     }
 
 
-    // ¼ÒÀ¯ Ä«µå ¸ñ·Ï¿¡¼­ Ä«µå Å¬¸¯ ½Ã
+    // ì†Œìœ  ì¹´ë“œ ëª©ë¡ì—ì„œ ì¹´ë“œ í´ë¦­ ì‹œ
     private void HandleOwnedCardClicked(CardUI clickedCardUI)
     {
         CardData cardData = clickedCardUI.CurrentCardData;
         if (LobbyCardManager.Instance.TryAddCardToDeck(cardData.cardId))
         {
-            // ¼º°øÀûÀ¸·Î µ¦¿¡ Ãß°¡µÊ
+            // ì„±ê³µì ìœ¼ë¡œ ë±ì— ì¶”ê°€ë¨
             if (_activeCardRootsMap.TryGetValue(cardData, out GameObject cardRootGO))
             {
                 cardRootGO.transform.SetParent(_deckCardContainer, false);
-                clickedCardUI.UpdateView(true); // ¹Ì´Ï Ä«µå ¸ğ½ÀÀ¸·Î º¯°æ
+                clickedCardUI.UpdateView(true); // ë¯¸ë‹ˆ ì¹´ë“œ ëª¨ìŠµìœ¼ë¡œ ë³€ê²½
 
-                RefreshOwnedCardsDisplay();  // ¼ÒÀ¯ Ä«µå ¸ñ·Ï¿¡¼­´Â ÀÌÁ¦ º¸ÀÌÁö ¾Ê¾Æ¾ß ÇÏ¹Ç·Î, ÇØ´ç ÆäÀÌÁö¸¦ ´Ù½Ã ±×·Á¼­ Á¦°Å
+                RefreshOwnedCardsDisplay();  // ì†Œìœ  ì¹´ë“œ ëª©ë¡ì—ì„œëŠ” ì´ì œ ë³´ì´ì§€ ì•Šì•„ì•¼ í•˜ë¯€ë¡œ, í•´ë‹¹ í˜ì´ì§€ë¥¼ ë‹¤ì‹œ ê·¸ë ¤ì„œ ì œê±°
                 SortDeckContainerChildren();
             }
-            // µ¦ Ä«¿îÆ® ¾÷µ¥ÀÌÆ®´Â OnDeckCompositionChanged ÇÚµé·¯°¡ ´ã´ç
+            // ë± ì¹´ìš´íŠ¸ ì—…ë°ì´íŠ¸ëŠ” OnDeckCompositionChanged í•¸ë“¤ëŸ¬ê°€ ë‹´ë‹¹
         }
     }
 
-    // µ¦ ¸ñ·Ï¿¡¼­ Ä«µå Å¬¸¯ ½Ã
+    // ë± ëª©ë¡ì—ì„œ ì¹´ë“œ í´ë¦­ ì‹œ
     private void HandleDeckCardClicked(CardUI clickedCardUI)
     {
         CardData cardDataToRemove = clickedCardUI.CurrentCardData;
         if (LobbyCardManager.Instance.TryRemoveCardFromDeck(cardDataToRemove.cardId))
         {
-            // ¼º°øÀûÀ¸·Î µ¦¿¡¼­ Á¦°ÅµÊ
+            // ì„±ê³µì ìœ¼ë¡œ ë±ì—ì„œ ì œê±°ë¨
             if (_activeCardRootsMap.TryGetValue(cardDataToRemove, out GameObject cardRootGO))
             {
-                // ºÎ¸ğ¸¦ _ownedCardContainer·Î ¿Å±â±â Àü¿¡,
-                // ÀÌ Ä«µå°¡ ÇöÀç ¼ÒÀ¯ Ä«µå ÇÊÅÍ/ÆäÀÌÁö¿¡ ¸Â´ÂÁö È®ÀÎÇÏ°í ±×¿¡ µû¶ó Ã³¸®
+                // ë¶€ëª¨ë¥¼ _ownedCardContainerë¡œ ì˜®ê¸°ê¸° ì „ì—,
+                // ì´ ì¹´ë“œê°€ í˜„ì¬ ì†Œìœ  ì¹´ë“œ í•„í„°/í˜ì´ì§€ì— ë§ëŠ”ì§€ í™•ì¸í•˜ê³  ê·¸ì— ë”°ë¼ ì²˜ë¦¬
                 cardRootGO.transform.SetParent(_ownedCardContainer, false);
-                clickedCardUI.UpdateView(false); // Å« Ä«µå ¸ğ½ÀÀ¸·Î º¯°æ
+                clickedCardUI.UpdateView(false); // í° ì¹´ë“œ ëª¨ìŠµìœ¼ë¡œ ë³€ê²½
 
                 RefreshOwnedCardsDisplay();
                 SortDeckContainerChildren();
             }
-            // µ¦ Ä«¿îÆ® ¾÷µ¥ÀÌÆ®´Â OnDeckCompositionChanged ÇÚµé·¯°¡ ´ã´ç
+            // ë± ì¹´ìš´íŠ¸ ì—…ë°ì´íŠ¸ëŠ” OnDeckCompositionChanged í•¸ë“¤ëŸ¬ê°€ ë‹´ë‹¹
         }
     }
 
     private void SortDeckContainerChildren()
     {
         List<Transform> children = new List<Transform>();
-        foreach (Transform child in _deckCardContainer) // _deckCardContainerÀÇ Á÷Á¢ÀûÀÎ ÀÚ½Äµé¸¸ °¡Á®¿È
+        foreach (Transform child in _deckCardContainer) // _deckCardContainerì˜ ì§ì ‘ì ì¸ ìì‹ë“¤ë§Œ ê°€ì ¸ì˜´
         {
             children.Add(child);
         }
 
-        // CardUI ÄÄÆ÷³ÍÆ® ¹× CardData¸¦ ±âÁØÀ¸·Î Á¤·Ä
+        // CardUI ì»´í¬ë„ŒíŠ¸ ë° CardDataë¥¼ ê¸°ì¤€ìœ¼ë¡œ ì •ë ¬
         children.Sort((t1, t2) => {
-            CardUI cui1 = t1.GetComponentInChildren<CardUI>(true); // ·çÆ®ÀÇ ÀÚ½Ä¿¡¼­ CardUI¸¦ Ã£À½
+            CardUI cui1 = t1.GetComponentInChildren<CardUI>(true); // ë£¨íŠ¸ì˜ ìì‹ì—ì„œ CardUIë¥¼ ì°¾ìŒ
             CardUI cui2 = t2.GetComponentInChildren<CardUI>(true);
 
             if (cui1 != null && cui1.CurrentCardData != null && cui2 != null && cui2.CurrentCardData != null)
@@ -249,13 +249,13 @@ public class UIPopup_Deck : UIPopup
                 return cui1.CurrentCardData.cardId.CompareTo(cui2.CurrentCardData.cardId);
             }
 
-            // CardUI³ª CardData°¡ ¾ø´Â °æ¿ì ¿¹¿Ü Ã³¸® (¿¹: µÚ·Î º¸³»°Å³ª, ·Î±× Ãâ·Â)
-            if (cui1 == null || cui1.CurrentCardData == null) return 1; // t1À» µÚ·Î
-            if (cui2 == null || cui2.CurrentCardData == null) return -1; // t2¸¦ µÚ·Î
+            // CardUIë‚˜ CardDataê°€ ì—†ëŠ” ê²½ìš° ì˜ˆì™¸ ì²˜ë¦¬ (ì˜ˆ: ë’¤ë¡œ ë³´ë‚´ê±°ë‚˜, ë¡œê·¸ ì¶œë ¥)
+            if (cui1 == null || cui1.CurrentCardData == null) return 1; // t1ì„ ë’¤ë¡œ
+            if (cui2 == null || cui2.CurrentCardData == null) return -1; // t2ë¥¼ ë’¤ë¡œ
             return 0;
         });
 
-        // Á¤·ÄµÈ ¼ø¼­´ë·Î SiblingIndex Àç¼³Á¤
+        // ì •ë ¬ëœ ìˆœì„œëŒ€ë¡œ SiblingIndex ì¬ì„¤ì •
         for (int i = 0; i < children.Count; i++)
         {
             children[i].SetSiblingIndex(i);
@@ -267,18 +267,18 @@ public class UIPopup_Deck : UIPopup
         UpdateDeckCountText();
     }
 
-    // ¼ÒÀ¯ Ä«µå ¸ñ·Ï Ç¥½Ã °»½Å (ÇÊÅÍ, ÆäÀÌÁö º¯°æ ½Ã)
+    // ì†Œìœ  ì¹´ë“œ ëª©ë¡ í‘œì‹œ ê°±ì‹  (í•„í„°, í˜ì´ì§€ ë³€ê²½ ì‹œ)
     private void RefreshOwnedCardsDisplay()
     {
         if (LobbyCardManager.Instance == null) return;
 
-        // ÇöÀç È­¸é¿¡ º¸ÀÌ´Â ¼ÒÀ¯ Ä«µå UI¸¸ ºñÈ°¼ºÈ­ (µ¦¿¡ ÀÖ´Â Ä«µå´Â °Çµå¸®Áö ¾ÊÀ½)
-        foreach (CardData cardData in _activeCardRootsMap.Keys.ToList()) // ToList()·Î º¹»çº» ¼øÈ¸
+        // í˜„ì¬ í™”ë©´ì— ë³´ì´ëŠ” ì†Œìœ  ì¹´ë“œ UIë§Œ ë¹„í™œì„±í™” (ë±ì— ìˆëŠ” ì¹´ë“œëŠ” ê±´ë“œë¦¬ì§€ ì•ŠìŒ)
+        foreach (CardData cardData in _activeCardRootsMap.Keys.ToList()) // ToList()ë¡œ ë³µì‚¬ë³¸ ìˆœíšŒ
         {
             if (!LobbyCardManager.Instance.CurrentDeckCardIds.Contains(cardData.cardId))
             {
                 _activeCardRootsMap[cardData].SetActive(false);
-                _activeCardRootsMap[cardData].transform.SetParent(this.transform); // Ç® ÄÁÅ×ÀÌ³Ê·Î
+                _activeCardRootsMap[cardData].transform.SetParent(this.transform); // í’€ ì»¨í…Œì´ë„ˆë¡œ
             }
         }
 
@@ -294,14 +294,14 @@ public class UIPopup_Deck : UIPopup
                 cardRootGO.transform.SetParent(_ownedCardContainer, false);
                 
                 CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
-                cardUI.UpdateView(false); // Å« Ä«µå ¸ğ½À
+                cardUI.UpdateView(false); // í° ì¹´ë“œ ëª¨ìŠµ
                 cardRootGO.SetActive(true);
             }
         }
         UpdateArrowButtons(filteredOwnedCardsToDisplay.Count);
     }
 
-    // GetFilteredOwnedCardsForDisplay: ÇöÀç µ¦¿¡ ¾ø´Â ¼ÒÀ¯ Ä«µå Áß ÇöÀç ÇÊÅÍ¿¡ ¸Â´Â Ä«µå¸¸ ¹İÈ¯
+    // GetFilteredOwnedCardsForDisplay: í˜„ì¬ ë±ì— ì—†ëŠ” ì†Œìœ  ì¹´ë“œ ì¤‘ í˜„ì¬ í•„í„°ì— ë§ëŠ” ì¹´ë“œë§Œ ë°˜í™˜
     private List<CardData> GetFilteredOwnedCardsForDisplay()
     {
         List<CardData> availableForDisplay = LobbyCardManager.Instance.OwnedPlayerCards
@@ -331,7 +331,7 @@ public class UIPopup_Deck : UIPopup
         if (_currentPageOwned > 0)
         {
             _currentPageOwned--;
-            RefreshOwnedCardsDisplay(); // ¼ÒÀ¯ Ä«µå ¸ñ·Ï¸¸ ÆäÀÌÁö °»½Å
+            RefreshOwnedCardsDisplay(); // ì†Œìœ  ì¹´ë“œ ëª©ë¡ë§Œ í˜ì´ì§€ ê°±ì‹ 
         }
     }
 
@@ -341,7 +341,7 @@ public class UIPopup_Deck : UIPopup
         if ((_currentPageOwned + 1) * CARDS_PER_PAGE_OWNED < filteredOwnedCardsToDisplay.Count)
         {
             _currentPageOwned++;
-            RefreshOwnedCardsDisplay(); // ¼ÒÀ¯ Ä«µå ¸ñ·Ï¸¸ ÆäÀÌÁö °»½Å
+            RefreshOwnedCardsDisplay(); // ì†Œìœ  ì¹´ë“œ ëª©ë¡ë§Œ í˜ì´ì§€ ê°±ì‹ 
         }
     }
 }

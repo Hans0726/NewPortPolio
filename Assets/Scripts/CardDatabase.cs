@@ -7,7 +7,7 @@ public class CardDatabase : ScriptableObject
     public List<CardData> _allCards = new List<CardData>();
     private Dictionary<short, CardData> _cardDictionary;
 
-    // °ÔÀÓ ½ÃÀÛ ½Ã ¶Ç´Â ÇÊ¿äÇÒ ¶§ È£ÃâÇÏ¿© µñ¼Å³Ê¸®¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+    // ê²Œì„ ì‹œì‘ ì‹œ ë˜ëŠ” í•„ìš”í•  ë•Œ í˜¸ì¶œí•˜ì—¬ ë”•ì…”ë„ˆë¦¬ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
     public void Initialize()
     {
         if (_cardDictionary == null)
@@ -28,7 +28,7 @@ public class CardDatabase : ScriptableObject
         }
     }
 
-    // ID·Î CardData¸¦ °¡Á®¿À´Â ÇÔ¼ö
+    // IDë¡œ CardDataë¥¼ ê°€ì ¸ì˜¤ëŠ” í•¨ìˆ˜
     public CardData GetCardDataById(short id)
     {
         if (_cardDictionary == null)

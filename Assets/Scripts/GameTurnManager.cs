@@ -6,7 +6,7 @@ using UnityEngine;
 public class GameTurnManager : MonoBehaviour
 {
     public static GameTurnManager Instance { get; private set; }
-    public event Action<int> OnCostChanged; // ÇöÀç ÀÚ¿øÀ» Àü´ŞÇÏ´Â ÀÌº¥Æ®
+    public event Action<int> OnCostChanged; // í˜„ì¬ ìì›ì„ ì „ë‹¬í•˜ëŠ” ì´ë²¤íŠ¸
     private int _currentCost = 1;
 
     void Awake()
@@ -24,7 +24,7 @@ public class GameTurnManager : MonoBehaviour
         set
         {
             _currentCost = value;
-            OnCostChanged?.Invoke(_currentCost); // ÀÚ¿øÀÌ º¯°æµÉ ¶§¸¶´Ù ÀÌº¥Æ® ¹ß»ı
+            OnCostChanged?.Invoke(_currentCost); // ìì›ì´ ë³€ê²½ë  ë•Œë§ˆë‹¤ ì´ë²¤íŠ¸ ë°œìƒ
         }
     }
 
@@ -32,7 +32,7 @@ public class GameTurnManager : MonoBehaviour
     {
         packet.turnNumber++;
         packet.turnTime = 0;
-        _currentCost++;
+        CurrentCost++;
     }
 
     public void TurnEnd()

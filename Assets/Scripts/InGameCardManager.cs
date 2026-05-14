@@ -2,34 +2,33 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
 
 public class InGameCardManager : MonoBehaviour
 {
     public static InGameCardManager Instance { get; private set; }
 
     [Header("Card Database")]
-    [SerializeField] private CardDatabase _cardDatabase; // ÀÎ½ºÆåÅÍ¿¡¼­ ÇÒ´ç
+    [SerializeField] private CardDatabase _cardDatabase; // ì¸ìŠ¤í™í„°ì—ì„œ í• ë‹¹
 
-    private List<CardData> _playerDeck = new List<CardData>(); // ½ÇÁ¦ °ÔÀÓ¿¡¼­ »ç¿ëÇÒ µ¦
+    private List<CardData> _playerDeck = new List<CardData>(); // ì‹¤ì œ ê²Œì„ì—ì„œ ì‚¬ìš©í•  ë±
     public List<CardData> PlayerDeck => _playerDeck;
 
-    private List<CardData> _playerHand = new List<CardData>(); // ÇöÀç ÇÃ·¹ÀÌ¾îÀÇ ÇÚµå
+    private List<CardData> _playerHand = new List<CardData>(); // í˜„ì¬ í”Œë ˆì´ì–´ì˜ í•¸ë“œ
     public List<CardData> PlayerHand => _playerHand;
 
-    private List<CardData> _playerDiscardPile = new List<CardData>(); // ¹ö·ÁÁø Ä«µå ´õ¹Ì (¼±ÅÃ »çÇ×)
+    private List<CardData> _playerDiscardPile = new List<CardData>(); // ë²„ë ¤ì§„ ì¹´ë“œ ë”ë¯¸ (ì„ íƒ ì‚¬í•­)
     public List<CardData> PlayerDiscardPile => _playerDiscardPile;
 
-    public int InitialHandSize = 3; // ÃÊ±â ÇÚµå Å©±â
+    public int InitialHandSize = 3; // ì´ˆê¸° í•¸ë“œ í¬ê¸°
 
-    // ÀÌº¥Æ® (UI µî ´Ù¸¥ °÷¿¡¼­ ÇÚµå º¯°æÀ» °¨ÁöÇÒ ¼ö ÀÖµµ·Ï)
-    public event Action<CardData> OnCardDrawn;  // Ä«µå¸¦ »Ì¾ÒÀ» ¶§
-    public event Action<CardData> OnCardPlayed; // Ä«µå¸¦ »ç¿ëÇßÀ» ¶§
-    public event Action OnInitialHandDrawn;     // ÃÊ±â ÇÚµå µå·Î¿ì°¡ '¿Ï·á'µÇ¾úÀ» ¶§
+    // ì´ë²¤íŠ¸ (UI ë“± ë‹¤ë¥¸ ê³³ì—ì„œ í•¸ë“œ ë³€ê²½ì„ ê°ì§€í•  ìˆ˜ ìˆë„ë¡)
+    public event Action<CardData> OnCardDrawn;  // ì¹´ë“œë¥¼ ë½‘ì•˜ì„ ë•Œ
+    public event Action<CardData> OnCardPlayed; // ì¹´ë“œë¥¼ ì‚¬ìš©í–ˆì„ ë•Œ
+    public event Action OnInitialHandDrawn;     // ì´ˆê¸° í•¸ë“œ ë“œë¡œìš°ê°€ 'ì™„ë£Œ'ë˜ì—ˆì„ ë•Œ
 
-    private List<CardData> _selectedAttackCards = new List<CardData>();  // ÀÌ ÅÏ¿¡ »ÌÀº °ø°İ Ä«µå
-    private List<CardData> _selectedDefenseCards = new List<CardData>(); // ÀÌ ÅÏ¿¡ »ÌÀº ¼öºñ Ä«µå
-    private List<CardData> _cardsToAddNextCycle = new List<CardData>();  // ´ÙÀ½ »çÀÌÅ¬¿¡ Ãß°¡ÇÒ Ä«µå
+    private List<CardData> _selectedAttackCards = new List<CardData>();  // ì´ í„´ì— ë½‘ì€ ê³µê²© ì¹´ë“œ
+    private List<CardData> _selectedDefenseCards = new List<CardData>(); // ì´ í„´ì— ë½‘ì€ ìˆ˜ë¹„ ì¹´ë“œ
+    private List<CardData> _cardsToAddNextCycle = new List<CardData>();  // ë‹¤ìŒ ì‚¬ì´í´ì— ì¶”ê°€í•  ì¹´ë“œ
 
     public List<CardData> SelectedAttackCards => _selectedAttackCards;
     public List<CardData> SelectedDefenseCards => _selectedDefenseCards;
@@ -43,7 +42,7 @@ public class InGameCardManager : MonoBehaviour
         }
         Instance = this;
 
-        _cardDatabase.Initialize(); // µ¥ÀÌÅÍº£ÀÌ½º ÃÊ±âÈ­   
+        _cardDatabase.Initialize(); // ë°ì´í„°ë² ì´ìŠ¤ ì´ˆê¸°í™”   
     }
 
     public void Initialize(List<short> deckCardIds)
@@ -54,14 +53,14 @@ public class InGameCardManager : MonoBehaviour
         ShuffleDeck();
     }
 
-    // Å×½ºÆ®¿ë ÃÊ±âÈ­ ÇÔ¼ö (GameManager¿¡¼­ È£Ãâ)
+    // í…ŒìŠ¤íŠ¸ìš© ì´ˆê¸°í™” í•¨ìˆ˜ (GameManagerì—ì„œ í˜¸ì¶œ)
     public void TestInitialize()
     {
         Debug.Log("[InGameCardManager] Test Initializing...");
         _cardDatabase.Initialize();
         for (int i = 0; i < 10; i++)
         {
-            // °ø°İÄ«µå 0~7 / ¼öºñÄ«µå 100~101±îÁö ¹Û¿¡ ¾øÀ¸¹Ç·Î
+            // ê³µê²©ì¹´ë“œ 0~7 / ìˆ˜ë¹„ì¹´ë“œ 100~101ê¹Œì§€ ë°–ì— ì—†ìœ¼ë¯€ë¡œ
             short randomAttackCardId = (short)UnityEngine.Random.Range(0, 8);
             short randomDefenseCardId = (short)UnityEngine.Random.Range(100, 102);
             short cointoss = (short)UnityEngine.Random.Range(0, 2);
@@ -77,8 +76,8 @@ public class InGameCardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ·Îºñ¿¡¼­ Àü´Ş¹ŞÀº µ¦ Ä«µå ID ¸®½ºÆ®·Î °ÔÀÓ µ¦À» ÃÊ±âÈ­ÇÕ´Ï´Ù.
-    /// GameManager µîÀ» ÅëÇØ È£ÃâµË´Ï´Ù.
+    /// ë¡œë¹„ì—ì„œ ì „ë‹¬ë°›ì€ ë± ì¹´ë“œ ID ë¦¬ìŠ¤íŠ¸ë¡œ ê²Œì„ ë±ì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+    /// GameManager ë“±ì„ í†µí•´ í˜¸ì¶œë©ë‹ˆë‹¤.
     /// </summary>
     public void InitializeDeck(List<short> deckCardIds)
     {
@@ -114,7 +113,7 @@ public class InGameCardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇöÀç µ¦À» ¼¯½À´Ï´Ù.
+    /// í˜„ì¬ ë±ì„ ì„ìŠµë‹ˆë‹¤.
     /// </summary>
     public void ShuffleDeck()
     {
@@ -130,8 +129,8 @@ public class InGameCardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ÁöÁ¤µÈ ¼ö¸¸Å­ µ¦¿¡¼­ Ä«µå¸¦ »Ì¾Æ ÇÚµå·Î °¡Á®¿É´Ï´Ù.
-    /// µ¦ÀÌ ºñ¸é ¹ö·ÁÁø Ä«µå¸¦ ¼¯¾î µ¦À¸·Î °¡Á®¿Ã ¼ö ÀÖ½À´Ï´Ù (¼±ÅÃÀû).
+    /// ì§€ì •ëœ ìˆ˜ë§Œí¼ ë±ì—ì„œ ì¹´ë“œë¥¼ ë½‘ì•„ í•¸ë“œë¡œ ê°€ì ¸ì˜µë‹ˆë‹¤.
+    /// ë±ì´ ë¹„ë©´ ë²„ë ¤ì§„ ì¹´ë“œë¥¼ ì„ì–´ ë±ìœ¼ë¡œ ê°€ì ¸ì˜¬ ìˆ˜ ìˆìŠµë‹ˆë‹¤ (ì„ íƒì ).
     /// </summary>
     public void DrawCards(int amountToDraw)
     {
@@ -145,23 +144,23 @@ public class InGameCardManager : MonoBehaviour
         {
             if (_playerDeck.Count == 0)
             {
-                // µ¦ÀÌ ºñ¾úÀ» ¶§ Ã³¸® (¿¹: ¹ö¸° Ä«µå ´õ¹Ì¸¦ ¼¯¾î¼­ µ¦À¸·Î)
+                // ë±ì´ ë¹„ì—ˆì„ ë•Œ ì²˜ë¦¬ (ì˜ˆ: ë²„ë¦° ì¹´ë“œ ë”ë¯¸ë¥¼ ì„ì–´ì„œ ë±ìœ¼ë¡œ)
                 if (_playerDiscardPile.Count > 0)
                 {
                     Debug.Log("Deck is empty. Shuffling discard pile into deck.");
                     _playerDeck.AddRange(_playerDiscardPile);
                     _playerDiscardPile.Clear();
-                    ShuffleDeck(); // »õ µ¦ ¼¯±â
-                    // OnDeckChanged ÀÌº¥Æ®´Â ShuffleDeck ³»ºÎ¿¡¼­ È£ÃâµÊ
+                    ShuffleDeck(); // ìƒˆ ë± ì„ê¸°
+                    // OnDeckChanged ì´ë²¤íŠ¸ëŠ” ShuffleDeck ë‚´ë¶€ì—ì„œ í˜¸ì¶œë¨
                 }
                 else
                 {
                     Debug.LogWarning("Deck is empty and discard pile is also empty. Cannot draw more cards.");
-                    break; // ´õ ÀÌ»ó »ÌÀ» Ä«µå ¾øÀ½
+                    break; // ë” ì´ìƒ ë½‘ì„ ì¹´ë“œ ì—†ìŒ
                 }
             }
 
-            // µ¦ÀÌ ¿©ÀüÈ÷ ºñ¾îÀÖ´Ù¸é (¹ö¸° Ä«µåµµ ¾ø¾ú´Ù¸é) Áß´Ü
+            // ë±ì´ ì—¬ì „íˆ ë¹„ì–´ìˆë‹¤ë©´ (ë²„ë¦° ì¹´ë“œë„ ì—†ì—ˆë‹¤ë©´) ì¤‘ë‹¨
             if (_playerDeck.Count == 0) break;
 
 
@@ -173,40 +172,40 @@ public class InGameCardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// °ÔÀÓ ½ÃÀÛ ½Ã ÃÊ±â ÇÚµå¸¦ »Ì½À´Ï´Ù.
+    /// ê²Œì„ ì‹œì‘ ì‹œ ì´ˆê¸° í•¸ë“œë¥¼ ë½‘ìŠµë‹ˆë‹¤.
     /// </summary>
     public void DrawInitialHand()
     {
         Debug.Log($"Drawing initial hand of {InitialHandSize} cards.");
-        DrawCards(InitialHandSize); // ³»ºÎÀûÀ¸·Î OnCardDrawnÀ» È£ÃâÇÏÁö ¾Êµµ·Ï DrawCards ¼öÁ¤
+        DrawCards(InitialHandSize); // ë‚´ë¶€ì ìœ¼ë¡œ OnCardDrawnì„ í˜¸ì¶œí•˜ì§€ ì•Šë„ë¡ DrawCards ìˆ˜ì •
 
-        // ÃÊ±â ÇÚµå µå·Î¿ì°¡ ¸ğµÎ ³¡³µÀ½À» ¾Ë¸²
+        // ì´ˆê¸° í•¸ë“œ ë“œë¡œìš°ê°€ ëª¨ë‘ ëë‚¬ìŒì„ ì•Œë¦¼
         OnInitialHandDrawn?.Invoke();
     }
 
-    // °ÔÀÓ Áß Ä«µå ÇÑ Àå »Ì´Â ÇÔ¼ö
+    // ê²Œì„ ì¤‘ ì¹´ë“œ í•œ ì¥ ë½‘ëŠ” í•¨ìˆ˜
     public void DrawOneCard()
     {
         if (_playerDeck.Count == 0)
         {
-            // TODO µ¦ ¾øÀ½ Ã³¸® ...
+            // TODO ë± ì—†ìŒ ì²˜ë¦¬ ...
             return;
         }
         CardData drawnCard = _playerDeck[0];
         _playerDeck.RemoveAt(0);
         _playerHand.Add(drawnCard);
-        OnCardDrawn?.Invoke(drawnCard); // °ÔÀÓ Áß¿¡´Â ÇÑ Àå¾¿ ÀÌº¥Æ® ¹ß»ı
+        OnCardDrawn?.Invoke(drawnCard); // ê²Œì„ ì¤‘ì—ëŠ” í•œ ì¥ì”© ì´ë²¤íŠ¸ ë°œìƒ
     }
 
-    // ÇÚµå¿¡¼­ Ä«µå »ç¿ë ÇÔ¼ö
+    // í•¸ë“œì—ì„œ ì¹´ë“œ ì‚¬ìš© í•¨ìˆ˜
     public bool PlayCardFromHand(CardData cardToPlay)
     {
         if (_playerHand.Contains(cardToPlay))
         {
-            // ½ÇÁ¦ Ä«µå »ç¿ë ·ÎÁ÷ (ÀÚ¿ø ¼Ò¸ğ, È¿°ú ¹ßµ¿ µî)Àº GameManager³ª ´Ù¸¥ °÷¿¡¼­ Ã³¸®
+            // ì‹¤ì œ ì¹´ë“œ ì‚¬ìš© ë¡œì§ (ìì› ì†Œëª¨, íš¨ê³¼ ë°œë™ ë“±)ì€ GameManagerë‚˜ ë‹¤ë¥¸ ê³³ì—ì„œ ì²˜ë¦¬
             _playerHand.Remove(cardToPlay);
             _playerDiscardPile.Add(cardToPlay);
-            OnCardPlayed?.Invoke(cardToPlay); // »ç¿ëÇÑ Ä«µå Á¤º¸¸¦ ÀÌº¥Æ®·Î Àü´Ş
+            OnCardPlayed?.Invoke(cardToPlay); // ì‚¬ìš©í•œ ì¹´ë“œ ì •ë³´ë¥¼ ì´ë²¤íŠ¸ë¡œ ì „ë‹¬
             return true;
         }
         Debug.LogWarning($"Card {cardToPlay.cardName} not found in hand.");
@@ -231,7 +230,7 @@ public class InGameCardManager : MonoBehaviour
         Debug.Log($"[InGameCardManager] Card added to next cycle deck: {card.cardName}");
     }
 
-    // ÅÏ Á¾·á ½Ã È£Ãâ (´ÙÀ½ µ¦ ÁØºñ)
+    // í„´ ì¢…ë£Œ ì‹œ í˜¸ì¶œ (ë‹¤ìŒ ë± ì¤€ë¹„)
     public void PrepareNextCycleDeck()
     {
         _playerDiscardPile.AddRange(_cardsToAddNextCycle);
@@ -239,7 +238,7 @@ public class InGameCardManager : MonoBehaviour
         Debug.Log("[InGameCardManager] Next cycle deck prepared");
     }
 
-    // ÅÏ ÃÊ±âÈ­ (»õ ÅÏ ½ÃÀÛ ½Ã)
+    // í„´ ì´ˆê¸°í™” (ìƒˆ í„´ ì‹œì‘ ì‹œ)
     public void ResetTurnSelection()
     {
         _selectedAttackCards.Clear();
