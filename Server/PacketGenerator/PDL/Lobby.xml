@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Lobby>
+  <!-- ===================== Matching Packets ===================== -->
+  <packet name ="C_PlayerMatchingReq">
+  </packet>
+
+  <packet name ="C_PlayerMatchingReqCancel">
+  </packet>
+
+  <packet name ="S_PlayerMatchingReqOk">
+  </packet>
+
+  <packet name="S_MatchingSuccess">
+  </packet>
+  <!-- ============================================================ -->
+  
+  <!-- ===================== DeckInfo Packets ===================== -->
+  <packet name ="C_PlayerDeckInfo">
+    <list name ="card">
+      <short name ="cardId"/>
+      <bool name ="isInDeck"/>
+    </list>
+  </packet>
+
+  <packet name ="S_PlayerDeckInfo">
+    <list name ="card">
+      <short name ="cardId"/>
+      <bool name ="isInDeck"/>
+    </list>
+  </packet>
+  <!-- ============================================================ -->
+
+</Lobby>

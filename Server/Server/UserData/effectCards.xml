@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<effectCards>
+  <card>
+    <cardId>0</cardId>
+    <cardName>효과카드1</cardName>
+    <cost>0</cost>
+    <specialEffect></specialEffect>
+  </card>
+</effectCards>

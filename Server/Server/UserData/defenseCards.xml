@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<defenseCards>
+  <card>
+    <cardId>100</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>특전사</cardName>
+    <moveSpeed>2</moveSpeed>
+    <cost>0</cost>
+    <specialEffect></specialEffect>
+    <attack>20</attack>
+    <attackSpeed>3</attackSpeed>
+  </card>
+  <card>
+    <cardId>101</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>박격포</cardName>
+    <moveSpeed>1</moveSpeed>
+    <cost>0</cost>
+    <specialEffect>스플레쉬데미지</specialEffect>
+    <attack>50</attack>
+    <attackSpeed>1</attackSpeed>
+  </card>
+</defenseCards>

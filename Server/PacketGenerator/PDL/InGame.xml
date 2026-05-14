@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<InGame>
+  <!-- ===================== Turn Start End Packets ===================== -->
+  <packet name="C_TurnStartReady">
+    <bool name="ready"/>
+  </packet>
+
+  <packet name="S_TurnStart">
+    <int name="turnNumber"/>
+    <int name="turnTime"/>
+  </packet>
+
+  <packet name="C_CardSelect">
+    <list name="selectedCardIds">
+      <short name="cardId"/>
+    </list>
+  </packet>
+
+  <packet name="S_CardSelectResult">
+    <int name="playerId"/>
+    <list name="selectedCardIds">
+      <short name="cardId"/>
+    </list>
+  </packet>
+
+  <packet name="C_TurnEnd">
+  </packet>
+
+  <packet name="S_TurnEnd">
+  </packet>
+  <!-- ============================================================ -->
+
+  <!-- ===================== Unit Placement Packets ===================== -->
+  <packet name="C_UnitPlacement">
+    <short name="cardId"/>
+    <float name="x"/>
+    <float name="y"/>
+  </packet>
+
+  <packet name="S_UnitPlacementResult">
+    <int name="playerId"/>
+    <short name="cardId"/>
+    <float name="x"/>
+    <float name="y"/>
+    <bool name="isSuccess"/>
+    <string name="errorMessage"/>
+  </packet>
+  <!-- ============================================================ -->
+
+  <!-- ===================== Unit Info Packets ===================== -->
+  <packet name="S_UnitSpawn">
+    <int name="unitId"/>
+    <int name="playerId"/>
+    <short name="cardId"/>
+    <float name="x"/>
+    <float name="y"/>
+    <int name="health"/>
+    <int name="attack"/>
+    <float name="moveSpeed"/>
+    <short name="defense"/>
+    <string name="specialEffect"/>
+    <float name="attackSpeed"/>
+  </packet>
+
+  <packet name="S_UnitMove">
+    <int name="unitId"/>
+    <float name="x"/>
+    <float name="y"/>
+  </packet>
+
+  <packet name="S_UnitAttack">
+    <int name="attackerId"/>
+    <int name="targetId"/>
+    <int name="damage"/>
+  </packet>
+
+  <packet name="S_UnitDestroy">
+    <int name="unitId"/>
+  </packet>
+
+  <packet name="S_LifeUpdate">
+    <int name="playerId"/>
+    <int name="life"/>
+  </packet>
+
+  <packet name="S_GameResult">
+    <int name="winnerId"/>
+    <string name="reason"/>
+  </packet>
+  <!-- ============================================================ -->
+</InGame>
