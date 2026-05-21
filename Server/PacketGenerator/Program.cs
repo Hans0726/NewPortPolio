@@ -15,12 +15,15 @@ namespace PacketGenerator
 
         static void Main(string[] args)
         {
-            // 기본 폴더 경로 설정 (예: 실행파일 위치 기준)
-            string pdlPath = "../PDL"; // XML 파일들이 있는 폴더 경로
+            string baseDirectory = AppContext.BaseDirectory;
+            string pdlPath = Path.GetFullPath(Path.Combine(baseDirectory, "..", "PDL"));
+            string outputPath = baseDirectory;
 
             // 명령줄 인자로 폴더 경로를 받을 수 있도록 함
             if (args.Length >= 1)
-                pdlPath = args[0];
+                pdlPath = Path.GetFullPath(args[0]);
+            if (args.Length >= 2)
+                outputPath = Path.GetFullPath(args[1]);
 
             if (!Directory.Exists(pdlPath))
             {
@@ -57,15 +60,16 @@ namespace PacketGenerator
             if (!string.IsNullOrEmpty(genPackets)) // 파싱된 내용이 있을 경우에만 파일 생성
             {
                 string fileText = string.Format(PacketFormat.fileFormat, packetEnums, genPackets);
-                File.WriteAllText("GenPackets.cs", fileText);
+                Directory.CreateDirectory(outputPath);
+                File.WriteAllText(Path.Combine(outputPath, "GenPackets.cs"), fileText);
                 Console.WriteLine("Generated GenPackets.cs");
 
                 string clientManagerText = string.Format(PacketFormat.managerFormat, clientRegister);
-                File.WriteAllText("ClientPacketManager.cs", clientManagerText);
+                File.WriteAllText(Path.Combine(outputPath, "ClientPacketManager.cs"), clientManagerText);
                 Console.WriteLine("Generated ClientPacketManager.cs");
 
                 string serverManagerText = string.Format(PacketFormat.managerFormat, serverRegister);
-                File.WriteAllText("ServerPacketManager.cs", serverManagerText);
+                File.WriteAllText(Path.Combine(outputPath, "ServerPacketManager.cs"), serverManagerText);
                 Console.WriteLine("Generated ServerPacketManager.cs");
             }
         }

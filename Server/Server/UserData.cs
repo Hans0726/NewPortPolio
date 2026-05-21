@@ -41,7 +41,7 @@ namespace Server
         }
 
         [XmlIgnore]
-        public static readonly string PATH = "../../../UserData/";
+        public static readonly string PATH = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "UserData"));
         [XmlIgnore]
         public static UserDatas Instance = new UserDatas();
 
@@ -55,7 +55,7 @@ namespace Server
         {
             try
             {
-                using (var reader = new StreamReader(PATH + "userdata.xml"))
+                using (var reader = new StreamReader(Path.Combine(PATH, "userdata.xml")))
                 {
                     XmlSerializer xs = new XmlSerializer(typeof(UserDatas));
                     UserDatas ud = xs.Deserialize(reader) as UserDatas;
@@ -72,7 +72,7 @@ namespace Server
         public void SaveData(string ip, UserData newUserdata, string path = "")
         {
             if (string.IsNullOrEmpty(path))
-                path = PATH + "userdata.xml";
+                path = Path.Combine(PATH, "userdata.xml");
 
             if (userdatasDict.TryGetValue(ip, out UserData us) == false)
             {
@@ -108,8 +108,8 @@ namespace Server
         {
             XmlDocument atXd = new XmlDocument();
             XmlDocument dfXd = new XmlDocument();
-            atXd.Load(path + "attackCards.xml");
-            dfXd.Load(path + "defenseCards.xml");
+            atXd.Load(Path.Combine(path, "attackCards.xml"));
+            dfXd.Load(Path.Combine(path, "defenseCards.xml"));
             XmlNodeList atList = atXd.GetElementsByTagName("card");
             XmlNodeList dfList = dfXd.GetElementsByTagName("card");
 
