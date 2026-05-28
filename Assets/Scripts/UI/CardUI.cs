@@ -49,7 +49,7 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     [Space(5), Header("CardInDeck Mini Display")]
     [SerializeField] private Image _imgCardMinimize;
     [SerializeField] private TextMeshProUGUI _textCostInDeck;
-    [SerializeField] private Text _textNameInDeck;
+    [SerializeField] private TextMeshProUGUI _textNameInDeck;
 
     [Header("Effects")]
     [SerializeField] private GameObject _playableEffect;

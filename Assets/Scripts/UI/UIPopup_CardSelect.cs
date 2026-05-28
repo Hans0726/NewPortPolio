@@ -15,6 +15,7 @@ public class UIPopup_CardSelect : UIPopup
     private int _originalSiblingIndex; // ★ 원본 카드의 sibling index (n번째 위치)
     private GameObject _draggedCardRoot; // ★ 드래그된 카드의 루트 오브젝트 (복원 시 사용)
     private Action<CardData, bool> _onChoice; // card, isDraw(true) or addToDeck(false)
+    private CardData _selectedCardData;
     private bool _choiceConfirmed;
 
     protected override void Start()
@@ -38,8 +39,15 @@ public class UIPopup_CardSelect : UIPopup
 
     public void OpenPopup(CardUI cardUI, Action<CardData, bool> onChoice)
     {
+        if (cardUI == null || cardUI.CurrentCardData == null)
+        {
+            Debug.LogError("[UIPopup_CardSelect] Cannot open popup because source card data is missing.");
+            return;
+        }
+
         _onChoice = onChoice;
         _originalCardUI = cardUI; // ★ 원본 카드 UI 저장
+        _selectedCardData = cardUI.CurrentCardData;
         _choiceConfirmed = false;
         
         cardUI.RootGameObject.SetActive(false); // 원본 카드 숨김
@@ -67,9 +75,10 @@ public class UIPopup_CardSelect : UIPopup
 
 
         // 팝업에서 카드 상호작용 불가능하도록 설정
-        CardUI displayedCardUI = _displayedCardInstance.GetComponentInChildren<CardUI>();
+        CardUI displayedCardUI = _displayedCardInstance.GetComponentInChildren<CardUI>(true);
         if (displayedCardUI != null)
         {
+            displayedCardUI.InitializeDisplay(_selectedCardData);
             displayedCardUI.enabled = false;
         }
 
@@ -92,14 +101,18 @@ public class UIPopup_CardSelect : UIPopup
             ? _displayedCardInstance.GetComponentInChildren<CardUI>(true)
             : null;
 
-        if (displayedCardUI == null || displayedCardUI.CurrentCardData == null)
+        CardData selectedCardData = _selectedCardData != null
+            ? _selectedCardData
+            : displayedCardUI?.CurrentCardData;
+
+        if (selectedCardData == null)
         {
             Debug.LogError("[UIPopup_CardSelect] Displayed card data is missing.");
             return;
         }
 
         _choiceConfirmed = true;
-        _onChoice?.Invoke(displayedCardUI.CurrentCardData, isDraw);
+        _onChoice?.Invoke(selectedCardData, isDraw);
         base.ClosePopup();
     }
 
@@ -134,6 +147,7 @@ public class UIPopup_CardSelect : UIPopup
         _originalParent = null;
         _draggedCardRoot = null;
         _onChoice = null;
+        _selectedCardData = null;
         _choiceConfirmed = false;
     }
 }

@@ -55,6 +55,11 @@ public class InGameUIManager : MonoBehaviour
     [Header("PlayerInfoPanel_TopLeft")]
     [SerializeField] private TextMeshProUGUI _playerCurrentCost;
 
+    [Header("PlayerInfoPanel_TopRight")]
+    [SerializeField] private GameObject _usedAttackCardsContent;
+    [SerializeField] private GameObject _usedDefenseCardsContent;
+    [SerializeField] private Vector2 _usedCardUISize = new Vector2(246f, 90f);
+
     // --- 상태 변수 ---
     private CardUI _hoveredCard = null;
     private CardUI _draggedCard = null;
@@ -70,6 +75,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private Transform _cardPoolContainer;
     private List<GameObject> _cardUIPool = new List<GameObject>();
     private List<GameObject> _activeHandCardRoots = new List<GameObject>();
+    private readonly List<GameObject> _usedCardUIRoots = new List<GameObject>();
     private const int INITIAL_POOL_SIZE = 15; // 최대 핸드 수 + 여유분
 
 
@@ -475,14 +481,94 @@ public class InGameUIManager : MonoBehaviour
         {
             // ★ 공격 카드: 오른쪽 목록에만 표시
             InGameCardManager.Instance.AddSelectedAttackCard(card);
+            AddUsedCardToInfoPanel(card, _usedAttackCardsContent);
+            
             Debug.Log($"Attack card selected: {card.cardName}");
         }
         else if (card.cardType == CardType.Defense)
         {
             // ★ 수비 카드: 배치 모드 활성화
             InGameCardManager.Instance.AddSelectedDefenseCard(card);
+            AddUsedCardToInfoPanel(card, _usedDefenseCardsContent);
             Debug.Log($"Defense card selected: {card.cardName}");
         }
+    }
+
+    private void AddUsedCardToInfoPanel(CardData card, GameObject contentRoot)
+    {
+        if (card == null || contentRoot == null || _cardUIPrefab == null)
+        {
+            Debug.LogWarning("[InGameUIManager] Cannot add used card UI. Missing card, content root, or card prefab.");
+            return;
+        }
+
+        GameObject cardRootGO = Instantiate(_cardUIPrefab, contentRoot.transform);
+        cardRootGO.name = $"UsedCardUI_{card.cardName}";
+        cardRootGO.SetActive(true);
+        ConfigureUsedCardRect(cardRootGO);
+
+        CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>(true);
+        if (cardUI == null)
+        {
+            Destroy(cardRootGO);
+            Debug.LogError("[InGameUIManager] CardUI component not found on used card prefab.");
+            return;
+        }
+
+        cardUI.InitializeDisplay(card);
+        cardUI.UpdateView(true);
+        FitUsedCardInDeckDisplay(cardRootGO);
+
+        CanvasGroup canvasGroup = cardRootGO.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        _usedCardUIRoots.Add(cardRootGO);
+    }
+
+    private void ConfigureUsedCardRect(GameObject cardRootGO)
+    {
+        RectTransform rectTransform = cardRootGO.GetComponent<RectTransform>();
+        if (rectTransform == null) return;
+
+        rectTransform.localScale = Vector3.one;
+        rectTransform.anchorMin = new Vector2(0f, 1f);
+        rectTransform.anchorMax = new Vector2(0f, 1f);
+        rectTransform.pivot = new Vector2(0f, 1f);
+        rectTransform.anchoredPosition = Vector2.zero;
+        rectTransform.sizeDelta = _usedCardUISize;
+
+        LayoutElement layoutElement = cardRootGO.GetComponent<LayoutElement>();
+        if (layoutElement == null)
+        {
+            layoutElement = cardRootGO.AddComponent<LayoutElement>();
+        }
+
+        layoutElement.ignoreLayout = false;
+        layoutElement.minWidth = _usedCardUISize.x;
+        layoutElement.minHeight = _usedCardUISize.y;
+        layoutElement.preferredWidth = _usedCardUISize.x;
+        layoutElement.preferredHeight = _usedCardUISize.y;
+        layoutElement.flexibleWidth = 0f;
+        layoutElement.flexibleHeight = 0f;
+    }
+
+    private void FitUsedCardInDeckDisplay(GameObject cardRootGO)
+    {
+        Transform cardInDeckTransform = cardRootGO.transform.Find("CardUIInDeck");
+
+        RectTransform cardInDeckRect = cardInDeckTransform as RectTransform;
+        if (cardInDeckRect == null) return;
+
+        cardInDeckRect.anchorMin = Vector2.zero;
+        cardInDeckRect.anchorMax = Vector2.one;
+        cardInDeckRect.pivot = new Vector2(0.5f, 0.5f);
+        cardInDeckRect.anchoredPosition = Vector2.zero;
+        cardInDeckRect.sizeDelta = Vector2.zero;
+        cardInDeckRect.localScale = Vector3.one;
     }
 
     private void AddCardToDeck(CardData card)
