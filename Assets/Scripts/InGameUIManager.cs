@@ -65,6 +65,7 @@ public class InGameUIManager : MonoBehaviour
     private CardUI _draggedCard = null;
     private GameObject _pendingSelectedCardRoot = null;
     private bool _isHandExpanded = false;
+    private bool _isHandInteractionLocked = false;
     private int _draggedCardOriginalIndex = -1; // ★ 드래그된 카드의 원래 인덱스 저장
 
     // ★ 드래그 상태 확인용 프로퍼티
@@ -288,6 +289,7 @@ public class InGameUIManager : MonoBehaviour
     void LateUpdate()
     {
         if (_currentHandState != HandState.InInteraction) return;
+        if (_isHandInteractionLocked) return;
 
         // --- 1. 핸드의 목표 상태(확대/축소) 결정 ---
         // 블로킹 패널이 활성화된 상태에서는 절대 핸드가 확장되지 않도록 보장
@@ -381,6 +383,8 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardBeginDrag(CardUI cardUI)
     {
+        if (_isHandInteractionLocked) return;
+
         // ★ 드래그 전 원래 인덱스 저장
        _draggedCardOriginalIndex = _activeHandCardRoots.IndexOf(cardUI.RootGameObject);
         
@@ -394,6 +398,8 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardDrag(PointerEventData eventData)
     {
+        if (_isHandInteractionLocked) return;
+
         if (_draggedCard == null) return; // ★ null 체크 추가
 
         RectTransform parentRect = _mainCanvas.transform as RectTransform;
@@ -410,6 +416,15 @@ public class InGameUIManager : MonoBehaviour
 
     public void OnCardEndDrag(CardUI cardUI, PointerEventData eventData)
     {
+        if (_isHandInteractionLocked)
+        {
+            if (_draggedCard != null && _draggedCard.CanvasGroup != null)
+            {
+                _draggedCard.CanvasGroup.blocksRaycasts = true;
+            }
+            return;
+        }
+
         if (_draggedCard == null) return;
         _draggedCard.CanvasGroup.blocksRaycasts = true;
 
@@ -475,10 +490,10 @@ public class InGameUIManager : MonoBehaviour
     private void UseCard(CardData card)
     {
         // 코스트 차감
-        GameTurnManager.Instance.CurrentCost -= card.cost;
-
         if (card.cardType == CardType.Attack)
         {
+            GameTurnManager.Instance.CurrentCost -= card.cost;
+
             // ★ 공격 카드: 오른쪽 목록에만 표시
             InGameCardManager.Instance.AddSelectedAttackCard(card);
             AddUsedCardToInfoPanel(card, _usedAttackCardsContent);
@@ -488,10 +503,29 @@ public class InGameUIManager : MonoBehaviour
         else if (card.cardType == CardType.Defense)
         {
             // ★ 수비 카드: 배치 모드 활성화
-            InGameCardManager.Instance.AddSelectedDefenseCard(card);
-            AddUsedCardToInfoPanel(card, _usedDefenseCardsContent);
-            Debug.Log($"Defense card selected: {card.cardName}");
+            if (DefensePlacementManager.Instance == null)
+            {
+                Debug.LogError("[InGameUIManager] DefensePlacementManager is missing in the scene.");
+                return;
+            }
+
+            bool placementStarted = DefensePlacementManager.Instance.BeginPlacement(
+                card,
+                CompleteDefenseCardPlacement,
+                () => SetHandInteractionLocked(false));
+            if (!placementStarted) return;
+
+            SetHandInteractionLocked(true);
+            GameTurnManager.Instance.CurrentCost -= card.cost;
+            Debug.Log($"Defense placement started: {card.cardName}");
         }
+    }
+
+    private void CompleteDefenseCardPlacement(CardData card, Vector3 placedPosition)
+    {
+        InGameCardManager.Instance.AddSelectedDefenseCard(card);
+        AddUsedCardToInfoPanel(card, _usedDefenseCardsContent);
+        Debug.Log($"Defense card placed: {card.cardName} at {placedPosition}");
     }
 
     private void AddUsedCardToInfoPanel(CardData card, GameObject contentRoot)
@@ -578,6 +612,31 @@ public class InGameUIManager : MonoBehaviour
         Debug.Log($"Card added to next cycle deck: {card.cardName}");
     }
 
+    private void SetHandInteractionLocked(bool isLocked)
+    {
+        _isHandInteractionLocked = isLocked;
+
+        if (isLocked)
+        {
+            _hoveredCard = null;
+            _isHandExpanded = false;
+        }
+
+        foreach (GameObject cardRootGO in _activeHandCardRoots)
+        {
+            CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>();
+            if (cardUI == null || cardUI.CanvasGroup == null) continue;
+
+            cardUI.CanvasGroup.interactable = !isLocked;
+            cardUI.CanvasGroup.blocksRaycasts = !isLocked;
+        }
+
+        if (!isLocked && GameTurnManager.Instance != null)
+        {
+            UpdateCardInteractableStates(GameTurnManager.Instance.CurrentCost);
+        }
+    }
+
     private void UpdateCardInteractableStates(int currentCost)
     {
         foreach (var cardRootGO in _activeHandCardRoots)
@@ -589,7 +648,7 @@ public class InGameUIManager : MonoBehaviour
                 cardUI.SetPlayableState(canAfford);
             }
         }
-        _playerCurrentCost.text = $"{currentCost}";
+        _playerCurrentCost.text = $"현재 코스트: {currentCost}";
         Debug.Log($"Updated card interactable states based on current cost: {currentCost}");
     }
 
