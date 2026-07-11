@@ -33,7 +33,6 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private GameObject _cardUIPrefab;
     [SerializeField] private RectTransform _deckPosition;
     [SerializeField] private RectTransform _dropZone; // 드래그 드롭 판단 영역
-    [SerializeField] private TextMeshProUGUI _costText;
     [SerializeField] private Canvas _mainCanvas;
     [SerializeField] private UIPopup_CardSelect _cardSelectPopup;
     [SerializeField] private GameObject _blockingPanel;

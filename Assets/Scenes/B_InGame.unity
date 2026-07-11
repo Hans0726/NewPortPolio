@@ -5026,8 +5026,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -66}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 44.749985, y: -66}
+  m_SizeDelta: {x: 289.5, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &125893551
 MonoBehaviour:
@@ -5049,7 +5049,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD604\uC7AC \uCF54\uC2A4\uD2B8: "
+  m_text: "\uD604\uC7AC \uCF54\uC2A4\uD2B8: 0"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 232d6ad016337c749adaa06940c87fa5, type: 2}
   m_sharedMaterial: {fileID: 4308402894589433717, guid: 232d6ad016337c749adaa06940c87fa5,
@@ -8245,7 +8245,6 @@ MonoBehaviour:
     type: 3}
   _deckPosition: {fileID: 802824665}
   _dropZone: {fileID: 706678322}
-  _costText: {fileID: 0}
   _mainCanvas: {fileID: 125466666}
   _cardSelectPopup: {fileID: 1782756314}
   _blockingPanel: {fileID: 36587098}
@@ -12902,6 +12901,7 @@ MonoBehaviour:
   _placedUnitRoot: {fileID: 0}
   _previewZ: -1
   _previewScale: 1
+  _bottomAnchorYOffset: -0.2
   _previewSortingLayerName: Layer 1
   _previewSortingOrder: 100
   _overlaySortingOrder: 2
