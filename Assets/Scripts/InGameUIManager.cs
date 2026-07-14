@@ -58,6 +58,7 @@ public class InGameUIManager : MonoBehaviour
     [SerializeField] private GameObject _usedAttackCardsContent;
     [SerializeField] private GameObject _usedDefenseCardsContent;
     [SerializeField] private Vector2 _usedCardUISize = new Vector2(246f, 90f);
+    [SerializeField] private Button _btnTurnEnd;
 
     // --- 상태 변수 ---
     private CardUI _hoveredCard = null;
@@ -91,6 +92,10 @@ public class InGameUIManager : MonoBehaviour
         if (GameTurnManager.Instance != null)
         {
             GameTurnManager.Instance.OnCostChanged += UpdateCardInteractableStates;
+            _btnTurnEnd.onClick.AddListener(() =>
+            {
+                GameTurnManager.Instance.TurnEnd();
+            });
         }
     }
 

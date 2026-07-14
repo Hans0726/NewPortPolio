@@ -301,10 +301,16 @@ public class DefensePlacementManager : MonoBehaviour
         unitObject.transform.position = position;
         unitObject.transform.localScale = Vector3.one * _previewScale;
 
-        SpriteRenderer renderer = unitObject.AddComponent<SpriteRenderer>();
+        GameObject visualObject = new GameObject("Visual");
+        visualObject.transform.SetParent(unitObject.transform, false);
+
+        SpriteRenderer renderer = visualObject.AddComponent<SpriteRenderer>();
         renderer.sprite = GetCardSprite(card);
         renderer.sortingLayerID = ResolveSortingLayerID();
         renderer.sortingOrder = _previewSortingOrder - 1;
+
+        DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
+        defenseUnit.Initialize(card, position);
     }
 
     private Vector3 GetSpritePositionFromBottomAnchor(Vector3 bottomAnchorPosition, Sprite sprite)

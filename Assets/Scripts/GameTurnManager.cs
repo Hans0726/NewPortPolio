@@ -6,8 +6,8 @@ using UnityEngine;
 public class GameTurnManager : MonoBehaviour
 {
     public static GameTurnManager Instance { get; private set; }
-    public event Action<int> OnCostChanged; // 현재 자원을 전달하는 이벤트
-    private int _currentCost = 1;
+    public event Action<int> OnCostChanged; // 현재 자원을 전달하는 이벤트    
+    [SerializeField] private int _currentCost = 99;
 
     void Awake()
     {
@@ -18,6 +18,12 @@ public class GameTurnManager : MonoBehaviour
         }
         Instance = this;
     }
+
+    private void Reset()
+    {
+        _currentCost = 1;
+    }
+
     public int CurrentCost
     {
         get => _currentCost;
@@ -37,7 +43,13 @@ public class GameTurnManager : MonoBehaviour
 
     public void TurnEnd()
     {
-        
+        if (InGameCardManager.Instance == null)
+        {
+            Debug.LogWarning("[GameTurnManager] Cannot start combat round. InGameCardManager is missing.");
+            return;
+        }
+
+        CombatRoundManager.Instance.StartCombatRound(InGameCardManager.Instance.SelectedAttackCards);
     }
 
     public void DeductCost(int amount)
