@@ -41,6 +41,10 @@ public class CardData : ScriptableObject
     public Sprite cardImage;            // 카드 이미지
     public CardType cardType;
 
+    [Header("Field Visual")]
+    public float fieldSpriteScale = 1f;
+    public float fieldHitRadius = 1f;
+
     [Header("공격 카드 스탯")]
     public int health = 10;             // 기본 체력 (공격 카드용)
     public int defense = 0;             // 기본 방어력 (공격 카드용)
@@ -48,6 +52,7 @@ public class CardData : ScriptableObject
     [Header("방어 카드 스탯")]
     public int attack = 5;              // 기본 공격력 (방어 카드용)
     public float attackSpeed = 1.0f;    // 기본 공격 속도 (방어 카드용)
+    public bool isFixedDefenseUnit = false;
 
     [Header("특수 효과")]
     public string specialEffect = ""; // 특수 효과 (문자열 또는 enum 등)

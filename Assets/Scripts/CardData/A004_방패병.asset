@@ -18,8 +18,11 @@ MonoBehaviour:
   cost: 1
   cardImage: {fileID: 0}
   cardType: 1
+  fieldSpriteScale: 1
+  fieldHitRadius: 1.2
   health: 100
   defense: 20
   attack: 0
   attackSpeed: 0
+  isFixedDefenseUnit: 0
   specialEffect: "\uC8FC\uBCC0 \uC720\uB2DB\uC758 \uBC29\uC5B4\uB825 \uC99D\uAC00 "

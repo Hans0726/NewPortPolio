@@ -37,6 +37,14 @@ public class DefensePlacementManager : MonoBehaviour
 
     public bool IsPlacing => _isPlacing;
 
+    public bool IsWorldPositionPlaceable(Vector3 worldPosition)
+    {
+        if (_placeableTilemap == null) return true;
+
+        Vector3Int cell = _placeableTilemap.WorldToCell(worldPosition);
+        return _placeableTilemap.HasTile(cell);
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)

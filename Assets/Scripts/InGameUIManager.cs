@@ -290,6 +290,62 @@ public class InGameUIManager : MonoBehaviour
             .OnComplete(() => ReturnCardUIRootToPool(playedCard));
     }
 
+    public void HideHandForCombat()
+    {
+        _currentHandState = HandState.Idle;
+        _isHandInteractionLocked = true;
+        _isHandExpanded = false;
+        _hoveredCard = null;
+        _draggedCardOriginalIndex = -1;
+
+        if (_draggedCard != null)
+        {
+            ReturnHandCardImmediately(_draggedCard.RootGameObject);
+            _draggedCard = null;
+        }
+
+        if (_pendingSelectedCardRoot != null)
+        {
+            ReturnHandCardImmediately(_pendingSelectedCardRoot);
+            _pendingSelectedCardRoot = null;
+        }
+
+        foreach (GameObject cardRootGO in _activeHandCardRoots.ToList())
+        {
+            ReturnHandCardImmediately(cardRootGO);
+        }
+
+        _activeHandCardRoots.Clear();
+    }
+
+    public void ShowHandForNewRound()
+    {
+        _isHandInteractionLocked = false;
+        _isHandExpanded = false;
+        _hoveredCard = null;
+        _draggedCard = null;
+        _pendingSelectedCardRoot = null;
+        _draggedCardOriginalIndex = -1;
+
+        HandleInitialHandDrawn();
+    }
+
+    private void ReturnHandCardImmediately(GameObject cardRootGO)
+    {
+        if (cardRootGO == null) return;
+
+        cardRootGO.transform.DOKill();
+
+        CardUI cardUI = cardRootGO.GetComponentInChildren<CardUI>(true);
+        if (cardUI != null && cardUI.CanvasGroup != null)
+        {
+            cardUI.CanvasGroup.interactable = false;
+            cardUI.CanvasGroup.blocksRaycasts = false;
+        }
+
+        ReturnCardUIRootToPool(cardRootGO);
+    }
+
     void LateUpdate()
     {
         if (_currentHandState != HandState.InInteraction) return;
@@ -497,6 +553,7 @@ public class InGameUIManager : MonoBehaviour
         if (card.cardType == CardType.Attack)
         {
             GameTurnManager.Instance.CurrentCost -= card.cost;
+            InGameCardManager.Instance.RemoveCardFromHand(card, true);
 
             // ★ 공격 카드: 오른쪽 목록에만 표시
             InGameCardManager.Instance.AddSelectedAttackCard(card);
@@ -521,6 +578,7 @@ public class InGameUIManager : MonoBehaviour
 
             SetHandInteractionLocked(true);
             GameTurnManager.Instance.CurrentCost -= card.cost;
+            InGameCardManager.Instance.RemoveCardFromHand(card, true);
             Debug.Log($"Defense placement started: {card.cardName}");
         }
     }
@@ -612,6 +670,7 @@ public class InGameUIManager : MonoBehaviour
     private void AddCardToDeck(CardData card)
     {
         // 원래 덱에 카드 추가 (다음 사이클 때 뽑을 수 있도록)
+        InGameCardManager.Instance.RemoveCardFromHand(card, true);
         InGameCardManager.Instance.AddCardToDeckForNextCycle(card);
         Debug.Log($"Card added to next cycle deck: {card.cardName}");
     }

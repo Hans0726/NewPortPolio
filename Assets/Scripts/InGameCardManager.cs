@@ -212,6 +212,23 @@ public class InGameCardManager : MonoBehaviour
         return false;
     }
 
+    public bool RemoveCardFromHand(CardData cardToRemove, bool addToDiscardPile)
+    {
+        if (cardToRemove == null) return false;
+        if (!_playerHand.Remove(cardToRemove))
+        {
+            Debug.LogWarning($"Card {cardToRemove.cardName} not found in hand.");
+            return false;
+        }
+
+        if (addToDiscardPile)
+        {
+            _playerDiscardPile.Add(cardToRemove);
+        }
+
+        return true;
+    }
+
     public void AddSelectedAttackCard(CardData card)
     {
         _selectedAttackCards.Add(card);
@@ -228,6 +245,15 @@ public class InGameCardManager : MonoBehaviour
     {
         _cardsToAddNextCycle.Add(card);
         Debug.Log($"[InGameCardManager] Card added to next cycle deck: {card.cardName}");
+    }
+
+    public void DiscardCurrentHand()
+    {
+        if (_playerHand.Count == 0) return;
+
+        _playerDiscardPile.AddRange(_playerHand);
+        _playerHand.Clear();
+        Debug.Log("[InGameCardManager] Current hand discarded.");
     }
 
     // 턴 종료 시 호출 (다음 덱 준비)

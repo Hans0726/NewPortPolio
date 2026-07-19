@@ -16,11 +16,13 @@ MonoBehaviour:
   cardName: "\uACE8\uB818"
   moveSpeed: 1
   cost: 1
-  description: 
   cardImage: {fileID: 0}
   cardType: 1
+  fieldSpriteScale: 1
+  fieldHitRadius: 1.2
   health: 200
   defense: 15
   attack: 0
   attackSpeed: 0
+  isFixedDefenseUnit: 0
   specialEffect: 

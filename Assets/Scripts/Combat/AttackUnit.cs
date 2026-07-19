@@ -1,4 +1,11 @@
+using System;
 using UnityEngine;
+
+public enum AttackUnitOwner
+{
+    Player,
+    Opponent
+}
 
 public class AttackUnit : MonoBehaviour
 {
@@ -14,17 +21,29 @@ public class AttackUnit : MonoBehaviour
     private int _maxHealth;
     private int _currentHealth;
     private int _defense;
+    private AttackUnitOwner _owner;
+    private Action<AttackUnitOwner> _onReachedDestination;
     private float _unitZ;
+    private float _fieldSpriteScale = 1f;
+    private float _hitRadius = 5f;
+    private float _bottomAnchorYOffset;
     private Vector3 _visualBaseLocalPosition;
 
     public bool IsDead => _currentHealth <= 0;
     public int Defense => _defense;
+    public float HitRadius => _hitRadius;
+    public Vector3 HitCenter => _renderer != null ? _renderer.bounds.center : transform.position;
 
-    public void Initialize(CardData card, WaypointPath path, int sortingLayerId, int sortingOrder, float unitZ)
+    public void Initialize(CardData card, WaypointPath path, int sortingLayerId, int sortingOrder, float unitZ, float baseScale, float bottomAnchorYOffset, AttackUnitOwner owner, Action<AttackUnitOwner> onReachedDestination)
     {
         _card = card;
         _path = path;
+        _owner = owner;
+        _onReachedDestination = onReachedDestination;
         _unitZ = unitZ;
+        _bottomAnchorYOffset = bottomAnchorYOffset;
+        _fieldSpriteScale = Mathf.Max(0.01f, baseScale * (card != null ? card.fieldSpriteScale : 1f));
+        _hitRadius = Mathf.Max(0f, (card != null ? card.fieldHitRadius : 0.25f) * _fieldSpriteScale);
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _maxHealth = Mathf.Max(1, card != null ? card.health : 1);
         _currentHealth = _maxHealth;
@@ -37,7 +56,8 @@ public class AttackUnit : MonoBehaviour
         _renderer.sprite = CombatSpriteUtility.GetCardSprite(card);
         _renderer.sortingLayerID = sortingLayerId;
         _renderer.sortingOrder = sortingOrder;
-        _visualBaseLocalPosition = Vector3.zero;
+        _renderer.transform.localScale = Vector3.one * _fieldSpriteScale;
+        _visualBaseLocalPosition = GetBottomAnchoredVisualPosition(_renderer.sprite);
 
         if (_path != null && _path.Count > 0)
         {
@@ -91,9 +111,10 @@ public class AttackUnit : MonoBehaviour
         transform.position = Vector3.MoveTowards(transform.position, target, _moveSpeed * Time.deltaTime);
 
         Vector3 movement = transform.position - previousPosition;
+
         if (_renderer != null && Mathf.Abs(movement.x) > 0.001f)
         {
-            _renderer.flipX = movement.x < 0f;
+            _renderer.flipX = movement.x > 0f;
         }
 
         if ((transform.position - target).sqrMagnitude <= _waypointReachDistance * _waypointReachDistance)
@@ -115,6 +136,17 @@ public class AttackUnit : MonoBehaviour
         _renderer.transform.localPosition = _visualBaseLocalPosition + new Vector3(0f, offsetY, 0f);
     }
 
+    private Vector3 GetBottomAnchoredVisualPosition(Sprite sprite)
+    {
+        if (sprite == null)
+        {
+            return new Vector3(0f, _bottomAnchorYOffset, 0f);
+        }
+
+        float bottomToOrigin = -sprite.bounds.min.y * _fieldSpriteScale;
+        return new Vector3(0f, bottomToOrigin + _bottomAnchorYOffset, 0f);
+    }
+
     private void SetAlpha(float alpha)
     {
         if (_renderer == null) return;
@@ -127,11 +159,18 @@ public class AttackUnit : MonoBehaviour
     private void ReachDestination()
     {
         Debug.Log($"[AttackUnit] Reached destination: {(_card != null ? _card.cardName : name)}");
+        _onReachedDestination?.Invoke(_owner);
         Destroy(gameObject);
     }
 
     private void Die()
     {
         Destroy(gameObject);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.8f);
+        Gizmos.DrawWireSphere(HitCenter, _hitRadius);
     }
 }
