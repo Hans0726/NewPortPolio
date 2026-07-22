@@ -4,17 +4,17 @@ public class DefenseUnit : MonoBehaviour
 {
     [SerializeField] private float _attackRange = 2.5f;
     [SerializeField] private float _holdAtRangeEdgeSeconds = 3f;
-    [SerializeField] private float _rangeEdgeInset = 0.05f;
-    [SerializeField] private float _movementAreaCheckRadius = 0.12f;
+    [SerializeField] private float _movementAreaCheckRadius = 0.2f;
     [SerializeField] private float _positionReachDistance = 0.03f;
     [SerializeField] private float _bobAmplitude = 0.035f;
     [SerializeField] private float _bobFrequency = 8f;
 
+
     private enum MoveState
     {
         Guarding,
-        MovingToRangeEdge,
-        HoldingAtRangeEdge,
+        ChasingTarget,
+        HoldingLastKnownPosition,
         ReturningHome
     }
 
@@ -22,13 +22,14 @@ public class DefenseUnit : MonoBehaviour
     private SpriteRenderer _renderer;
     private Vector3 _homePosition;
     private AttackUnit _target;
-    private MoveState _moveState;
-    private Vector3 _rangeEdgeHoldPosition;
+    [SerializeField] private MoveState _moveState;
+    private Vector3 _lastKnownTargetPosition;
     private float _moveSpeed;
     private int _attack;
     private float _attackSpeed;
     private float _nextAttackTime;
     private float _holdUntilTime;
+    private float _blockedChaseStartTime;
     private bool _isFixedUnit;
     private bool _isMovingThisFrame;
     private Vector3 _visualBaseLocalPosition;
@@ -49,22 +50,23 @@ public class DefenseUnit : MonoBehaviour
     {
         _isMovingThisFrame = false;
 
-        AttackUnit escapedTarget = IsValidTarget(_target) ? null : _target;
-        AcquireTarget();
-
-        if (_target != null)
+        if (_target == null || _target.IsDead)
         {
-            _moveState = MoveState.Guarding;
-            FacePosition(_target.HitCenter);
-            TryAttack();
+            if (_target != null)
+            {
+                BeginLastKnownPositionHold();
+                _target = null;
+            }
+
+            AcquireTarget();
+        }
+
+        if (_target != null && !_target.IsDead)
+        {
+            HandleTrackedTarget();
         }
         else
         {
-            if (escapedTarget != null && !escapedTarget.IsDead && _moveState == MoveState.Guarding)
-            {
-                BeginRangeEdgeHold(escapedTarget.HitCenter);
-            }
-
             HandleNoTarget();
         }
 
@@ -73,22 +75,58 @@ public class DefenseUnit : MonoBehaviour
 
     private void AcquireTarget()
     {
-        if (IsValidTarget(_target)) return;
+        if (_target != null && !_target.IsDead) return;
 
-        _target = AttackUnitRegistry.FindClosest(_homePosition, _attackRange);
+        _target = AttackUnitRegistry.FindClosest(transform.position, _attackRange);
+        if (_target == null) return;
+
+        _moveState = MoveState.Guarding;
+        _lastKnownTargetPosition = _target.HitCenter;
+        _blockedChaseStartTime = 0f;
     }
 
-    private bool IsValidTarget(AttackUnit target)
+    private bool CanAttackTarget(AttackUnit target)
     {
         if (target == null || target.IsDead) return false;
 
-        return GetDistanceToTargetEdge(_homePosition, target) <= _attackRange;
+        return GetDistanceToTargetEdge(transform.position, target) <= _attackRange;
     }
 
-    private void HandleTarget()
+    private void HandleTrackedTarget()
     {
-        FacePosition(_target.HitCenter);
-        TryAttack();
+        _lastKnownTargetPosition = _target.HitCenter;
+        FacePosition(_lastKnownTargetPosition);
+
+        if (CanAttackTarget(_target))
+        {
+            _moveState = MoveState.Guarding;
+            _blockedChaseStartTime = 0f;
+            TryAttack();
+            return;
+        }
+
+        if (_isFixedUnit)
+        {
+            _target = null;
+            return;
+        }
+
+        _moveState = MoveState.ChasingTarget;
+        MoveTowards(_lastKnownTargetPosition);
+
+        if (_isMovingThisFrame)
+        {
+            _blockedChaseStartTime = 0f;
+        }
+        else if (_blockedChaseStartTime <= 0f)
+        {
+            _blockedChaseStartTime = Time.time;
+        }
+        else if (Time.time >= _blockedChaseStartTime + _holdAtRangeEdgeSeconds)
+        {
+            _target = null;
+            BeginLastKnownPositionHold();
+        }
     }
 
     private void TryAttack()
@@ -103,23 +141,23 @@ public class DefenseUnit : MonoBehaviour
     {
         if (_isFixedUnit) return;
 
-        if (_moveState == MoveState.MovingToRangeEdge)
+        if (_moveState == MoveState.HoldingLastKnownPosition)
         {
-            bool reached = MoveTowards(_rangeEdgeHoldPosition);
-            if (reached || !_isMovingThisFrame)
+            if (Time.time >= _holdUntilTime)
             {
-                _moveState = MoveState.HoldingAtRangeEdge;
-                _holdUntilTime = Time.time + _holdAtRangeEdgeSeconds;
+                _moveState = MoveState.ReturningHome;
             }
 
             return;
         }
 
-        if (_moveState == MoveState.HoldingAtRangeEdge)
+        if (_moveState == MoveState.ChasingTarget)
         {
-            if (Time.time >= _holdUntilTime)
+            bool reached = MoveTowards(_lastKnownTargetPosition);
+            if (reached || !_isMovingThisFrame)
             {
-                _moveState = MoveState.ReturningHome;
+                _moveState = MoveState.HoldingLastKnownPosition;
+                _holdUntilTime = Time.time + _holdAtRangeEdgeSeconds;
             }
 
             return;
@@ -140,33 +178,20 @@ public class DefenseUnit : MonoBehaviour
         }
     }
 
-    private void BeginRangeEdgeHold(Vector3 escapedTargetPosition)
+    private void BeginLastKnownPositionHold()
     {
         if (_isFixedUnit) return;
 
-        Vector3 direction = escapedTargetPosition - _homePosition;
-        direction.z = 0f;
-
-        if (direction.sqrMagnitude <= 0.001f)
-        {
-            _rangeEdgeHoldPosition = _homePosition;
-        }
-        else
-        {
-            float rangeEdgeDistance = Mathf.Max(0f, _attackRange - _rangeEdgeInset);
-            _rangeEdgeHoldPosition = _homePosition + direction.normalized * rangeEdgeDistance;
-            _rangeEdgeHoldPosition.z = transform.position.z;
-        }
-
-        _moveState = MoveState.MovingToRangeEdge;
+        _lastKnownTargetPosition.z = transform.position.z;
+        _moveState = MoveState.ChasingTarget;
         _holdUntilTime = 0f;
+        _blockedChaseStartTime = 0f;
     }
 
     private bool MoveTowards(Vector3 targetPosition)
     {
         Vector3 previousPosition = transform.position;
         Vector3 nextPosition = Vector3.MoveTowards(transform.position, targetPosition, _moveSpeed * Time.deltaTime);
-        nextPosition = ClampPositionInsideAttackRange(nextPosition);
 
         if (CanMoveToPosition(nextPosition))
         {
@@ -199,19 +224,6 @@ public class DefenseUnit : MonoBehaviour
 
         float centerDistance = Vector3.Distance(origin, target.HitCenter);
         return Mathf.Max(0f, centerDistance - target.HitRadius);
-    }
-
-    private Vector3 ClampPositionInsideAttackRange(Vector3 position)
-    {
-        Vector3 homePosition = Application.isPlaying ? _homePosition : transform.position;
-        Vector3 homeToPosition = position - homePosition;
-        homeToPosition.z = 0f;
-
-        if (homeToPosition.sqrMagnitude <= _attackRange * _attackRange) return position;
-
-        Vector3 clampedPosition = homePosition + homeToPosition.normalized * _attackRange;
-        clampedPosition.z = position.z;
-        return clampedPosition;
     }
 
     private bool CanMoveToPosition(Vector3 position)
@@ -261,8 +273,7 @@ public class DefenseUnit : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
-        Vector3 center = Application.isPlaying ? _homePosition : transform.position;
-        Gizmos.DrawWireSphere(center, _attackRange);
+        Gizmos.DrawWireSphere(transform.position, _attackRange);
 
         if (!Application.isPlaying) return;
 

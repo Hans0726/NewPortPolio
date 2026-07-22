@@ -18,7 +18,7 @@ MonoBehaviour:
   cost: 0
   cardImage: {fileID: 0}
   cardType: 1
-  fieldSpriteScale: 0.5
+  fieldSpriteScale: 0.7
   fieldHitRadius: 1
   health: 50
   defense: 0

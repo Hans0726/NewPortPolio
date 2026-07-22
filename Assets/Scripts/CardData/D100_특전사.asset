@@ -22,7 +22,7 @@ MonoBehaviour:
   fieldHitRadius: 1
   health: 0
   defense: 0
-  attack: 20
-  attackSpeed: 3
+  attack: 10
+  attackSpeed: 2
   isFixedDefenseUnit: 0
   specialEffect: 

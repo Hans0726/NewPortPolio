@@ -28,10 +28,14 @@ public class GameTurnManager : MonoBehaviour
 
     private bool _isCombatInProgress;
     private bool _isGameEnded;
+    private int _playerMaxLife;
+    private int _opponentMaxLife;
 
     public int CurrentRound => _currentRound;
     public int PlayerLife => _playerLife;
     public int OpponentLife => _opponentLife;
+    public int PlayerMaxLife => _playerMaxLife;
+    public int OpponentMaxLife => _opponentMaxLife;
 
     public int CurrentCost
     {
@@ -57,6 +61,8 @@ public class GameTurnManager : MonoBehaviour
     private void Start()
     {
         _currentRound = Mathf.Clamp(_currentRound, 1, _maxRound);
+        _playerMaxLife = Mathf.Max(1, _playerLife);
+        _opponentMaxLife = Mathf.Max(1, _opponentLife);
         CurrentCost = Mathf.Clamp(_startingCost, 1, _maxCost);
         OnRoundChanged?.Invoke(_currentRound);
         OnLifeChanged?.Invoke(_playerLife, _opponentLife);
@@ -99,7 +105,6 @@ public class GameTurnManager : MonoBehaviour
         }
 
         _isCombatInProgress = true;
-        InGameCardManager.Instance.DiscardCurrentHand();
         CombatRoundManager.Instance.StartCombatRound(
             InGameCardManager.Instance.SelectedAttackCards,
             null,

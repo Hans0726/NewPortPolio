@@ -12,6 +12,9 @@ public class AttackUnit : MonoBehaviour
     [SerializeField] private float _waypointReachDistance = 0.05f;
     [SerializeField] private float _bobAmplitude = 0.05f;
     [SerializeField] private float _bobFrequency = 8f;
+    [SerializeField] private Vector2 _healthBarSize = new Vector2(1.1f, 0.1f);
+    [SerializeField] private float _healthBarTopPadding = 0.18f;
+    [SerializeField] private int _healthBarSortingOrderOffset = 20;
 
     private CardData _card;
     private WaypointPath _path;
@@ -28,8 +31,11 @@ public class AttackUnit : MonoBehaviour
     private float _hitRadius = 5f;
     private float _bottomAnchorYOffset;
     private Vector3 _visualBaseLocalPosition;
+    private WorldHealthBar _healthBar;
 
     public bool IsDead => _currentHealth <= 0;
+    public int MaxHealth => _maxHealth;
+    public int CurrentHealth => _currentHealth;
     public int Defense => _defense;
     public float HitRadius => _hitRadius;
     public Vector3 HitCenter => _renderer != null ? _renderer.bounds.center : transform.position;
@@ -67,6 +73,7 @@ public class AttackUnit : MonoBehaviour
             _nextWaypointIndex = 1;
         }
 
+        CreateHealthBar(sortingLayerId, sortingOrder);
         AttackUnitRegistry.Register(this);
     }
 
@@ -87,6 +94,7 @@ public class AttackUnit : MonoBehaviour
     {
         int actualDamage = Mathf.Max(1, rawDamage - _defense);
         _currentHealth -= actualDamage;
+        _healthBar?.SetValue(_currentHealth, _maxHealth);
 
         if (_currentHealth <= 0)
         {
@@ -134,6 +142,24 @@ public class AttackUnit : MonoBehaviour
 
         float offsetY = Mathf.Sin(Time.time * _bobFrequency) * _bobAmplitude;
         _renderer.transform.localPosition = _visualBaseLocalPosition + new Vector3(0f, offsetY, 0f);
+    }
+
+    private void CreateHealthBar(int sortingLayerId, int sortingOrder)
+    {
+        Vector3 offset = new Vector3(0f, GetHealthBarHeightOffset(), 0f);
+        Vector2 size = _healthBarSize * Mathf.Max(0.75f, _fieldSpriteScale);
+        _healthBar = WorldHealthBar.Create(transform, offset, size, new Color(0.2f, 0.9f, 0.25f, 0.95f), sortingLayerId, sortingOrder + _healthBarSortingOrderOffset);
+        _healthBar.SetValue(_currentHealth, _maxHealth);
+    }
+
+    private float GetHealthBarHeightOffset()
+    {
+        if (_renderer == null || _renderer.sprite == null)
+        {
+            return 1f + _healthBarTopPadding;
+        }
+
+        return _renderer.sprite.bounds.size.y * _fieldSpriteScale + _bottomAnchorYOffset + _healthBarTopPadding;
     }
 
     private Vector3 GetBottomAnchoredVisualPosition(Sprite sprite)

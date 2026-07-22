@@ -6,7 +6,6 @@ using System;
 public class UIPopup_CardSelect : UIPopup
 {
     [SerializeField] private Transform _cardDisplayContainer; // 팝업 내부 카드 표시 영역
-    [SerializeField] private Button _btnAddToDeck;
     [SerializeField] private Button _btnDraw;
 
     private GameObject _displayedCardInstance; // 팝업에 표시 중인 카드 복제본
@@ -14,16 +13,14 @@ public class UIPopup_CardSelect : UIPopup
     private Transform _originalParent; // ★ 원본 카드의 부모 (핸드 컨테이너)
     private int _originalSiblingIndex; // ★ 원본 카드의 sibling index (n번째 위치)
     private GameObject _draggedCardRoot; // ★ 드래그된 카드의 루트 오브젝트 (복원 시 사용)
-    private Action<CardData, bool> _onChoice; // card, isDraw(true) or addToDeck(false)
+    private Action<CardData> _onChoice;
     private CardData _selectedCardData;
     private bool _choiceConfirmed;
 
     protected override void Start()
     {
         base.Start(); // UIPopup의 Start 호출 (_btnClose 설정)
-
-        _btnAddToDeck.onClick.AddListener(OnAddToDeckClicked);
-        _btnDraw.onClick.AddListener(OnDrawClicked);
+        _btnDraw.onClick.AddListener(ConfirmChoice);
     }
 
     /// <summary>
@@ -37,7 +34,7 @@ public class UIPopup_CardSelect : UIPopup
         _draggedCardRoot = draggedCardUI.RootGameObject; // ★ 카드 루트 객체 저장
     }
 
-    public void OpenPopup(CardUI cardUI, Action<CardData, bool> onChoice)
+    public void OpenPopup(CardUI cardUI, Action<CardData> onChoice)
     {
         if (cardUI == null || cardUI.CurrentCardData == null)
         {
@@ -85,17 +82,7 @@ public class UIPopup_CardSelect : UIPopup
         base.OpenPopup(true);
     }
 
-    private void OnAddToDeckClicked()
-    {
-        ConfirmChoice(false);
-    }
-
-    private void OnDrawClicked()
-    {
-        ConfirmChoice(true);
-    }
-
-    private void ConfirmChoice(bool isDraw)
+    private void ConfirmChoice()
     {
         CardUI displayedCardUI = _displayedCardInstance != null
             ? _displayedCardInstance.GetComponentInChildren<CardUI>(true)
@@ -112,7 +99,7 @@ public class UIPopup_CardSelect : UIPopup
         }
 
         _choiceConfirmed = true;
-        _onChoice?.Invoke(selectedCardData, isDraw);
+        _onChoice?.Invoke(selectedCardData);
         base.ClosePopup();
     }
 

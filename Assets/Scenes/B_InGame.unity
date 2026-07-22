@@ -5365,7 +5365,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7947911505737750455, guid: d730038d263986f4dac93230e1dd62b0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 855377715}
   m_SourcePrefab: {fileID: 100100000, guid: d730038d263986f4dac93230e1dd62b0, type: 3}
 --- !u!4 &153679909 stripped
 Transform:
@@ -5402,7 +5406,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1da925ee829426e4d957576c0e7c2c18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameTurnManager
+  _currentRound: 1
+  _maxRound: 10
   _currentCost: 99
+  _startingCost: 99
+  _maxCost: 99
+  _playerLife: 10
+  _opponentLife: 10
+  _lifeDamagePerAttackUnit: 1
+  _cardsToDrawPerRound: 3
 --- !u!4 &163340607
 Transform:
   m_ObjectHideFlags: 0
@@ -7181,6 +7193,12 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9132832536761082797, guid: fd980c817c63af4458df40a61e529e93,
     type: 3}
   m_PrefabInstance: {fileID: 306856474}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &315081097 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7947911505737750455, guid: d730038d263986f4dac93230e1dd62b0,
+    type: 3}
+  m_PrefabInstance: {fileID: 1532045242}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &320586888
 PrefabInstance:
@@ -9722,11 +9740,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatRoundManager
   _enemyAttackPath: {fileID: 775007954}
+  _opponentAttackPath: {fileID: 0}
   _attackUnitRoot: {fileID: 0}
   _spawnInterval: 0.35
   _unitZ: -1
   _unitSortingLayerName: Layer 1
   _attackUnitSortingOrder: 80
+  _attackUnitBaseScale: 1
+  _attackUnitBottomAnchorYOffset: 0
 --- !u!4 &588959867
 Transform:
   m_ObjectHideFlags: 0
@@ -10897,6 +10918,30 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 853395559}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &855377712 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7947911505737750455, guid: d730038d263986f4dac93230e1dd62b0,
+    type: 3}
+  m_PrefabInstance: {fileID: 153679908}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &855377715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 855377712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e6a2b8e5d8b4e92967a9b1f0b9b4285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectiveHealthBar
+  _objectiveOwner: 1
+  _barOffset: {x: 0, y: 2.4, z: 0}
+  _barSize: {x: 1.4, y: 0.24}
+  _fillColor: {r: 1, g: 0, b: 0.22755897, a: 0.95}
+  _sortingLayerName: Layer 1
+  _sortingOrder: 120
 --- !u!1001 &858370625
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13933,7 +13978,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7947911505737750455, guid: d730038d263986f4dac93230e1dd62b0,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1532045246}
   m_SourcePrefab: {fileID: 100100000, guid: d730038d263986f4dac93230e1dd62b0, type: 3}
 --- !u!4 &1532045243 stripped
 Transform:
@@ -13941,6 +13990,24 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1532045242}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1532045246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 315081097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e6a2b8e5d8b4e92967a9b1f0b9b4285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectiveHealthBar
+  _objectiveOwner: 0
+  _barOffset: {x: 0, y: 2.4, z: 0}
+  _barSize: {x: 1.4, y: 0.24}
+  _fillColor: {r: 1, g: 0, b: 0.23137255, a: 0.95}
+  _sortingLayerName: Layer 1
+  _sortingOrder: 120
 --- !u!1 &1544867652
 GameObject:
   m_ObjectHideFlags: 0

@@ -25,4 +25,4 @@ MonoBehaviour:
   attack: 0
   attackSpeed: 0
   isFixedDefenseUnit: 0
-  specialEffect: "\uC8FC\uBCC0 \uC720\uB2DB\uC758 \uC774\uB3D9\uC18D\uB3C4 \uC99D\uAC00 "
+  specialEffect: ' '

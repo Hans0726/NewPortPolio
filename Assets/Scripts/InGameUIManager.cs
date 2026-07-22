@@ -501,7 +501,7 @@ public class InGameUIManager : MonoBehaviour
             // ★ 팝업을 열기 전에 카드의 원본 부모/위치 정보 저장
             // 드래그 전 저장된 원래 인덱스 사용
             _cardSelectPopup.SetOriginalCardInfo(_handContainer, _draggedCardOriginalIndex, _draggedCard);
-            _cardSelectPopup.OpenPopup(cardUI, OnCardSelectionChoice);
+            _cardSelectPopup.OpenPopup(cardUI, OnCardSelection);
         }
         else
         {
@@ -526,18 +526,10 @@ public class InGameUIManager : MonoBehaviour
         }
     }
 
-    private void OnCardSelectionChoice(CardData card, bool isDraw)
+    private void OnCardSelection(CardData card)
     {
-        if (isDraw)
-        {
-            // 카드 뽑기
-            UseCard(card);
-        }
-        else
-        {
-            // 덱에 추가
-            AddCardToDeck(card);
-        }
+        // 카드 뽑기
+        UseCard(card);
 
         // UI에서 제거
         if (_pendingSelectedCardRoot != null)
