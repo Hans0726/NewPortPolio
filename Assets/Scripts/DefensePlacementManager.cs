@@ -7,9 +7,8 @@ public class DefensePlacementManager : MonoBehaviour
 {
     public static DefensePlacementManager Instance { get; private set; }
 
-    [Header("Placement Tilemaps")]
-    [SerializeField] private Tilemap _placeableTilemap;
-    [SerializeField] private Tilemap _placementOverlayTilemap;
+    [Header("Placement Area")]
+    [SerializeField] private Collider2D[] _placeableAreas;
 
     [Header("Placement Preview")]
     [SerializeField] private Camera _worldCamera;
@@ -24,25 +23,25 @@ public class DefensePlacementManager : MonoBehaviour
     [Header("Overlay Colors")]
     [SerializeField] private Color _placeableColor = new Color(0.1f, 1f, 0.1f, 0.35f);
 
-    private readonly HashSet<Vector3Int> _placeableCells = new HashSet<Vector3Int>();
-
     private CardData _pendingCard;
     private Action<CardData, Vector3> _onPlaced;
     private Action _onPlacementEnded;
     private GameObject _previewObject;
     private SpriteRenderer _previewRenderer;
-    private Tilemap _runtimeOverlayTilemap;
-    private Tile _overlayTile;
     private bool _isPlacing;
 
     public bool IsPlacing => _isPlacing;
 
     public bool IsWorldPositionPlaceable(Vector3 worldPosition)
     {
-        if (_placeableTilemap == null) return true;
+        Vector2 point = worldPosition;
+        foreach (Collider2D area in _placeableAreas)
+        {
+            if (area != null && area.OverlapPoint(point))
+                return true;
+        }
 
-        Vector3Int cell = _placeableTilemap.WorldToCell(worldPosition);
-        return _placeableTilemap.HasTile(cell);
+        return false;
     }
 
     private void Awake()
@@ -59,8 +58,6 @@ public class DefensePlacementManager : MonoBehaviour
         {
             _worldCamera = Camera.main;
         }
-
-        EnsureOverlayTilemap();
     }
 
     private void Update()
@@ -90,15 +87,6 @@ public class DefensePlacementManager : MonoBehaviour
             return false;
         }
 
-        if (_placeableTilemap == null || _placementOverlayTilemap == null)
-        {
-            if (_placeableTilemap == null)
-            {
-                Debug.LogError("[DefensePlacementManager] Placeable Tilemap is not assigned.");
-                return false;
-            }
-        }
-
         if (_worldCamera == null)
         {
             _worldCamera = Camera.main;
@@ -109,121 +97,62 @@ public class DefensePlacementManager : MonoBehaviour
             }
         }
 
-        EnsureOverlayTilemap();
-        if (_placementOverlayTilemap == null)
-        {
-            Debug.LogError("[DefensePlacementManager] Placement Overlay Tilemap could not be prepared.");
-            return false;
-        }
-
         _pendingCard = card;
         _onPlaced = onPlaced;
         _onPlacementEnded = onPlacementEnded;
         _isPlacing = true;
 
-        CachePlacementCells();
-        ShowPlacementOverlay();
         CreatePreview(card);
         UpdatePreviewPosition();
         return true;
     }
 
-    private void CachePlacementCells()
-    {
-        _placeableCells.Clear();
+    //private void ShowPlacementOverlay()
+    //{
+    //    _placementOverlayTilemap.ClearAllTiles();
+    //    ApplyOverlayRendererSettings();
 
-        BoundsInt placeableBounds = _placeableTilemap.cellBounds;
-        foreach (Vector3Int cell in placeableBounds.allPositionsWithin)
-        {
-            if (_placeableTilemap.HasTile(cell))
-            {
-                _placeableCells.Add(cell);
-            }
-        }
-    }
+    //    _overlayTile = ScriptableObject.CreateInstance<Tile>();
+    //    _overlayTile.sprite = CreateOverlaySprite();
+    //    _overlayTile.colliderType = Tile.ColliderType.None;
 
-    private void EnsureOverlayTilemap()
-    {
-        if (_placeableTilemap == null) return;
+    //    foreach (Vector3Int cell in _placeableCells)
+    //    {
+    //        SetOverlayCell(cell, _placeableColor);
+    //    }
+    //}
 
-        if (_placementOverlayTilemap != null && _placementOverlayTilemap != _placeableTilemap)
-        {
-            return;
-        }
+    //private Sprite CreateOverlaySprite()
+    //{
+    //    const int textureSize = 32;
+    //    Texture2D texture = new Texture2D(textureSize, textureSize);
+    //    texture.filterMode = FilterMode.Point;
+    //    texture.wrapMode = TextureWrapMode.Clamp;
 
-        if (_runtimeOverlayTilemap != null)
-        {
-            _placementOverlayTilemap = _runtimeOverlayTilemap;
-            return;
-        }
+    //    Color[] pixels = new Color[textureSize * textureSize];
+    //    for (int i = 0; i < pixels.Length; i++)
+    //    {
+    //        pixels[i] = Color.white;
+    //    }
 
-        GameObject overlayObject = new GameObject("PlacementOverlayTilemap_Runtime");
-        Transform sourceTransform = _placeableTilemap.transform;
-        overlayObject.transform.SetParent(sourceTransform.parent, false);
-        overlayObject.transform.localPosition = sourceTransform.localPosition;
-        overlayObject.transform.localRotation = sourceTransform.localRotation;
-        overlayObject.transform.localScale = sourceTransform.localScale;
+    //    texture.SetPixels(pixels);
+    //    texture.Apply();
+    //    texture.hideFlags = HideFlags.HideAndDontSave;
 
-        _runtimeOverlayTilemap = overlayObject.AddComponent<Tilemap>();
-        overlayObject.AddComponent<TilemapRenderer>();
-        _placementOverlayTilemap = _runtimeOverlayTilemap;
+    //    return Sprite.Create(texture, new Rect(0f, 0f, textureSize, textureSize), new Vector2(0.5f, 0.5f), textureSize);
+    //}
 
-        Debug.LogWarning("[DefensePlacementManager] Overlay Tilemap was missing or matched Placeable Tilemap, so a runtime overlay was created.");
-    }
+    //private void ApplyOverlayRendererSettings()
+    //{
+    //    if (_placementOverlayTilemap == null) return;
+    //    if (_placementOverlayTilemap == _placeableTilemap) return;
 
-    private void ShowPlacementOverlay()
-    {
-        _placementOverlayTilemap.ClearAllTiles();
-        ApplyOverlayRendererSettings();
+    //    TilemapRenderer overlayRenderer = _placementOverlayTilemap.GetComponent<TilemapRenderer>();
+    //    if (overlayRenderer == null) return;
 
-        _overlayTile = ScriptableObject.CreateInstance<Tile>();
-        _overlayTile.sprite = CreateOverlaySprite();
-        _overlayTile.colliderType = Tile.ColliderType.None;
-
-        foreach (Vector3Int cell in _placeableCells)
-        {
-            SetOverlayCell(cell, _placeableColor);
-        }
-    }
-
-    private void SetOverlayCell(Vector3Int cell, Color color)
-    {
-        _placementOverlayTilemap.SetTile(cell, _overlayTile);
-        _placementOverlayTilemap.SetTileFlags(cell, TileFlags.None);
-        _placementOverlayTilemap.SetColor(cell, color);
-    }
-
-    private Sprite CreateOverlaySprite()
-    {
-        const int textureSize = 32;
-        Texture2D texture = new Texture2D(textureSize, textureSize);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-
-        Color[] pixels = new Color[textureSize * textureSize];
-        for (int i = 0; i < pixels.Length; i++)
-        {
-            pixels[i] = Color.white;
-        }
-
-        texture.SetPixels(pixels);
-        texture.Apply();
-        texture.hideFlags = HideFlags.HideAndDontSave;
-
-        return Sprite.Create(texture, new Rect(0f, 0f, textureSize, textureSize), new Vector2(0.5f, 0.5f), textureSize);
-    }
-
-    private void ApplyOverlayRendererSettings()
-    {
-        if (_placementOverlayTilemap == null) return;
-        if (_placementOverlayTilemap == _placeableTilemap) return;
-
-        TilemapRenderer overlayRenderer = _placementOverlayTilemap.GetComponent<TilemapRenderer>();
-        if (overlayRenderer == null) return;
-
-        overlayRenderer.sortingLayerID = ResolveSortingLayerID();
-        overlayRenderer.sortingOrder = _overlaySortingOrder;
-    }
+    //    overlayRenderer.sortingLayerID = ResolveSortingLayerID();
+    //    overlayRenderer.sortingOrder = _overlaySortingOrder;
+    //}
 
     private void CreatePreview(CardData card)
     {
@@ -248,7 +177,7 @@ public class DefensePlacementManager : MonoBehaviour
         }
 
         Sprite resourceSprite = Resources.Load<Sprite>("CardImage/" + card.cardName);
-        return resourceSprite != null ? resourceSprite : CreateOverlaySprite();
+        return resourceSprite;
     }
 
     private void UpdatePreviewPosition()
@@ -256,13 +185,12 @@ public class DefensePlacementManager : MonoBehaviour
         if (_previewObject == null || _worldCamera == null) return;
 
         Vector3 mouseWorldPosition = GetMouseWorldPosition();
-        Vector3Int cell = _placeableTilemap.WorldToCell(mouseWorldPosition);
         Sprite previewSprite = _previewRenderer != null ? _previewRenderer.sprite : null;
         _previewObject.transform.position = GetSpritePositionFromBottomAnchor(mouseWorldPosition, previewSprite);
 
         if (_previewRenderer != null)
         {
-            _previewRenderer.color = IsPlaceableCell(cell)
+            _previewRenderer.color = IsWorldPositionPlaceable(mouseWorldPosition)
                 ? new Color(1f, 1f, 1f, 0.85f)
                 : new Color(1f, 0.4f, 0.4f, 0.65f);
         }
@@ -271,24 +199,19 @@ public class DefensePlacementManager : MonoBehaviour
     private void TryPlaceAtMousePosition()
     {
         Vector3 mouseWorldPosition = GetMouseWorldPosition();
-        Vector3Int cell = _placeableTilemap.WorldToCell(mouseWorldPosition);
-        if (!IsPlaceableCell(cell))
+        if (!IsWorldPositionPlaceable(mouseWorldPosition))
         {
             Debug.Log("[DefensePlacementManager] Cannot place defense unit outside the placeable area.");
             return;
         }
 
-        Vector3 placePosition = mouseWorldPosition;
+        Vector3 groundPosition = mouseWorldPosition;
+        Vector3 placePosition = groundPosition;
         Sprite unitSprite = GetCardSprite(_pendingCard);
         placePosition = GetSpritePositionFromBottomAnchor(placePosition, unitSprite);
-        PlaceUnit(_pendingCard, placePosition);
+        PlaceUnit(_pendingCard, placePosition, groundPosition);
         _onPlaced?.Invoke(_pendingCard, placePosition);
         EndPlacement();
-    }
-
-    private bool IsPlaceableCell(Vector3Int cell)
-    {
-        return _placeableCells.Contains(cell);
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -298,7 +221,7 @@ public class DefensePlacementManager : MonoBehaviour
         return _worldCamera.ScreenToWorldPoint(mousePosition);
     }
 
-    private void PlaceUnit(CardData card, Vector3 position)
+    private void PlaceUnit(CardData card, Vector3 position, Vector3 groundPosition)
     {
         GameObject unitObject = new GameObject($"DefenseUnit_{card.cardName}");
         if (_placedUnitRoot != null)
@@ -318,7 +241,7 @@ public class DefensePlacementManager : MonoBehaviour
         renderer.sortingOrder = _previewSortingOrder - 1;
 
         DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
-        defenseUnit.Initialize(card, position);
+        defenseUnit.Initialize(card, position, groundPosition);
     }
 
     private Vector3 GetSpritePositionFromBottomAnchor(Vector3 bottomAnchorPosition, Sprite sprite)
@@ -353,11 +276,6 @@ public class DefensePlacementManager : MonoBehaviour
             Destroy(_previewObject);
             _previewObject = null;
             _previewRenderer = null;
-        }
-
-        if (_placementOverlayTilemap != null)
-        {
-            _placementOverlayTilemap.ClearAllTiles();
         }
 
         _onPlaced = null;

@@ -21,6 +21,7 @@ public class DefenseUnit : MonoBehaviour
     private CardData _card;
     private SpriteRenderer _renderer;
     private Vector3 _homePosition;
+    private Vector3 _groundOffsetFromTransform;
     private AttackUnit _target;
     [SerializeField] private MoveState _moveState;
     private Vector3 _lastKnownTargetPosition;
@@ -34,10 +35,11 @@ public class DefenseUnit : MonoBehaviour
     private bool _isMovingThisFrame;
     private Vector3 _visualBaseLocalPosition;
 
-    public void Initialize(CardData card, Vector3 homePosition)
+    public void Initialize(CardData card, Vector3 homePosition, Vector3 homeGroundPosition)
     {
         _card = card;
         _homePosition = homePosition;
+        _groundOffsetFromTransform = homeGroundPosition - homePosition;
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _attack = Mathf.Max(1, card != null ? card.attack : 1);
         _attackSpeed = Mathf.Max(0.1f, card != null ? card.attackSpeed : 1f);
@@ -49,6 +51,13 @@ public class DefenseUnit : MonoBehaviour
     private void Update()
     {
         _isMovingThisFrame = false;
+
+        if (!IsCombatActive())
+        {
+            HandleOutOfCombat();
+            AnimateVisual();
+            return;
+        }
 
         if (_target == null || _target.IsDead)
         {
@@ -71,6 +80,26 @@ public class DefenseUnit : MonoBehaviour
         }
 
         AnimateVisual();
+    }
+
+    private bool IsCombatActive()
+    {
+        return GameTurnManager.Instance != null && GameTurnManager.Instance.IsCombatInProgress;
+    }
+
+    private void HandleOutOfCombat()
+    {
+        _target = null;
+        _blockedChaseStartTime = 0f;
+
+        if (_isFixedUnit || IsAtPosition(_homePosition))
+        {
+            _moveState = MoveState.Guarding;
+            return;
+        }
+
+        _moveState = MoveState.ReturningHome;
+        MoveTowards(_homePosition);
     }
 
     private void AcquireTarget()
@@ -193,9 +222,14 @@ public class DefenseUnit : MonoBehaviour
         Vector3 previousPosition = transform.position;
         Vector3 nextPosition = Vector3.MoveTowards(transform.position, targetPosition, _moveSpeed * Time.deltaTime);
 
-        if (CanMoveToPosition(nextPosition))
+        if (!TryMoveTo(nextPosition))
         {
-            transform.position = nextPosition;
+            Vector3 xOnlyPosition = new Vector3(nextPosition.x, transform.position.y, nextPosition.z);
+            if (!TryMoveTo(xOnlyPosition))
+            {
+                Vector3 yOnlyPosition = new Vector3(transform.position.x, nextPosition.y, nextPosition.z);
+                TryMoveTo(yOnlyPosition);
+            }
         }
 
         Vector3 movement = transform.position - previousPosition;
@@ -203,10 +237,18 @@ public class DefenseUnit : MonoBehaviour
 
         if (_renderer != null && Mathf.Abs(movement.x) > 0.001f)
         {
-            _renderer.flipX = movement.x < 0f;
+            _renderer.flipX = movement.x > 0f;
         }
 
         return IsAtPosition(targetPosition);
+    }
+
+    private bool TryMoveTo(Vector3 position)
+    {
+        if (!CanMoveToPosition(position)) return false;
+
+        transform.position = position;
+        return true;
     }
 
     private void AnimateVisual()
@@ -236,20 +278,12 @@ public class DefenseUnit : MonoBehaviour
         if (_movementAreaCheckRadius <= 0f) return true;
 
         return placementManager.IsWorldPositionPlaceable(groundPosition + Vector3.left * _movementAreaCheckRadius)
-            && placementManager.IsWorldPositionPlaceable(groundPosition + Vector3.right * _movementAreaCheckRadius)
-            && placementManager.IsWorldPositionPlaceable(groundPosition + Vector3.up * _movementAreaCheckRadius)
-            && placementManager.IsWorldPositionPlaceable(groundPosition + Vector3.down * _movementAreaCheckRadius);
+            && placementManager.IsWorldPositionPlaceable(groundPosition + Vector3.right * _movementAreaCheckRadius);
     }
 
     private Vector3 GetGroundPosition(Vector3 unitPosition)
     {
-        if (_renderer == null || _renderer.sprite == null) return unitPosition;
-
-        Vector3 groundPosition = unitPosition;
-        float visualOffsetY = _visualBaseLocalPosition.y * transform.lossyScale.y;
-        float spriteBottomOffsetY = _renderer.sprite.bounds.min.y * _renderer.transform.lossyScale.y;
-        groundPosition.y += visualOffsetY + spriteBottomOffsetY;
-        return groundPosition;
+        return unitPosition + _groundOffsetFromTransform;
     }
 
     private bool IsAtPosition(Vector3 position)
@@ -266,7 +300,7 @@ public class DefenseUnit : MonoBehaviour
         float deltaX = position.x - transform.position.x;
         if (Mathf.Abs(deltaX) > 0.001f)
         {
-            _renderer.flipX = deltaX < 0f;
+            _renderer.flipX = deltaX > 0f;
         }
     }
 

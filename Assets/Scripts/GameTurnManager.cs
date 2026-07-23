@@ -36,6 +36,7 @@ public class GameTurnManager : MonoBehaviour
     public int OpponentLife => _opponentLife;
     public int PlayerMaxLife => _playerMaxLife;
     public int OpponentMaxLife => _opponentMaxLife;
+    public bool IsCombatInProgress => _isCombatInProgress;
 
     public int CurrentCost
     {
