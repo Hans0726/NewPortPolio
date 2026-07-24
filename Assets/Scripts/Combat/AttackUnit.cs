@@ -30,10 +30,12 @@ public class AttackUnit : MonoBehaviour
     private float _fieldSpriteScale = 1f;
     private float _hitRadius = 5f;
     private float _bottomAnchorYOffset;
+    private bool _isHiding = false;
     private Vector3 _visualBaseLocalPosition;
     private WorldHealthBar _healthBar;
 
     public bool IsDead => _currentHealth <= 0;
+    public bool IsHiding => _isHiding;
     public int MaxHealth => _maxHealth;
     public int CurrentHealth => _currentHealth;
     public int Defense => _defense;
@@ -128,9 +130,15 @@ public class AttackUnit : MonoBehaviour
         if ((transform.position - target).sqrMagnitude <= _waypointReachDistance * _waypointReachDistance)
         {
             if (_path.IsArrivedAtEntrance(_nextWaypointIndex - 0))
+            {
+                _isHiding = true;
                 SetAlpha(0.3f);
+            }
             if (_path.IsArrivedAtExit(_nextWaypointIndex - 0))
+            {
+                _isHiding = false;
                 SetAlpha(1f);
+            }
 
             _nextWaypointIndex++;
         }

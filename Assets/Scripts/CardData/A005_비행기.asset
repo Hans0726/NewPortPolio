@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: 5
   cardName: "\uBE44\uD589\uAE30"
-  moveSpeed: 3.5
+  moveSpeed: 5
   cost: 2
   cardImage: {fileID: 0}
   cardType: 1

@@ -9,6 +9,8 @@ public class DefensePlacementManager : MonoBehaviour
 
     [Header("Placement Area")]
     [SerializeField] private Collider2D[] _placeableAreas;
+    [SerializeField] private SpriteRenderer[] _placeableAreaRenderers;
+    [SerializeField] private Color _placeableColor = new Color(0.1f, 1f, 0.1f, 0.35f);
 
     [Header("Placement Preview")]
     [SerializeField] private Camera _worldCamera;
@@ -18,11 +20,8 @@ public class DefensePlacementManager : MonoBehaviour
     [SerializeField] private float _bottomAnchorYOffset = 0.1f;
     [SerializeField] private string _previewSortingLayerName = "Layer 1";
     [SerializeField] private int _previewSortingOrder = 100;
-    [SerializeField] private int _overlaySortingOrder = 2;
 
-    [Header("Overlay Colors")]
-    [SerializeField] private Color _placeableColor = new Color(0.1f, 1f, 0.1f, 0.35f);
-
+   
     private CardData _pendingCard;
     private Action<CardData, Vector3> _onPlaced;
     private Action _onPlacementEnded;
@@ -102,57 +101,22 @@ public class DefensePlacementManager : MonoBehaviour
         _onPlacementEnded = onPlacementEnded;
         _isPlacing = true;
 
+        ShowPlacementArea(true);
         CreatePreview(card);
         UpdatePreviewPosition();
         return true;
     }
 
-    //private void ShowPlacementOverlay()
-    //{
-    //    _placementOverlayTilemap.ClearAllTiles();
-    //    ApplyOverlayRendererSettings();
-
-    //    _overlayTile = ScriptableObject.CreateInstance<Tile>();
-    //    _overlayTile.sprite = CreateOverlaySprite();
-    //    _overlayTile.colliderType = Tile.ColliderType.None;
-
-    //    foreach (Vector3Int cell in _placeableCells)
-    //    {
-    //        SetOverlayCell(cell, _placeableColor);
-    //    }
-    //}
-
-    //private Sprite CreateOverlaySprite()
-    //{
-    //    const int textureSize = 32;
-    //    Texture2D texture = new Texture2D(textureSize, textureSize);
-    //    texture.filterMode = FilterMode.Point;
-    //    texture.wrapMode = TextureWrapMode.Clamp;
-
-    //    Color[] pixels = new Color[textureSize * textureSize];
-    //    for (int i = 0; i < pixels.Length; i++)
-    //    {
-    //        pixels[i] = Color.white;
-    //    }
-
-    //    texture.SetPixels(pixels);
-    //    texture.Apply();
-    //    texture.hideFlags = HideFlags.HideAndDontSave;
-
-    //    return Sprite.Create(texture, new Rect(0f, 0f, textureSize, textureSize), new Vector2(0.5f, 0.5f), textureSize);
-    //}
-
-    //private void ApplyOverlayRendererSettings()
-    //{
-    //    if (_placementOverlayTilemap == null) return;
-    //    if (_placementOverlayTilemap == _placeableTilemap) return;
-
-    //    TilemapRenderer overlayRenderer = _placementOverlayTilemap.GetComponent<TilemapRenderer>();
-    //    if (overlayRenderer == null) return;
-
-    //    overlayRenderer.sortingLayerID = ResolveSortingLayerID();
-    //    overlayRenderer.sortingOrder = _overlaySortingOrder;
-    //}
+    private void ShowPlacementArea(bool isOn)
+    {
+        foreach (SpriteRenderer sr in _placeableAreaRenderers)
+        {
+            if (isOn)
+                sr.color = _placeableColor;
+            else
+                sr.color = new Color(sr.color.r, sr.color.g, sr.color.b, 0f);
+        }
+    }
 
     private void CreatePreview(CardData card)
     {
@@ -278,6 +242,7 @@ public class DefensePlacementManager : MonoBehaviour
             _previewRenderer = null;
         }
 
+        ShowPlacementArea(false);
         _onPlaced = null;
         _onPlacementEnded?.Invoke();
         _onPlacementEnded = null;

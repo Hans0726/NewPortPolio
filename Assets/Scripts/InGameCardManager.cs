@@ -58,6 +58,7 @@ public class InGameCardManager : MonoBehaviour
     {
         Debug.Log("[InGameCardManager] Test Initializing...");
         _cardDatabase.Initialize();
+
         for (int i = 0; i < 10; i++)
         {
             // 공격카드 0~7 / 수비카드 100~101까지 밖에 없으므로
@@ -65,12 +66,26 @@ public class InGameCardManager : MonoBehaviour
             short randomDefenseCardId = (short)UnityEngine.Random.Range(100, 102);
             short cointoss = (short)UnityEngine.Random.Range(0, 2);
             short resId = cointoss == 0 ? randomAttackCardId : randomDefenseCardId;
+            bool isExistSameDefenseCard = false; // 수비 카드인지 확인;
 
             CardData cardData = _cardDatabase.GetCardDataById(resId);
             if (cardData != null)
             {
-                _playerDeck.Add(cardData);
+                foreach (var existingCard in _playerDeck)
+                {
+                    if (existingCard.cardId == cardData.cardId && existingCard.cardType == CardType.Defense)
+                    {
+                        isExistSameDefenseCard = true;
+                        continue;
+                    }
+                }
+                if (isExistSameDefenseCard)
+                {
+                    i--; // 중복 수비 카드가 있으면 다시 시도
+                    continue;
+                }
             }
+            _playerDeck.Add(cardData);
         }
         ShuffleDeck();
     }
