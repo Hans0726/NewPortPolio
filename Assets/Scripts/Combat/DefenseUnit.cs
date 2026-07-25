@@ -3,12 +3,14 @@ using UnityEngine;
 public class DefenseUnit : MonoBehaviour
 {
     [SerializeField] private float _attackRange = 2.5f;
-    [SerializeField] private float _targetReleaseRangeMultiplier = 1.25f;
+    [SerializeField, Min(0f)] private float _maxChaseDuration = 2f;
     [SerializeField] private float _movementAreaCheckRadius = 0.2f;
     [SerializeField] private float _positionReachDistance = 0.03f;
     [SerializeField] private float _bobAmplitude = 0.035f;
     [SerializeField] private float _bobFrequency = 8f;
-
+    [SerializeField, Min(0f)] private float _pursuitPredictionMultiplier = 1.5f;
+    [Header("Debug")]
+    [SerializeField] private bool _enableDebugLogs = true;
 
     private enum MoveState
     {
@@ -28,21 +30,30 @@ public class DefenseUnit : MonoBehaviour
     private int _attack;
     private float _attackSpeed;
     private float _nextAttackTime;
+    private float _chaseElapsedTime;
     private bool _isFixedUnit;
     private bool _isMovingThisFrame;
     private Vector3 _visualBaseLocalPosition;
+    private AttackUnitOwner _targetOwner = AttackUnitOwner.Opponent;
 
-    public void Initialize(CardData card, Vector3 homePosition, Vector3 homeGroundPosition)
+    public void Initialize(
+        CardData card,
+        Vector3 homePosition,
+        Vector3 homeGroundPosition,
+        AttackUnitOwner targetOwner = AttackUnitOwner.Opponent)
     {
         _card = card;
         _homePosition = homePosition;
         _groundOffsetFromTransform = homeGroundPosition - homePosition;
+        _targetOwner = targetOwner;
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _attack = Mathf.Max(1, card != null ? card.attack : 1);
         _attackSpeed = Mathf.Max(0.1f, card != null ? card.attackSpeed : 1f);
         _isFixedUnit = card != null && card.isFixedDefenseUnit;
         _renderer = GetComponentInChildren<SpriteRenderer>();
         _visualBaseLocalPosition = _renderer != null ? _renderer.transform.localPosition : Vector3.zero;
+
+        LogDebug($"Initialized | State={_moveState}");
     }
 
     private void Update()
@@ -77,9 +88,9 @@ public class DefenseUnit : MonoBehaviour
 
     private void HandleOutOfCombat()
     {
-        _target = null;
+        ClearTarget("Combat ended");
         transform.position = _homePosition;
-        _moveState = MoveState.Guarding;
+        ChangeMoveState(MoveState.Guarding, "Combat ended");
 
         if (_renderer != null)
         {
@@ -89,7 +100,10 @@ public class DefenseUnit : MonoBehaviour
 
     private void RefreshTarget()
     {
-        AttackUnit attackableTarget = AttackUnitRegistry.FindClosest(transform.position, _attackRange);
+        AttackUnit attackableTarget = AttackUnitRegistry.FindClosest(
+            transform.position,
+            _attackRange,
+            _targetOwner);
 
         if (attackableTarget != null && (_target == null || _target.IsDead || !CanAttackTarget(_target)))
         {
@@ -99,28 +113,39 @@ public class DefenseUnit : MonoBehaviour
 
         if (_target == null || _target.IsDead)
         {
-            ClearTarget();
-            return;
-        }
-
-        if (!CanAttackTarget(_target) && ShouldReleaseTarget(_target))
-        {
-            ClearTarget();
+            ClearTarget("Target missing or dead");
         }
     }
 
     private void SetTarget(AttackUnit target)
     {
-        _target = target;
-        if (_target == null) return;
+        if (target == null) return;
 
-        _moveState = MoveState.Guarding;
+        AttackUnit previousTarget = _target;
+        _target = target;
+
+        if (previousTarget != _target)
+        {
+            _chaseElapsedTime = 0f;
+            LogDebug($"Target acquired | {GetAttackUnitName(previousTarget)} -> {GetAttackUnitName(_target)}");
+        }
+
+        ChangeMoveState(MoveState.Guarding, "Target acquired");
         _lastKnownTargetPosition = _target.HitCenter;
     }
 
-    private void ClearTarget()
+    private void ClearTarget(string reason)
     {
+        if (_target == null)
+        {
+            _chaseElapsedTime = 0f;
+            return;
+        }
+
+        string targetName = GetAttackUnitName(_target);
         _target = null;
+        _chaseElapsedTime = 0f;
+        LogDebug($"Target released | Target={targetName} | Reason={reason}");
     }
 
     private bool CanAttackTarget(AttackUnit target)
@@ -130,32 +155,32 @@ public class DefenseUnit : MonoBehaviour
         return GetDistanceToTargetEdge(transform.position, target) <= _attackRange;
     }
 
-    private bool ShouldReleaseTarget(AttackUnit target)
-    {
-        if (target == null || target.IsDead) return true;
-
-        float releaseRange = _attackRange * Mathf.Max(1f, _targetReleaseRangeMultiplier);
-        return GetDistanceToTargetEdge(transform.position, target) > releaseRange;
-    }
-
     private void HandleTrackedTarget()
     {
-        _lastKnownTargetPosition = _target.HitCenter;
-        FacePosition(_lastKnownTargetPosition);
+        FacePosition(_target.HitCenter);
 
         if (CanAttackTarget(_target))
         {
-            _moveState = MoveState.Guarding;
+            _chaseElapsedTime = 0f;
+            ChangeMoveState(MoveState.Guarding, "Target entered attack range");
             TryAttack();
+            return;
+        }
+
+        if (IsRecoveringFromAttack())
+        {
+            ChangeMoveState(MoveState.Guarding, "Waiting for attack cooldown");
             return;
         }
 
         if (_isFixedUnit)
         {
-            ClearTarget();
+            ClearTarget("Fixed unit cannot chase");
             return;
         }
 
+        float predictionTime = GetAttackCooldown() * _pursuitPredictionMultiplier;
+        _lastKnownTargetPosition = _target.GetPredictedHitCenter(predictionTime);
         ChaseTarget();
     }
 
@@ -163,17 +188,35 @@ public class DefenseUnit : MonoBehaviour
     {
         if (_target == null || Time.time < _nextAttackTime || _target.IsHiding) return;
 
+        string targetName = GetAttackUnitName(_target);
         _target.TakeDamage(_attack);
-        _nextAttackTime = Time.time + 1f / _attackSpeed;
+        _nextAttackTime = Time.time + GetAttackCooldown();
+        LogDebug($"Attack | Target={targetName} | Damage={_attack} | Cooldown={GetAttackCooldown():0.00}s");
+    }
+
+    private bool IsRecoveringFromAttack()
+    {
+        return Time.time < _nextAttackTime;
+    }
+
+    private float GetAttackCooldown()
+    {
+        return 1f / _attackSpeed;
     }
 
     private void HandleNoTarget()
     {
         if (_isFixedUnit) return;
 
+        if (IsRecoveringFromAttack())
+        {
+            ChangeMoveState(MoveState.Guarding, "Waiting for attack cooldown");
+            return;
+        }
+
         if (_moveState != MoveState.ReturningHome && !IsAtPosition(_homePosition))
         {
-            _moveState = MoveState.ReturningHome;
+            ChangeMoveState(MoveState.ReturningHome, "No target");
         }
 
         if (_moveState == MoveState.ReturningHome)
@@ -181,29 +224,57 @@ public class DefenseUnit : MonoBehaviour
             bool reachedHome = MoveTowards(_homePosition);
             if (reachedHome)
             {
-                _moveState = MoveState.Guarding;
+                ChangeMoveState(MoveState.Guarding, "Reached home");
             }
         }
     }
 
     private void ChaseTarget()
     {
-        _moveState = MoveState.ChasingTarget;
+        ChangeMoveState(MoveState.ChasingTarget, "Target outside attack range");
+        _chaseElapsedTime += Time.deltaTime;
 
-        bool reached = MoveTowards(_lastKnownTargetPosition);
+        MoveTowards(_lastKnownTargetPosition);
 
         // 이동 중 사거리 안으로 들어오면 먼저 멈추고 다음 프레임부터 공격한다.
         if (_target != null && CanAttackTarget(_target))
         {
-            _moveState = MoveState.Guarding;
+            _chaseElapsedTime = 0f;
+            ChangeMoveState(MoveState.Guarding, "Stopped inside attack range");
             FacePosition(_target.HitCenter);
             return;
         }
 
-        if (reached || !_isMovingThisFrame)
+        if (_chaseElapsedTime >= _maxChaseDuration)
         {
-            ClearTarget();
+            ClearTarget($"Could not enter attack range within {_maxChaseDuration:0.00}s");
         }
+    }
+
+    private void ChangeMoveState(MoveState nextState, string reason)
+    {
+        if (_moveState == nextState) return;
+
+        _moveState = nextState;
+    }
+
+    private void LogDebug(string message)
+    {
+        if (!_enableDebugLogs) return;
+
+        Debug.Log($"[DefenseUnit:{GetDefenseUnitName()}] {message}", this);
+    }
+
+    private string GetDefenseUnitName()
+    {
+        return _card != null && !string.IsNullOrEmpty(_card.cardName)
+            ? _card.cardName
+            : name;
+    }
+
+    private static string GetAttackUnitName(AttackUnit target)
+    {
+        return target != null ? target.name : "None";
     }
 
     private bool MoveTowards(Vector3 targetPosition)
@@ -237,7 +308,8 @@ public class DefenseUnit : MonoBehaviour
 
     private bool TryMoveTo(Vector3 position)
     {
-        if (!CanMoveToPosition(position)) return false;
+        if (!CanMoveToPosition(position))
+            return false;
 
         transform.position = position;
         return true;

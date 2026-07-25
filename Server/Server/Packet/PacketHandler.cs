@@ -76,24 +76,51 @@ static class PacketHandler
     {
         _logger.Log("Called", nameof(C_TurnStartReadyHandler));
         ClientSession clientSession = session as ClientSession;
+        C_TurnStartReady readyPacket = packet as C_TurnStartReady;
+
+        if (clientSession?.Room == null || readyPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.ReadyForTurn(clientSession, readyPacket.ready));
     }
 
     public static void C_CardSelectHandler(PacketSession session, IPacket packet)
     {
         _logger.Log("Called", nameof(C_CardSelectHandler));
         ClientSession clientSession = session as ClientSession;
+        C_CardSelect cardPacket = packet as C_CardSelect;
+
+        if (clientSession?.Room == null || cardPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayCardSelection(clientSession, cardPacket));
     }
 
     public static void C_TurnEndHandler(PacketSession session, IPacket packet)
     {
         _logger.Log("Called", nameof(C_TurnEndHandler));
         ClientSession clientSession = session as ClientSession;
+
+        if (clientSession?.Room == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.EndTurnPreparation(clientSession));
     }
 
     public static void C_UnitPlacementHandler(PacketSession session, IPacket packet)
     {
         _logger.Log("Called", nameof(C_UnitPlacementHandler));
         ClientSession clientSession = session as ClientSession;
+        C_UnitPlacement placementPacket = packet as C_UnitPlacement;
+
+        if (clientSession?.Room == null || placementPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitPlacement(clientSession, placementPacket));
     }
 
 

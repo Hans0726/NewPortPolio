@@ -14,6 +14,10 @@ namespace Server
         object _lock = new object();
         JobQueue _jobQueue = new JobQueue();
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
+        HashSet<int> _turnStartReadySessions = new HashSet<int>();
+        HashSet<int> _turnEndSessions = new HashSet<int>();
+        int _currentTurn;
+        const int PreparationTimeSeconds = 30;
 
         public void Push(Action job)
         {
@@ -65,6 +69,9 @@ namespace Server
 
         public void Leave(ClientSession session)
         {
+            _turnStartReadySessions.Remove(session.SessionId);
+            _turnEndSessions.Remove(session.SessionId);
+
             // 플레이어 제거
             if (session.Equals(_sessions[0]) == true)
                 _sessions[0] = null;
@@ -105,6 +112,103 @@ namespace Server
                 _sessions[0] = null;
             else
                 _sessions[1] = null;
+        }
+
+        public void ReadyForTurn(ClientSession session, bool ready)
+        {
+            if (session == null || !ready || !ContainsSession(session))
+                return;
+
+            _turnStartReadySessions.Add(session.SessionId);
+            if (_turnStartReadySessions.Count < 2)
+                return;
+
+            _turnStartReadySessions.Clear();
+            _turnEndSessions.Clear();
+            _currentTurn++;
+
+            S_TurnStart packet = new S_TurnStart
+            {
+                turnNumber = _currentTurn,
+                turnTime = PreparationTimeSeconds
+            };
+            SendToAll(packet.Serialize());
+        }
+
+        public void EndTurnPreparation(ClientSession session)
+        {
+            if (session == null || !ContainsSession(session))
+                return;
+
+            _turnEndSessions.Add(session.SessionId);
+            if (_turnEndSessions.Count < 2)
+                return;
+
+            _turnEndSessions.Clear();
+            SendToAll(new S_TurnEnd().Serialize());
+        }
+
+        public void RelayCardSelection(ClientSession sender, C_CardSelect packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            S_CardSelectResult result = new S_CardSelectResult
+            {
+                playerId = sender.SessionId
+            };
+
+            foreach (C_CardSelect.SelectedCardIds selectedCard in packet.selectedCardIdss)
+            {
+                result.selectedCardIdss.Add(new S_CardSelectResult.SelectedCardIds
+                {
+                    cardId = selectedCard.cardId
+                });
+            }
+
+            SendToOpponent(sender, result.Serialize());
+        }
+
+        public void RelayUnitPlacement(ClientSession sender, C_UnitPlacement packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            S_UnitPlacementResult result = new S_UnitPlacementResult
+            {
+                playerId = sender.SessionId,
+                cardId = packet.cardId,
+                x = packet.x,
+                y = packet.y,
+                isSuccess = true,
+                errorMessage = string.Empty
+            };
+            SendToOpponent(sender, result.Serialize());
+        }
+
+        private bool ContainsSession(ClientSession session)
+        {
+            return (_sessions[0] != null && _sessions[0].SessionId == session.SessionId)
+                || (_sessions[1] != null && _sessions[1].SessionId == session.SessionId);
+        }
+
+        private void SendToAll(ArraySegment<byte> packet)
+        {
+            foreach (ClientSession session in _sessions)
+            {
+                session?.Send(packet);
+            }
+        }
+
+        private void SendToOpponent(ClientSession sender, ArraySegment<byte> packet)
+        {
+            foreach (ClientSession session in _sessions)
+            {
+                if (session != null && session.SessionId != sender.SessionId)
+                {
+                    session.Send(packet);
+                }
+            }
         }
 
         //public void Move(ClientSession session, C_Move packet)

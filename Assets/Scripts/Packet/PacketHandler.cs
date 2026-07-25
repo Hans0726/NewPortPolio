@@ -49,7 +49,7 @@ class PacketHandler
     {
         S_TurnStart pkt = packet as S_TurnStart;
         ServerSession serverSession = session as ServerSession;
-        GameTurnManager.Instance.TurnStart(pkt);
+        GameTurnManager.Instance.ApplyTurnStart(pkt);
     }
     public static void S_CardSelectResultHandler(PacketSession session, IPacket packet)
     {
@@ -64,7 +64,7 @@ class PacketHandler
         S_TurnEnd pkt = packet as S_TurnEnd;
         ServerSession serverSession = session as ServerSession;
 
-        GameTurnManager.Instance.TurnEnd();
+        GameTurnManager.Instance.BeginCombat();
     }
 
     public static void S_UnitPlacementResultHandler(PacketSession session, IPacket packet)

@@ -33,6 +33,13 @@ public class InGameCardManager : MonoBehaviour
     public List<CardData> SelectedAttackCards => _selectedAttackCards;
     public List<CardData> SelectedDefenseCards => _selectedDefenseCards;
 
+    public CardData GetCardDataById(short cardId)
+    {
+        return _cardDatabase != null
+            ? _cardDatabase.GetCardDataById(cardId)
+            : null;
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this)

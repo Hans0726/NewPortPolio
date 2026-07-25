@@ -23,6 +23,6 @@ MonoBehaviour:
   health: 0
   defense: 0
   attack: 40
-  attackSpeed: 1
+  attackSpeed: 0.5
   isFixedDefenseUnit: 1
   specialEffect: 

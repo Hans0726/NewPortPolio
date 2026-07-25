@@ -173,9 +173,24 @@ public class DefensePlacementManager : MonoBehaviour
         Vector3 placePosition = groundPosition;
         Sprite unitSprite = GetCardSprite(_pendingCard);
         placePosition = GetSpritePositionFromBottomAnchor(placePosition, unitSprite);
-        PlaceUnit(_pendingCard, placePosition, groundPosition);
+        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Opponent);
         _onPlaced?.Invoke(_pendingCard, placePosition);
         EndPlacement();
+    }
+
+    public void PlaceRemoteDefenseUnit(CardData card, Vector3 position)
+    {
+        if (card == null) return;
+
+        Sprite sprite = GetCardSprite(card);
+        Vector3 groundPosition = position;
+        if (sprite != null)
+        {
+            groundPosition.y += sprite.bounds.min.y * _previewScale;
+        }
+
+        groundPosition.y -= _bottomAnchorYOffset;
+        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Player);
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -185,7 +200,11 @@ public class DefensePlacementManager : MonoBehaviour
         return _worldCamera.ScreenToWorldPoint(mousePosition);
     }
 
-    private void PlaceUnit(CardData card, Vector3 position, Vector3 groundPosition)
+    private void PlaceUnit(
+        CardData card,
+        Vector3 position,
+        Vector3 groundPosition,
+        AttackUnitOwner targetOwner)
     {
         GameObject unitObject = new GameObject($"DefenseUnit_{card.cardName}");
         if (_placedUnitRoot != null)
@@ -205,7 +224,7 @@ public class DefensePlacementManager : MonoBehaviour
         renderer.sortingOrder = _previewSortingOrder - 1;
 
         DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
-        defenseUnit.Initialize(card, position, groundPosition);
+        defenseUnit.Initialize(card, position, groundPosition, targetOwner);
     }
 
     private Vector3 GetSpritePositionFromBottomAnchor(Vector3 bottomAnchorPosition, Sprite sprite)

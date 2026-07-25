@@ -28,7 +28,10 @@ public static class AttackUnitRegistry
         _activeUnits.Remove(unit);
     }
 
-    public static AttackUnit FindClosest(Vector3 origin, float range)
+    public static AttackUnit FindClosest(
+        Vector3 origin,
+        float range,
+        AttackUnitOwner targetOwner)
     {
         RemoveInactiveUnits();
         AttackUnit closest = null;
@@ -42,6 +45,8 @@ public static class AttackUnitRegistry
                 _activeUnits.RemoveAt(i);
                 continue;
             }
+
+            if (unit.Owner != targetOwner) continue;
 
             float centerDistance = Vector3.Distance(unit.HitCenter, origin);
             float edgeDistance = Mathf.Max(0f, centerDistance - unit.HitRadius);

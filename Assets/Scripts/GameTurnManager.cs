@@ -78,16 +78,39 @@ public class GameTurnManager : MonoBehaviour
         _maxRound = 10;
     }
 
-    public void TurnStart(S_TurnStart packet)
+    public void ApplyTurnStart(S_TurnStart packet)
     {
-        if (packet != null)
+        if (packet == null || _isGameEnded) return;
+
+        int serverRound = Mathf.Clamp(packet.turnNumber, 1, _maxRound);
+        bool isNewRound = serverRound > _currentRound;
+        _currentRound = serverRound;
+
+        if (isNewRound)
         {
-            packet.turnNumber = _currentRound;
-            packet.turnTime = 0;
+            CurrentCost = Mathf.Min(_maxCost, _startingCost + _currentRound - 1);
+            OnRoundChanged?.Invoke(_currentRound);
+
+            if (InGameCardManager.Instance != null)
+            {
+                InGameCardManager.Instance.PrepareNextCycleDeck();
+                InGameCardManager.Instance.DrawCards(_cardsToDrawPerRound);
+            }
+
+            InGameUIManager.Instance?.ShowHandForNewRound();
         }
+
+        BattlePreparationController.Instance?.BeginPreparation(
+            _currentRound,
+            packet.turnTime);
     }
 
     public void TurnEnd()
+    {
+        BattlePreparationController.Instance?.RequestTurnEnd();
+    }
+
+    public void BeginCombat()
     {
         if (_isCombatInProgress || _isGameEnded)
         {
@@ -100,15 +123,15 @@ public class GameTurnManager : MonoBehaviour
             return;
         }
 
-        if (InGameUIManager.Instance != null)
-        {
-            InGameUIManager.Instance.HideHandForCombat();
-        }
+        InGameUIManager.Instance?.HideHandForCombat();
 
         _isCombatInProgress = true;
+        var opponentAttackCards = BattlePreparationController.Instance != null
+            ? BattlePreparationController.Instance.OpponentAttackCards
+            : null;
         CombatRoundManager.Instance.StartCombatRound(
             InGameCardManager.Instance.SelectedAttackCards,
-            null,
+            opponentAttackCards,
             ApplyAttackUnitDestinationDamage,
             CompleteCombatRound);
     }
@@ -151,13 +174,13 @@ public class GameTurnManager : MonoBehaviour
             return;
         }
 
-        StartNextRound();
+        BattlePreparationController.Instance?.NotifyCombatRoundFinished();
     }
 
-    private void StartNextRound()
+    public void StartNextRoundForTest()
     {
         _currentRound++;
-        CurrentCost = Mathf.Min(_maxCost, CurrentCost + 1);
+        CurrentCost = Mathf.Min(_maxCost, _startingCost + _currentRound - 1);
         OnRoundChanged?.Invoke(_currentRound);
 
         if (InGameCardManager.Instance != null)
@@ -166,10 +189,8 @@ public class GameTurnManager : MonoBehaviour
             InGameCardManager.Instance.DrawCards(_cardsToDrawPerRound);
         }
 
-        if (InGameUIManager.Instance != null)
-        {
-            InGameUIManager.Instance.ShowHandForNewRound();
-        }
+        InGameUIManager.Instance?.ShowHandForNewRound();
+        BattlePreparationController.Instance?.BeginPreparation(_currentRound, 30);
 
         Debug.Log($"[GameTurnManager] Round {_currentRound} started. Cost: {CurrentCost}");
     }

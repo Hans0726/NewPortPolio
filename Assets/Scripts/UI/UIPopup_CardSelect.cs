@@ -100,7 +100,7 @@ public class UIPopup_CardSelect : UIPopup
 
         _choiceConfirmed = true;
         _onChoice?.Invoke(selectedCardData);
-        base.ClosePopup();
+        ClosePopup();
     }
 
     protected override void ClosePopup()
@@ -118,11 +118,12 @@ public class UIPopup_CardSelect : UIPopup
             _originalCardUI.RootGameObject.SetActive(true);
 
             // ★ 핸드의 다른 카드들의 파티클 시간을 동기화
-            float handParticleTime = InGameUIManager.Instance.GetHandPlayableEffectTime();
+            float handParticleTime = InGameHandUI.Instance != null
+                ? InGameHandUI.Instance.GetPlayableEffectTime()
+                : 0f;
             _originalCardUI.SetPlayableEffectTime(handParticleTime);
 
-            // ★ InGameUIManager의 _activeHandCardRoots에 다시 추가
-            InGameUIManager.Instance.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
+            InGameHandUI.Instance?.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
         }
 
         // 팝업 닫을 때 복제본 정리

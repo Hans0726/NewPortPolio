@@ -169,19 +169,17 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // ★ 드래그 중이면 호버 이벤트 무시
-        if (InGameUIManager.Instance != null && !InGameUIManager.Instance.IsDragging)
+        if (InGameHandUI.Instance != null && !InGameHandUI.Instance.IsDragging)
         {
-            InGameUIManager.Instance.SetHoveredCard(this);
+            InGameHandUI.Instance.SetHoveredCard(this);
         }
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        // ★ 드래그 중이면 호버 해제 이벤트 무시
-        if (InGameUIManager.Instance != null && !InGameUIManager.Instance.IsDragging)
+        if (InGameHandUI.Instance != null && !InGameHandUI.Instance.IsDragging)
         {
-            InGameUIManager.Instance.ClearHoveredCard(this);
+            InGameHandUI.Instance.ClearHoveredCard(this);
         }
     }
 
@@ -189,8 +187,8 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     {
         if (!CanvasGroup.interactable) return;
         _playableEffect.SetActive(false);
-        InGameUIManager.Instance.OnCardBeginDrag(this);
+        InGameHandUI.Instance?.OnCardBeginDrag(this);
     }
-    public void OnDrag(PointerEventData eventData) => InGameUIManager.Instance.OnCardDrag(eventData);
-    public void OnEndDrag(PointerEventData eventData) => InGameUIManager.Instance.OnCardEndDrag(this, eventData);
+    public void OnDrag(PointerEventData eventData) => InGameHandUI.Instance?.OnCardDrag(eventData);
+    public void OnEndDrag(PointerEventData eventData) => InGameHandUI.Instance?.OnCardEndDrag(this, eventData);
 }

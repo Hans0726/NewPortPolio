@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: 100
   cardName: "\uD2B9\uC804\uC0AC"
-  moveSpeed: 2
+  moveSpeed: 1.5
   cost: 0
   cardImage: {fileID: 0}
   cardType: 2
@@ -23,6 +23,6 @@ MonoBehaviour:
   health: 0
   defense: 0
   attack: 10
-  attackSpeed: 2
+  attackSpeed: 1
   isFixedDefenseUnit: 0
   specialEffect: 

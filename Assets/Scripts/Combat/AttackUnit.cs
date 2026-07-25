@@ -41,6 +41,42 @@ public class AttackUnit : MonoBehaviour
     public int Defense => _defense;
     public float HitRadius => _hitRadius;
     public Vector3 HitCenter => _renderer != null ? _renderer.bounds.center : transform.position;
+    public AttackUnitOwner Owner => _owner;
+
+    public Vector3 GetPredictedHitCenter(float secondsAhead)
+    {
+        if (_path == null || _path.Count == 0 || secondsAhead <= 0f)
+        {
+            return HitCenter;
+        }
+
+        Vector3 predictedPosition = transform.position;
+        float remainingDistance = _moveSpeed * secondsAhead;
+        int waypointIndex = _nextWaypointIndex;
+        int waypointCount = _path.Count;
+
+        while (remainingDistance > 0f && waypointIndex < waypointCount)
+        {
+            Vector3 waypointPosition = _path.GetWaypointPosition(waypointIndex);
+            waypointPosition.z = _unitZ;
+
+            float distanceToWaypoint = Vector3.Distance(predictedPosition, waypointPosition);
+            if (distanceToWaypoint > remainingDistance)
+            {
+                predictedPosition = Vector3.MoveTowards(
+                    predictedPosition,
+                    waypointPosition,
+                    remainingDistance);
+                break;
+            }
+
+            predictedPosition = waypointPosition;
+            remainingDistance -= distanceToWaypoint;
+            waypointIndex++;
+        }
+
+        return HitCenter + (predictedPosition - transform.position);
+    }
 
     public void Initialize(CardData card, WaypointPath path, int sortingLayerId, int sortingOrder, float unitZ, float baseScale, float bottomAnchorYOffset, AttackUnitOwner owner, Action<AttackUnitOwner> onReachedDestination)
     {
@@ -76,6 +112,7 @@ public class AttackUnit : MonoBehaviour
         }
 
         CreateHealthBar(sortingLayerId, sortingOrder);
+
         AttackUnitRegistry.Register(this);
     }
 
