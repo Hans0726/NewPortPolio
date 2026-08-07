@@ -8437,6 +8437,7 @@ MonoBehaviour:
   _mainCanvas: {fileID: 125466666}
   _cardSelectPopup: {fileID: 1782756314}
   _blockingPanel: {fileID: 36587098}
+  _cardPoolContainer: {fileID: 437923702}
   _spreadAngle: 8
   _cardSpacing: 100
   _baseYPosition: 80
@@ -8447,12 +8448,12 @@ MonoBehaviour:
   _expandedCardScale: {x: 1, y: 1}
   _collapsedCardScale: {x: 0.5, y: 0.5}
   _lerpSpeed: 10
+  _preparationTimeText: {fileID: 0}
   _playerCurrentCost: {fileID: 125893551}
   _usedAttackCardsContent: {fileID: 749358935}
   _usedDefenseCardsContent: {fileID: 932029257}
   _usedCardUISize: {x: 188.75, y: 90}
   _btnTurnEnd: {fileID: 1227225573}
-  _cardPoolContainer: {fileID: 437923702}
 --- !u!4 &437923702
 Transform:
   m_ObjectHideFlags: 0
@@ -20637,9 +20638,9 @@ SceneRoots:
   - {fileID: 1996062628}
   - {fileID: 478579374}
   - {fileID: 125466667}
+  - {fileID: 775007955}
   - {fileID: 420689016}
   - {fileID: 437923702}
   - {fileID: 163340607}
   - {fileID: 1395811177}
-  - {fileID: 775007955}
   - {fileID: 588959867}

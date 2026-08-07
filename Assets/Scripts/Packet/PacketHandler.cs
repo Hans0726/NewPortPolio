@@ -14,18 +14,19 @@ class PacketHandler
     //    PlayerManager.Instance.EnterGame(pkt);
     //}
 
-    public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
-    {
-        //S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
-        //ServerSession serverSession = session as ServerSession;
-        //PlayerManager.Instance.LeaveGame(pkt);
-    }
+    //public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
+    //{
+    //    S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
+    //    ServerSession serverSession = session as ServerSession;
+    //    PlayerManager.Instance.LeaveGame(pkt);
+    //}
 
     public static void S_PlayerDeckInfoHandler(PacketSession session, IPacket packet)
     {
         S_PlayerDeckInfo pkt = packet as S_PlayerDeckInfo;
         ServerSession serverSession = session as ServerSession;
-        LobbyCardManager.Instance.InitializePlayerDeck(pkt);
+
+        NetworkMananger.Instance.Gateway.PlayerDeckInfoHandle(pkt);
     }
 
     public static void S_PlayerMatchingReqOkHandler(PacketSession session, IPacket packet)
@@ -33,7 +34,7 @@ class PacketHandler
         S_PlayerMatchingReqOk pkt = packet as S_PlayerMatchingReqOk;
         ServerSession serverSession = session as ServerSession;
 
-        GameManager.Instance.MatchingReqOk();
+        NetworkMananger.Instance.Gateway.MatchingRequestAcceptedHandle(pkt);
     }
 
     public static void S_MatchingSuccessHandler(PacketSession session, IPacket packet)
@@ -41,7 +42,7 @@ class PacketHandler
         S_MatchingSuccess pkt = packet as S_MatchingSuccess;
         ServerSession serverSession = session as ServerSession;
 
-        GameManager.Instance.MatchingSuccess();
+        NetworkMananger.Instance.Gateway.MatchSuccessHandle(pkt);
     }
 
 

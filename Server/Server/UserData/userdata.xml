@@ -52,15 +52,15 @@
         <cards>
           <Card>
             <cardId>0</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>1</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>2</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>3</cardId>
@@ -68,11 +68,11 @@
           </Card>
           <Card>
             <cardId>4</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>5</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>6</cardId>
@@ -84,7 +84,7 @@
           </Card>
           <Card>
             <cardId>100</cardId>
-            <isInDeck>false</isInDeck>
+            <isInDeck>true</isInDeck>
           </Card>
           <Card>
             <cardId>101</cardId>

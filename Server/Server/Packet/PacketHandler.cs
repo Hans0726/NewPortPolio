@@ -1,4 +1,4 @@
-﻿using Server;
+using Server;
 using Server.Session;
 using ServerCore;
 using System;
