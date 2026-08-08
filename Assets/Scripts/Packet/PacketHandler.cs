@@ -50,14 +50,14 @@ class PacketHandler
     {
         S_TurnStart pkt = packet as S_TurnStart;
         ServerSession serverSession = session as ServerSession;
-        GameTurnManager.Instance.ApplyTurnStart(pkt);
+        NetworkMananger.Instance.Gateway.TurnStartHandle(pkt);
     }
     public static void S_CardSelectResultHandler(PacketSession session, IPacket packet)
     {
         S_CardSelectResult pkt = packet as S_CardSelectResult;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.CardSelectResultHandle(pkt);
     }
 
     public static void S_TurnEndHandler(PacketSession session, IPacket packet)
@@ -65,7 +65,7 @@ class PacketHandler
         S_TurnEnd pkt = packet as S_TurnEnd;
         ServerSession serverSession = session as ServerSession;
 
-        GameTurnManager.Instance.BeginCombat();
+        NetworkMananger.Instance.Gateway.TurnEndHandle(pkt);
     }
 
     public static void S_UnitPlacementResultHandler(PacketSession session, IPacket packet)
@@ -73,7 +73,7 @@ class PacketHandler
         S_UnitPlacementResult pkt = packet as S_UnitPlacementResult;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.UnitPlacementResultHandle(pkt);
     }
 
     public static void S_UnitSpawnHandler(PacketSession session, IPacket packet)
@@ -113,7 +113,7 @@ class PacketHandler
         S_LifeUpdate pkt = packet as S_LifeUpdate;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.LifeUpdateHandle(pkt);
     }
 
     public static void S_GameResultHandler(PacketSession session, IPacket packet)
@@ -121,7 +121,7 @@ class PacketHandler
         S_GameResult pkt = packet as S_GameResult;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.GameResultHandle(pkt);
     }
 
     //public static void S_PlayerListHandler(PacketSession session, IPacket packet)

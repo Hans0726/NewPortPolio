@@ -44,6 +44,8 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     [SerializeField] private TextMeshProUGUI _textCostInDeck;
     [SerializeField] private TextMeshProUGUI _textNameInDeck;
     private ScrollRect _parentScrollRect;
+    private InGameHandUI _handView;
+    public InGameHandUI HandView => _handView;
 
     [Header("Effects")]
     [SerializeField] private GameObject _playableEffect;
@@ -78,7 +80,7 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         _parentScrollRect = GetComponentInParent<ScrollRect>();
     }
 
-    public void InitializeDisplay(CardData cardData, InGameUIManager uiManager = null)
+    public void InitializeDisplay(CardData cardData)
     {
         _currentCardData = cardData;
 
@@ -114,6 +116,11 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         if (_imgDefense) _imgDefense.SetActive(isAttackCard);
         if (_imgAttack) _imgAttack.SetActive(!isAttackCard);
         if (_imgAttackSpeed) _imgAttackSpeed.SetActive(!isAttackCard);
+    }
+
+    public void BindHandView(InGameHandUI handView)
+    {
+        _handView = handView;
     }
 
 
@@ -164,9 +171,9 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (InGameHandUI.Instance != null && !InGameHandUI.Instance.IsDragging)
+        if (_handView != null && !_handView.IsDragging)
         {
-            InGameHandUI.Instance.SetHoveredCard(this);
+            _handView.SetHoveredCard(this);
         }
     }
 
@@ -174,43 +181,46 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     {
 
 
-        if (InGameHandUI.Instance != null && !InGameHandUI.Instance.IsDragging)
+        if (_handView != null && !_handView.IsDragging)
         {
-            InGameHandUI.Instance.ClearHoveredCard(this);
+            _handView.ClearHoveredCard(this);
         }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (InGameHandUI.Instance == null)
+        if (_handView == null)
         {
+            _parentScrollRect ??= GetComponentInParent<ScrollRect>();
             _parentScrollRect?.OnBeginDrag(eventData);
             return;
         }
 
         if (!CanvasGroup.interactable) return;
         _playableEffect.SetActive(false);
-        InGameHandUI.Instance?.OnCardBeginDrag(this);
+        _handView.OnCardBeginDrag(this);
     }
     public void OnDrag(PointerEventData eventData)
     {
-        if (InGameHandUI.Instance == null)
+        if (_handView == null)
         {
+            _parentScrollRect ??= GetComponentInParent<ScrollRect>();
             _parentScrollRect?.OnDrag(eventData);
             return;
         }
 
-        InGameHandUI.Instance.OnCardDrag(eventData);
+        _handView.OnCardDrag(eventData);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (InGameHandUI.Instance == null)
+        if (_handView == null)
         {
+            _parentScrollRect ??= GetComponentInParent<ScrollRect>();
             _parentScrollRect?.OnEndDrag(eventData);
             return;
         }
 
-        InGameHandUI.Instance.OnCardEndDrag(this, eventData);
+        _handView.OnCardEndDrag(this, eventData);
     }
 }

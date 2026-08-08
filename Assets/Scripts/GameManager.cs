@@ -41,11 +41,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(LoadInGameSceneAsync());
     }
 
-    public void LoadLobbyScene()
-    {
-
-    }
-
     private IEnumerator LoadInGameSceneAsync()
     {
         Debug.Log("Matching success. Moving to InGame scene in 3 seconds...");

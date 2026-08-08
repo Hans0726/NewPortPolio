@@ -118,12 +118,13 @@ public class UIPopup_CardSelect : UIPopup
             _originalCardUI.RootGameObject.SetActive(true);
 
             // ★ 핸드의 다른 카드들의 파티클 시간을 동기화
-            float handParticleTime = InGameHandUI.Instance != null
-                ? InGameHandUI.Instance.GetPlayableEffectTime()
+            InGameHandUI handView = _originalCardUI.HandView;
+            float handParticleTime = handView != null
+                ? handView.GetPlayableEffectTime()
                 : 0f;
             _originalCardUI.SetPlayableEffectTime(handParticleTime);
 
-            InGameHandUI.Instance?.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
+            handView?.RestoreCardToHand(_draggedCardRoot, _originalSiblingIndex);
         }
 
         // 팝업 닫을 때 복제본 정리

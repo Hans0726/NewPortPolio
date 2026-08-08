@@ -5525,9 +5525,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 163340607}
+  - component: {fileID: 2200000001}
   - component: {fileID: 163340606}
   m_Layer: 0
-  m_Name: GameTurnManager
+  m_Name: InGameFlow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5544,10 +5545,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1da925ee829426e4d957576c0e7c2c18, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameTurnManager
+  m_EditorClassIdentifier: Assembly-CSharp::InGameFlowController
   _currentRound: 1
   _maxRound: 10
-  _currentCost: 99
   _startingCost: 99
   _maxCost: 99
   _playerLife: 10
@@ -8361,7 +8361,7 @@ GameObject:
   - component: {fileID: 420689016}
   - component: {fileID: 420689015}
   m_Layer: 0
-  m_Name: InGameCardManager
+  m_Name: InGameCardState
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8380,7 +8380,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cardDatabase: {fileID: 11400000, guid: d5e9741bdad0d18458b073a67eadcb8d, type: 2}
-  InitialHandSize: 5
+  _initialHandSize: 5
 --- !u!4 &420689016
 Transform:
   m_ObjectHideFlags: 0
@@ -8407,7 +8407,7 @@ GameObject:
   - component: {fileID: 437923702}
   - component: {fileID: 437923701}
   m_Layer: 0
-  m_Name: InGameUIManager
+  m_Name: InGameHUDView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9880,8 +9880,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatRoundManager
   _enemyAttackPath: {fileID: 775007954}
-  _opponentAttackPath: {fileID: 0}
-  _attackUnitRoot: {fileID: 0}
+  _attackUnitRoot: {fileID: 448493306}
   _spawnInterval: 0.35
   _unitZ: -1
   _unitSortingLayerName: Layer 1
@@ -17654,6 +17653,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcc6e757f80c7eb4ebc6c5b5e72af33f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIPopup_CardSelect
+--- !u!114 &1817585838 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4070001667596250428, guid: 57074a9336889794f86b20700d5da8f8,
+    type: 3}
+  m_PrefabInstance: {fileID: 2136335597}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &1818824175
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20385,6 +20396,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 125466667}
     m_Modifications:
+    - target: {fileID: -5766620885815883513, guid: 57074a9336889794f86b20700d5da8f8,
+        type: 3}
+      propertyPath: _text
+      value: 
+      objectReference: {fileID: 1817585838}
     - target: {fileID: 1406078015102474168, guid: 57074a9336889794f86b20700d5da8f8,
         type: 3}
       propertyPath: m_Name
@@ -20629,6 +20645,27 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2142086135}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2200000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 163340605}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82e83c8f9a8ce8545a0ba7a749b6434e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InGameSceneInstaller
+  _autoDetectTestMode: 1
+  _inGameUIRoot: {fileID: 437923700}
+  _inGameCardRoot: {fileID: 420689014}
+  _flowController: {fileID: 163340606}
+  _hudView: {fileID: 437923701}
+  _cardState: {fileID: 420689015}
+  _preparationController: {fileID: 0}
+  _placementService: {fileID: 1395811176}
+  _combatService: {fileID: 588959866}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -20639,8 +20676,8 @@ SceneRoots:
   - {fileID: 478579374}
   - {fileID: 125466667}
   - {fileID: 775007955}
+  - {fileID: 1395811177}
+  - {fileID: 163340607}
   - {fileID: 420689016}
   - {fileID: 437923702}
-  - {fileID: 163340607}
-  - {fileID: 1395811177}
   - {fileID: 588959867}
