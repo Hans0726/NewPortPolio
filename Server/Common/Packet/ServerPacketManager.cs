@@ -30,14 +30,20 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.C_UnitPlacement, MakePacket<C_UnitPlacement>);
         _handler.Add((ushort)PacketID.C_UnitPlacement, PacketHandler.C_UnitPlacementHandler);
 
+        _makeFunc.Add((ushort)PacketID.C_LifeUpdate, MakePacket<C_LifeUpdate>);
+        _handler.Add((ushort)PacketID.C_LifeUpdate, PacketHandler.C_LifeUpdateHandler);
+
         _makeFunc.Add((ushort)PacketID.C_PlayerMatchingReq, MakePacket<C_PlayerMatchingReq>);
         _handler.Add((ushort)PacketID.C_PlayerMatchingReq, PacketHandler.C_PlayerMatchingReqHandler);
 
         _makeFunc.Add((ushort)PacketID.C_PlayerMatchingReqCancel, MakePacket<C_PlayerMatchingReqCancel>);
         _handler.Add((ushort)PacketID.C_PlayerMatchingReqCancel, PacketHandler.C_PlayerMatchingReqCancelHandler);
 
-        _makeFunc.Add((ushort)PacketID.C_PlayerDeckInfo, MakePacket<C_PlayerDeckInfo>);
-        _handler.Add((ushort)PacketID.C_PlayerDeckInfo, PacketHandler.C_PlayerDeckInfoHandler);
+        _makeFunc.Add((ushort)PacketID.C_PlayerInfo, MakePacket<C_PlayerInfo>);
+        _handler.Add((ushort)PacketID.C_PlayerInfo, PacketHandler.C_PlayerInfoHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_LeaveGame, MakePacket<C_LeaveGame>);
+        _handler.Add((ushort)PacketID.C_LeaveGame, PacketHandler.C_LeaveGameHandler);
 
     }
 

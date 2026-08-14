@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +12,7 @@ namespace Server
     [Serializable]
     public class UserData
     {
-        public List<S_PlayerDeckInfo.Card> cards = new List<S_PlayerDeckInfo.Card>();
+        public List<S_PlayerInfo.Card> cards = new List<S_PlayerInfo.Card>();
     }
 
     [Serializable]
@@ -117,14 +117,14 @@ namespace Server
             
             foreach (XmlNode node in atList)
             {
-                S_PlayerDeckInfo.Card card = new S_PlayerDeckInfo.Card();
+                S_PlayerInfo.Card card = new S_PlayerInfo.Card();
                 card.cardId = Convert.ToInt16(node["cardId"].InnerText);
                 ud.cards.Add(card);
             }
 
             foreach (XmlNode node in dfList)
             {
-                S_PlayerDeckInfo.Card card = new S_PlayerDeckInfo.Card();
+                S_PlayerInfo.Card card = new S_PlayerInfo.Card();
                 card.cardId = Convert.ToInt16(node["cardId"].InnerText);
                 ud.cards.Add(card);
             }
@@ -142,8 +142,9 @@ namespace Server
 
         public void SendDeckPacket(UserData data, PacketSession session)
         {
-            S_PlayerDeckInfo d = new S_PlayerDeckInfo();
+            S_PlayerInfo d = new S_PlayerInfo();
             d.cards = data.cards;
+            d.playerId = (session as ClientSession).SessionId;
 
             session.Send(d.Serialize());
         }

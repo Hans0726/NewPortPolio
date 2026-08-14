@@ -13,6 +13,7 @@ public class NetworkMananger : MonoBehaviour
     public NetworkGateway Gateway { get; private set; }
 
     ServerSession _session = new ServerSession();
+
     public void Send(ArraySegment<byte> sendBuff)
     {
         _session.Send(sendBuff);

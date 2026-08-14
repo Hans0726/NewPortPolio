@@ -42,6 +42,17 @@ public class DefensePlacementManager : MonoBehaviour
         return false;
     }
 
+    public bool IsWorldPositionPlaceable(Vector3 worldPosition, AttackUnitOwner owner)
+    {
+        if (owner == AttackUnitOwner.Opponent)
+        {
+            worldPosition.x = -worldPosition.x;
+            worldPosition.y = -worldPosition.y;
+        }
+
+        return IsWorldPositionPlaceable(worldPosition);
+    }
+
     private void Awake()
     {
         if (_worldCamera == null)
@@ -164,24 +175,18 @@ public class DefensePlacementManager : MonoBehaviour
         Vector3 placePosition = groundPosition;
         Sprite unitSprite = GetCardSprite(_pendingCard);
         placePosition = GetSpritePositionFromBottomAnchor(placePosition, unitSprite);
-        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Opponent);
-        _onPlaced?.Invoke(_pendingCard, placePosition);
+        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Player);
+        _onPlaced?.Invoke(_pendingCard, groundPosition);
         EndPlacement();
     }
 
-    public void PlaceRemoteDefenseUnit(CardData card, Vector3 position)
+    public void PlaceRemoteDefenseUnit(CardData card, Vector3 groundPosition)
     {
         if (card == null) return;
 
         Sprite sprite = GetCardSprite(card);
-        Vector3 groundPosition = position;
-        if (sprite != null)
-        {
-            groundPosition.y += sprite.bounds.min.y * _previewScale;
-        }
-
-        groundPosition.y -= _bottomAnchorYOffset;
-        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Player);
+        Vector3 position = GetSpritePositionFromBottomAnchor(groundPosition, sprite);
+        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Opponent);
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -195,7 +200,7 @@ public class DefensePlacementManager : MonoBehaviour
         CardData card,
         Vector3 position,
         Vector3 groundPosition,
-        AttackUnitOwner targetOwner)
+        AttackUnitOwner owner)
     {
         GameObject unitObject = new GameObject($"DefenseUnit_{card.cardName}");
         if (_placedUnitRoot != null)
@@ -215,7 +220,7 @@ public class DefensePlacementManager : MonoBehaviour
         renderer.sortingOrder = _previewSortingOrder - 1;
 
         DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
-        defenseUnit.Initialize(card, position, groundPosition, targetOwner, this);
+        defenseUnit.Initialize(card, position, groundPosition, owner, this);
         _placedUnits.Add(defenseUnit);
     }
 

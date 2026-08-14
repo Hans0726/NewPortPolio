@@ -9,9 +9,9 @@ public class InGameSceneInstaller : MonoBehaviour
 
     [Header("Existing Scene Roots")]
     [FormerlySerializedAs("_inGameUIManager")]
-    [SerializeField] private GameObject _inGameUIRoot;
+    [SerializeField] private GameObject _inGameHUDView;
     [FormerlySerializedAs("_inGameCardManager")]
-    [SerializeField] private GameObject _inGameCardRoot;
+    [SerializeField] private GameObject _inGameCardState;
 
     [Header("Scene Components")]
     [SerializeField] private InGameFlowController _flowController;
@@ -121,13 +121,13 @@ public class InGameSceneInstaller : MonoBehaviour
 
     private void ResolveSceneComponents()
     {
-        if (_hudView == null && _inGameUIRoot != null)
+        if (_hudView == null && _inGameHUDView != null)
         {
-            _hudView = _inGameUIRoot.GetComponent<InGameHUDView>();
+            _hudView = _inGameHUDView.GetComponent<InGameHUDView>();
         }
-        if (_cardState == null && _inGameCardRoot != null)
+        if (_cardState == null && _inGameCardState != null)
         {
-            _cardState = _inGameCardRoot.GetComponent<InGameCardState>();
+            _cardState = _inGameCardState.GetComponent<InGameCardState>();
         }
 
         _flowController ??= FindAnyObjectByType<InGameFlowController>();

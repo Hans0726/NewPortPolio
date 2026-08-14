@@ -1,4 +1,4 @@
-﻿using ServerCore;
+using ServerCore;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -11,11 +11,12 @@ namespace ServerCore
     class Program
     {
         static Listener _listener = new Listener();
-        public static Queue<GameRoom> MatchingRoom = new Queue<GameRoom>();
+        public static Queue<GameRoom> MatchingRooms = new();
+        public static List<GameRoom> ActiveRooms = new();
 
         static void FlushRoom()
         {
-            foreach (GameRoom room in MatchingRoom)
+            foreach (GameRoom room in ActiveRooms)
                 room.Push(() => room.Flush());
             JobTimer.Instance.Push(FlushRoom, 250);
         }

@@ -1,4 +1,4 @@
-﻿using DummyClient;
+using DummyClient;
 using ServerCore;
 using System;
 using System.Collections.Generic;
@@ -32,10 +32,10 @@ static class PacketHandler
     //    ServerSession serverSession = session as ServerSession;
     //}
 
-    public static void S_PlayerDeckInfoHandler(PacketSession session, IPacket packet)
+    public static void S_PlayerInfoHandler(PacketSession session, IPacket packet)
     {
-        _logger.Log("[Dummy] Called", nameof(S_PlayerDeckInfoHandler));
-        S_PlayerDeckInfo pkt = packet as S_PlayerDeckInfo;
+        _logger.Log("[Dummy] Called", nameof(S_PlayerInfoHandler));
+        S_PlayerInfo pkt = packet as S_PlayerInfo;
         ServerSession serverSession = session as ServerSession;
     }  
 
@@ -118,13 +118,6 @@ static class PacketHandler
     {
         _logger.Log("[Dummy] Called", nameof(S_UnitDestroyHandler));
         S_UnitDestroy pkt = packet as S_UnitDestroy;
-        ServerSession serverSession = session as ServerSession;
-    }
-
-    public static void S_LifeUpdateHandler(PacketSession session, IPacket packet)
-    {
-        _logger.Log("[Dummy] Called", nameof(S_LifeUpdateHandler));
-        S_LifeUpdate pkt = packet as S_LifeUpdate;
         ServerSession serverSession = session as ServerSession;
     }
 

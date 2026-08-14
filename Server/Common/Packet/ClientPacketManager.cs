@@ -42,9 +42,6 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.S_UnitDestroy, MakePacket<S_UnitDestroy>);
         _handler.Add((ushort)PacketID.S_UnitDestroy, PacketHandler.S_UnitDestroyHandler);
 
-        _makeFunc.Add((ushort)PacketID.S_LifeUpdate, MakePacket<S_LifeUpdate>);
-        _handler.Add((ushort)PacketID.S_LifeUpdate, PacketHandler.S_LifeUpdateHandler);
-
         _makeFunc.Add((ushort)PacketID.S_GameResult, MakePacket<S_GameResult>);
         _handler.Add((ushort)PacketID.S_GameResult, PacketHandler.S_GameResultHandler);
 
@@ -54,8 +51,11 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.S_MatchingSuccess, MakePacket<S_MatchingSuccess>);
         _handler.Add((ushort)PacketID.S_MatchingSuccess, PacketHandler.S_MatchingSuccessHandler);
 
-        _makeFunc.Add((ushort)PacketID.S_PlayerDeckInfo, MakePacket<S_PlayerDeckInfo>);
-        _handler.Add((ushort)PacketID.S_PlayerDeckInfo, PacketHandler.S_PlayerDeckInfoHandler);
+        _makeFunc.Add((ushort)PacketID.S_PlayerInfo, MakePacket<S_PlayerInfo>);
+        _handler.Add((ushort)PacketID.S_PlayerInfo, PacketHandler.S_PlayerInfoHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_BroadcastLeaveGame, MakePacket<S_BroadcastLeaveGame>);
+        _handler.Add((ushort)PacketID.S_BroadcastLeaveGame, PacketHandler.S_BroadcastLeaveGameHandler);
 
     }
 

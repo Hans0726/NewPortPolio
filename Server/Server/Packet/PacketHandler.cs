@@ -1,12 +1,6 @@
 using Server;
 using Server.Session;
 using ServerCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 
 static class PacketHandler
@@ -23,21 +17,16 @@ static class PacketHandler
 
     public static void C_LeaveGameHandler(PacketSession session, IPacket packet)
     {
-        //_logger.Log("Called", nameof(C_LeaveGameHandler));
-        //C_LeaveGame leavePacket = packet as C_LeaveGame;
-        //ClientSession clientSession = session as ClientSession;
-
-        //if (clientSession.Room == null)
-        //    return;
-
-        //GameRoom room = clientSession.Room;
-        //room.Push(() => room.Leave(clientSession));
+        _logger.Log("Called", nameof(C_LeaveGameHandler));
+        C_LeaveGame leavePacket = packet as C_LeaveGame;
+        ClientSession clientSession = session as ClientSession;
+        clientSession.Dispose();
     }
 
-    public static void C_PlayerDeckInfoHandler(PacketSession session, IPacket packet)
+    public static void C_PlayerInfoHandler(PacketSession session, IPacket packet)
     {
-        _logger.Log("Called", nameof(C_PlayerDeckInfoHandler));
-        C_PlayerDeckInfo deckPacket = packet as C_PlayerDeckInfo;
+        _logger.Log("Called", nameof(C_PlayerInfoHandler));
+        C_PlayerInfo deckPacket = packet as C_PlayerInfo;
         ClientSession clientSession = session as ClientSession;
 
         UserData userData = clientSession.UserData;
@@ -54,12 +43,11 @@ static class PacketHandler
     {
         _logger.Log("Called", nameof(C_PlayerMatchingReqHandler));
         ClientSession clientSession = session as ClientSession;
-        GameRoom room;
  
-        if (Program.MatchingRoom.Count < 1)
-            Program.MatchingRoom.Enqueue(new GameRoom());
+        if (Program.MatchingRooms.Count == 0 || Program.MatchingRooms.Peek().IsFull == true)
+            Program.MatchingRooms.Enqueue(new GameRoom());
 
-        room = Program.MatchingRoom.Peek();
+        GameRoom room = Program.MatchingRooms.Peek();
         room.Push(() => room.RequestMatch(clientSession));
     }
 
@@ -68,7 +56,10 @@ static class PacketHandler
         _logger.Log("Called", nameof(C_PlayerMatchingReqCancelHandler));
         ClientSession clientSession = session as ClientSession;
 
-        GameRoom room = Program.MatchingRoom.Peek();
+        GameRoom room = clientSession.Room;
+        if (room == null)
+            return;
+
         room.Push(() => room.CancelMatch(clientSession));
     }
 
@@ -123,6 +114,15 @@ static class PacketHandler
         room.Push(() => room.RelayUnitPlacement(clientSession, placementPacket));
     }
 
+    public static void C_LifeUpdateHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("Called", nameof(C_LifeUpdateHandler));
+        ClientSession clientSession = session as ClientSession;
+        C_LifeUpdate lifeUpdatePacket = packet as C_LifeUpdate;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayLifeUpdate(clientSession, lifeUpdatePacket));
+    }
 
     //public static void C_MoveHandler(PacketSession session, IPacket packet)
     //{

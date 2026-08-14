@@ -14,19 +14,12 @@ class PacketHandler
     //    PlayerManager.Instance.EnterGame(pkt);
     //}
 
-    //public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
-    //{
-    //    S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
-    //    ServerSession serverSession = session as ServerSession;
-    //    PlayerManager.Instance.LeaveGame(pkt);
-    //}
-
-    public static void S_PlayerDeckInfoHandler(PacketSession session, IPacket packet)
+    public static void S_PlayerInfoHandler(PacketSession session, IPacket packet)
     {
-        S_PlayerDeckInfo pkt = packet as S_PlayerDeckInfo;
+        S_PlayerInfo pkt = packet as S_PlayerInfo;
         ServerSession serverSession = session as ServerSession;
 
-        NetworkMananger.Instance.Gateway.PlayerDeckInfoHandle(pkt);
+        NetworkMananger.Instance.Gateway.PlayerInfoHandle(pkt);
     }
 
     public static void S_PlayerMatchingReqOkHandler(PacketSession session, IPacket packet)
@@ -108,20 +101,20 @@ class PacketHandler
         // 필요한 로직 추가 가능
     }
 
-    public static void S_LifeUpdateHandler(PacketSession session, IPacket packet)
-    {
-        S_LifeUpdate pkt = packet as S_LifeUpdate;
-        ServerSession serverSession = session as ServerSession;
-
-        NetworkMananger.Instance.Gateway.LifeUpdateHandle(pkt);
-    }
-
     public static void S_GameResultHandler(PacketSession session, IPacket packet)
     {
         S_GameResult pkt = packet as S_GameResult;
         ServerSession serverSession = session as ServerSession;
 
         NetworkMananger.Instance.Gateway.GameResultHandle(pkt);
+    }
+
+    public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
+        ServerSession serverSession = session as ServerSession;
+
+        NetworkMananger.Instance.Gateway.BroadcastLeaveGameHandle(pkt);
     }
 
     //public static void S_PlayerListHandler(PacketSession session, IPacket packet)

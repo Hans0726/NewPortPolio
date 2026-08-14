@@ -1,7 +1,18 @@
-START ../../PacketGenerator/bin/PacketGenerator.exe ../../PacketGenerator/PDL
-XCOPY /Y GenPackets.cs "../../DummyClient/Packet"
-XCOPY /Y GenPackets.cs "../../../../../NewPortPolio/Assets/Scripts/Packet"
-XCOPY /Y GenPackets.cs "../../Server/Packet"
-XCOPY /Y ClientPacketManager.cs "../../DummyClient/Packet"
-XCOPY /Y ClientPacketManager.cs "../../../../../NewPortPolio/Assets/Scripts/Packet"
-XCOPY /Y ServerPacketManager.cs "../../Server/Packet"
+@ECHO OFF
+SETLOCAL
+
+SET "PACKET_DIR=%~dp0"
+SET "GENERATOR=%PACKET_DIR%..\..\PacketGenerator\bin\PacketGenerator.exe"
+SET "PDL_DIR=%PACKET_DIR%..\..\PacketGenerator\PDL"
+
+"%GENERATOR%" "%PDL_DIR%" "%PACKET_DIR%."
+IF NOT "%ERRORLEVEL%"=="0" EXIT /B %ERRORLEVEL%
+
+XCOPY /Y "%PACKET_DIR%GenPackets.cs" "%PACKET_DIR%..\..\DummyClient\Packet\"
+XCOPY /Y "%PACKET_DIR%GenPackets.cs" "%PACKET_DIR%..\..\..\Assets\Scripts\Packet\"
+XCOPY /Y "%PACKET_DIR%GenPackets.cs" "%PACKET_DIR%..\..\Server\Packet\"
+XCOPY /Y "%PACKET_DIR%ClientPacketManager.cs" "%PACKET_DIR%..\..\DummyClient\Packet\"
+XCOPY /Y "%PACKET_DIR%ClientPacketManager.cs" "%PACKET_DIR%..\..\..\Assets\Scripts\Packet\"
+XCOPY /Y "%PACKET_DIR%ServerPacketManager.cs" "%PACKET_DIR%..\..\Server\Packet\"
+
+ENDLOCAL

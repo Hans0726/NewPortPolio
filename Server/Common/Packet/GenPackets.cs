@@ -18,14 +18,16 @@ public enum PacketID
 	S_UnitMove = 10, 
 	S_UnitAttack = 11, 
 	S_UnitDestroy = 12, 
-	S_LifeUpdate = 13, 
+	C_LifeUpdate = 13, 
 	S_GameResult = 14, 
 	C_PlayerMatchingReq = 15, 
 	C_PlayerMatchingReqCancel = 16, 
 	S_PlayerMatchingReqOk = 17, 
 	S_MatchingSuccess = 18, 
-	C_PlayerDeckInfo = 19, 
-	S_PlayerDeckInfo = 20, 
+	C_PlayerInfo = 19, 
+	S_PlayerInfo = 20, 
+	C_LeaveGame = 21, 
+	S_BroadcastLeaveGame = 22, 
 	
 }
 
@@ -757,12 +759,12 @@ public class S_UnitDestroy : IPacket
     }
 }
 
-public class S_LifeUpdate : IPacket
+public class C_LifeUpdate : IPacket
 {
     public int playerId;
 	public int life;
 
-    public ushort Protocol { get { return (ushort)PacketID.S_LifeUpdate; } }
+    public ushort Protocol { get { return (ushort)PacketID.C_LifeUpdate; } }
 
     public void Deserialize(ArraySegment<byte> segment)
     {
@@ -789,7 +791,7 @@ public class S_LifeUpdate : IPacket
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
 
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.S_LifeUpdate);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.C_LifeUpdate);
         count += sizeof(ushort);
 
         success &= BitConverter.TryWriteBytes(s.Slice(count), this.playerId);
@@ -1027,7 +1029,7 @@ public class S_MatchingSuccess : IPacket
     }
 }
 
-public class C_PlayerDeckInfo : IPacket
+public class C_PlayerInfo : IPacket
 {
     public List<Card> cards = new List<Card>();
 	
@@ -1057,7 +1059,7 @@ public class C_PlayerDeckInfo : IPacket
 	    }
 	}
 
-    public ushort Protocol { get { return (ushort)PacketID.C_PlayerDeckInfo; } }
+    public ushort Protocol { get { return (ushort)PacketID.C_PlayerInfo; } }
 
     public void Deserialize(ArraySegment<byte> segment)
     {
@@ -1089,7 +1091,7 @@ public class C_PlayerDeckInfo : IPacket
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
 
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.C_PlayerDeckInfo);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.C_PlayerInfo);
         count += sizeof(ushort);
 
         success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)this.cards.Count);
@@ -1108,9 +1110,10 @@ public class C_PlayerDeckInfo : IPacket
     }
 }
 
-public class S_PlayerDeckInfo : IPacket
+public class S_PlayerInfo : IPacket
 {
-    public List<Card> cards = new List<Card>();
+    public int playerId;
+	public List<Card> cards = new List<Card>();
 	
 	public class Card
 	{
@@ -1138,7 +1141,7 @@ public class S_PlayerDeckInfo : IPacket
 	    }
 	}
 
-    public ushort Protocol { get { return (ushort)PacketID.S_PlayerDeckInfo; } }
+    public ushort Protocol { get { return (ushort)PacketID.S_PlayerInfo; } }
 
     public void Deserialize(ArraySegment<byte> segment)
     {
@@ -1148,7 +1151,9 @@ public class S_PlayerDeckInfo : IPacket
         count += sizeof(ushort);
         count += sizeof(ushort);
 
-        this.cards.Clear();
+        this.playerId = BitConverter.ToInt32(s.Slice(count));
+		count += sizeof(int);
+		this.cards.Clear();
 		ushort cardLen = BitConverter.ToUInt16(s.Slice(count));
 		count += sizeof(ushort);
 		for (int i = 0; i < cardLen; i++)
@@ -1170,14 +1175,102 @@ public class S_PlayerDeckInfo : IPacket
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
 
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.S_PlayerDeckInfo);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.S_PlayerInfo);
         count += sizeof(ushort);
 
-        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)this.cards.Count);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), this.playerId);
+		count += sizeof(int);
+		success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)this.cards.Count);
 		count += sizeof(ushort);
 		
 		foreach (Card card in cards)
 		    success &= card.Serialize(s, ref count);
+		
+
+        success &= BitConverter.TryWriteBytes(s, count);
+
+        if (success == false)
+            return null;
+
+        return SendBufferHelper.Close(count);
+    }
+}
+
+public class C_LeaveGame : IPacket
+{
+    
+
+    public ushort Protocol { get { return (ushort)PacketID.C_LeaveGame; } }
+
+    public void Deserialize(ArraySegment<byte> segment)
+    {
+        ushort count = 0;
+
+        ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
+        count += sizeof(ushort);
+        count += sizeof(ushort);
+
+        
+    }
+
+    public ArraySegment<byte> Serialize()
+    {
+        ArraySegment<byte> segment = SendBufferHelper.Open(4096);
+
+        ushort count = 0;
+        bool success = true;
+
+        Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
+
+        count += sizeof(ushort);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.C_LeaveGame);
+        count += sizeof(ushort);
+
+        
+
+        success &= BitConverter.TryWriteBytes(s, count);
+
+        if (success == false)
+            return null;
+
+        return SendBufferHelper.Close(count);
+    }
+}
+
+public class S_BroadcastLeaveGame : IPacket
+{
+    public int playerId;
+
+    public ushort Protocol { get { return (ushort)PacketID.S_BroadcastLeaveGame; } }
+
+    public void Deserialize(ArraySegment<byte> segment)
+    {
+        ushort count = 0;
+
+        ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
+        count += sizeof(ushort);
+        count += sizeof(ushort);
+
+        this.playerId = BitConverter.ToInt32(s.Slice(count));
+		count += sizeof(int);
+		
+    }
+
+    public ArraySegment<byte> Serialize()
+    {
+        ArraySegment<byte> segment = SendBufferHelper.Open(4096);
+
+        ushort count = 0;
+        bool success = true;
+
+        Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
+
+        count += sizeof(ushort);
+        success &= BitConverter.TryWriteBytes(s.Slice(count), (ushort)PacketID.S_BroadcastLeaveGame);
+        count += sizeof(ushort);
+
+        success &= BitConverter.TryWriteBytes(s.Slice(count), this.playerId);
+		count += sizeof(int);
 		
 
         success &= BitConverter.TryWriteBytes(s, count);

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BattlePreparationController : MonoBehaviour
 {
-    [SerializeField] private int _testPreparationSeconds = 30;
+    [SerializeField] private int _preparationSeconds = 30;
 
     private InGameMatchState _matchState;
     private InGameHUDView _hudView;
@@ -61,7 +61,7 @@ public class BattlePreparationController : MonoBehaviour
     {
         if (GameConfig.ENABLE_TEST_MODE)
         {
-            BeginPreparation(_matchState.CurrentRound, _testPreparationSeconds);
+            BeginPreparation(_matchState.CurrentRound, _preparationSeconds);
         }
         else
         {
@@ -86,7 +86,7 @@ public class BattlePreparationController : MonoBehaviour
 
         int duration = preparationSeconds > 0
             ? preparationSeconds
-            : _testPreparationSeconds;
+            : _preparationSeconds;
         _timerRoutine = StartCoroutine(RunPreparationTimer(duration));
     }
 

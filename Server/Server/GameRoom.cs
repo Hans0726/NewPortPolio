@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Server.Session;
 using ServerCore;
 
@@ -11,13 +6,24 @@ namespace Server
     class GameRoom : IJobQueue
     {
         ClientSession[] _sessions = new ClientSession[2]; 
-        object _lock = new object();
         JobQueue _jobQueue = new JobQueue();
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         HashSet<int> _turnStartReadySessions = new HashSet<int>();
         HashSet<int> _turnEndSessions = new HashSet<int>();
+        Dictionary<int, int> _lifeUpdateSessions = new Dictionary<int,int>();
         int _currentTurn;
         const int PreparationTimeSeconds = 30;
+        const int PlayerLife = 10;
+        public bool IsFull => _sessions[0] != null && _sessions[1] != null;
+        public bool IsEmpty => _sessions[0] == null && _sessions[1] == null;
+        bool _gameEnded = false;
+
+
+        public enum GameResult
+        {
+            Victory,
+            Defeat
+        }
 
         public void Push(Action job)
         {
@@ -29,11 +35,10 @@ namespace Server
             foreach (ClientSession s in _sessions)
             {
                 if (s == null)
-                    return;
+                    continue;
                 s.Send(_pendingList);
             }
                 
-
             _pendingList.Clear();
         }
 
@@ -71,17 +76,23 @@ namespace Server
         {
             _turnStartReadySessions.Remove(session.SessionId);
             _turnEndSessions.Remove(session.SessionId);
+            _lifeUpdateSessions.Remove(session.SessionId);
 
             // 플레이어 제거
             if (session.Equals(_sessions[0]) == true)
                 _sessions[0] = null;
             else
                 _sessions[1] = null;
+            
+            if(IsEmpty)
+            {
+                Program.ActiveRooms.Remove(this);
+            }
 
             // 모두에게 알림
-            //S_BroadcastLeaveGame leave = new S_BroadcastLeaveGame();
-            //leave.playerId = session.SessionId;
-            //BroadCast(leave.Serialize());
+            S_BroadcastLeaveGame leave = new S_BroadcastLeaveGame();
+            leave.playerId = session.SessionId;
+            BroadCast(leave.Serialize());
         }
 
         public void RequestMatch(ClientSession session)
@@ -92,16 +103,16 @@ namespace Server
             else
                 _sessions[1] = session;
 
-            S_MatchingSuccess s = new S_MatchingSuccess();
             S_PlayerMatchingReqOk sok = new S_PlayerMatchingReqOk();
-
             session.Send(sok.Serialize());
-            if (_sessions[0] != null && _sessions[1] != null)
+
+            if (IsFull)
             {
-                foreach(ClientSession bothsession in _sessions)
-                {
-                    bothsession.Send(s.Serialize());
-                }
+                Program.ActiveRooms.Add(Program.MatchingRooms.Dequeue());
+                S_MatchingSuccess s = new S_MatchingSuccess();
+                BroadCast(s.Serialize());
+                _lifeUpdateSessions.Add(_sessions[0].SessionId, PlayerLife);
+                _lifeUpdateSessions.Add(_sessions[1].SessionId, PlayerLife);
             }
         }
 
@@ -132,7 +143,7 @@ namespace Server
                 turnNumber = _currentTurn,
                 turnTime = PreparationTimeSeconds
             };
-            SendToAll(packet.Serialize());
+            BroadCast(packet.Serialize());
         }
 
         public void EndTurnPreparation(ClientSession session)
@@ -145,7 +156,7 @@ namespace Server
                 return;
 
             _turnEndSessions.Clear();
-            SendToAll(new S_TurnEnd().Serialize());
+            BroadCast(new S_TurnEnd().Serialize());
         }
 
         public void RelayCardSelection(ClientSession sender, C_CardSelect packet)
@@ -186,18 +197,32 @@ namespace Server
             SendToOpponent(sender, result.Serialize());
         }
 
+        public void RelayLifeUpdate(ClientSession sender, C_LifeUpdate packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender) || _gameEnded)
+                return;
+
+            // 게임 룸은 각 세션에 해당하는 라이프를 가지고 있어야하고 둘 중에 하나라도 라이프가 0이 되면 게임 종료를 알리는 패킷을 보내야 한다.
+            if (_lifeUpdateSessions.ContainsKey(sender.SessionId))
+                _lifeUpdateSessions[sender.SessionId] = packet.life;
+
+            if (_lifeUpdateSessions.Values.Any(life => life <= 0))
+            {
+                _gameEnded = true;
+                GameResult result = _lifeUpdateSessions[sender.SessionId] <= 0 ? GameResult.Defeat : GameResult.Victory;
+                S_GameResult gameEndPacket = new S_GameResult
+                {
+                    winnerId = _lifeUpdateSessions[sender.SessionId] > 0 ? sender.SessionId : _sessions.First(s => s != null && s.SessionId != sender.SessionId).SessionId,
+                    reason = result == GameResult.Victory ? "승리!" : "패배!"
+                };
+                BroadCast(gameEndPacket.Serialize());
+            }
+        }
+
         private bool ContainsSession(ClientSession session)
         {
             return (_sessions[0] != null && _sessions[0].SessionId == session.SessionId)
                 || (_sessions[1] != null && _sessions[1].SessionId == session.SessionId);
-        }
-
-        private void SendToAll(ArraySegment<byte> packet)
-        {
-            foreach (ClientSession session in _sessions)
-            {
-                session?.Send(packet);
-            }
         }
 
         private void SendToOpponent(ClientSession sender, ArraySegment<byte> packet)

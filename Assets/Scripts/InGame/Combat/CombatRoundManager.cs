@@ -42,6 +42,19 @@ public class CombatRoundManager : MonoBehaviour
         _combatRoutine = StartCoroutine(RunCombatRound(playerAttackCards, opponentAttackCards));
     }
 
+    public void StopCombatRound()
+    {
+        AttackUnitRegistry.InActivateAttackUnits();
+        if (_combatRoutine != null)
+        {
+            StopCoroutine(_combatRoutine);
+            _combatRoutine = null;
+        }
+        _placementService?.SetPlacedUnitsCombatActive(false);
+        _onAttackUnitReachedDestination = null;
+        _onCombatRoundFinished = null;
+    }
+
     private IEnumerator RunCombatRound(IReadOnlyList<CardData> playerAttackCards, IReadOnlyList<CardData> opponentAttackCards)
     {
         yield return SpawnAttackUnits(playerAttackCards, _enemyAttackPath, AttackUnitOwner.Player, false);

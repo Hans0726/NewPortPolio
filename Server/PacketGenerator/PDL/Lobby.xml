@@ -14,15 +14,16 @@
   </packet>
   <!-- ============================================================ -->
   
-  <!-- ===================== DeckInfo Packets ===================== -->
-  <packet name ="C_PlayerDeckInfo">
+  <!-- ===================== PlayerInfo Packets ===================== -->
+  <packet name ="C_PlayerInfo">
     <list name ="card">
       <short name ="cardId"/>
       <bool name ="isInDeck"/>
     </list>
   </packet>
 
-  <packet name ="S_PlayerDeckInfo">
+  <packet name ="S_PlayerInfo">
+    <int name ="playerId"/>
     <list name ="card">
       <short name ="cardId"/>
       <bool name ="isInDeck"/>

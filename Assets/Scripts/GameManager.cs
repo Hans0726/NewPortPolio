@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,6 +42,12 @@ public class GameManager : MonoBehaviour
         StartCoroutine(LoadInGameSceneAsync());
     }
 
+    public void LoadLobbyScene(float waitingTime = 0f)
+    {
+        waitingTime = Math.Max(0f, waitingTime);
+        StartCoroutine(LoadLobbySceneAsync(waitingTime));
+    }
+
     private IEnumerator LoadInGameSceneAsync()
     {
         Debug.Log("Matching success. Moving to InGame scene in 3 seconds...");
@@ -53,4 +60,16 @@ public class GameManager : MonoBehaviour
         }
         Debug.Log("InGame scene loaded.");
     }
+
+    private IEnumerator LoadLobbySceneAsync(float waitingTime = 0f)
+    {
+        yield return new WaitForSeconds(waitingTime);
+
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("A_Lobby"); // 씬 이름 확인
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
+        Debug.Log("Lobby scene loaded.");
+    } 
 }

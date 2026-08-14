@@ -34,7 +34,7 @@ public class DefenseUnit : MonoBehaviour
     private bool _isFixedUnit;
     private bool _isMovingThisFrame;
     private Vector3 _visualBaseLocalPosition;
-    private AttackUnitOwner _targetOwner = AttackUnitOwner.Opponent;
+    private AttackUnitOwner _owner = AttackUnitOwner.Player;
     private DefensePlacementManager _placementService;
     private bool _combatActive;
 
@@ -42,13 +42,13 @@ public class DefenseUnit : MonoBehaviour
         CardData card,
         Vector3 homePosition,
         Vector3 homeGroundPosition,
-        AttackUnitOwner targetOwner = AttackUnitOwner.Opponent,
+        AttackUnitOwner owner = AttackUnitOwner.Player,
         DefensePlacementManager placementService = null)
     {
         _card = card;
         _homePosition = homePosition;
         _groundOffsetFromTransform = homeGroundPosition - homePosition;
-        _targetOwner = targetOwner;
+        _owner = owner;
         _placementService = placementService;
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _attack = Mathf.Max(1, card != null ? card.attack : 1);
@@ -113,10 +113,15 @@ public class DefenseUnit : MonoBehaviour
 
     private void RefreshTarget()
     {
+        if (_target != null && (_target.IsDead || _target.Owner == _owner))
+        {
+            ClearTarget("Target is missing, dead, or friendly");
+        }
+
         AttackUnit attackableTarget = AttackUnitRegistry.FindClosest(
             transform.position,
             _attackRange,
-            _targetOwner);
+            GetEnemyOwner());
 
         if (attackableTarget != null && (_target == null || _target.IsDead || !CanAttackTarget(_target)))
         {
@@ -132,7 +137,7 @@ public class DefenseUnit : MonoBehaviour
 
     private void SetTarget(AttackUnit target)
     {
-        if (target == null) return;
+        if (target == null || target.Owner == _owner) return;
 
         AttackUnit previousTarget = _target;
         _target = target;
@@ -164,8 +169,16 @@ public class DefenseUnit : MonoBehaviour
     private bool CanAttackTarget(AttackUnit target)
     {
         if (target == null || target.IsDead) return false;
+        if (target.Owner == _owner) return false;
 
         return GetDistanceToTargetEdge(transform.position, target) <= _attackRange;
+    }
+
+    private AttackUnitOwner GetEnemyOwner()
+    {
+        return _owner == AttackUnitOwner.Player
+            ? AttackUnitOwner.Opponent
+            : AttackUnitOwner.Player;
     }
 
     private void HandleTrackedTarget()
@@ -350,11 +363,15 @@ public class DefenseUnit : MonoBehaviour
         if (_placementService == null) return true;
 
         Vector3 groundPosition = GetGroundPosition(position);
-        if (!_placementService.IsWorldPositionPlaceable(groundPosition)) return false;
+        if (!_placementService.IsWorldPositionPlaceable(groundPosition, _owner)) return false;
         if (_movementAreaCheckRadius <= 0f) return true;
 
-        return _placementService.IsWorldPositionPlaceable(groundPosition + Vector3.left * _movementAreaCheckRadius)
-            && _placementService.IsWorldPositionPlaceable(groundPosition + Vector3.right * _movementAreaCheckRadius);
+        return _placementService.IsWorldPositionPlaceable(
+                groundPosition + Vector3.left * _movementAreaCheckRadius,
+                _owner)
+            && _placementService.IsWorldPositionPlaceable(
+                groundPosition + Vector3.right * _movementAreaCheckRadius,
+                _owner);
     }
 
     private Vector3 GetGroundPosition(Vector3 unitPosition)

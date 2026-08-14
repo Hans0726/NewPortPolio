@@ -4,7 +4,21 @@ using UnityEngine;
 
 public sealed class CardPlayController : IDisposable
 {
+    private readonly struct PendingDefensePlacement
+    {
+        public PendingDefensePlacement(CardData card, Vector3 groundPosition)
+        {
+            Card = card;
+            GroundPosition = groundPosition;
+        }
+
+        public CardData Card { get; }
+        public Vector3 GroundPosition { get; }
+    }
+
     private readonly List<CardData> _opponentAttackCards = new List<CardData>();
+    private readonly List<PendingDefensePlacement> _pendingOpponentDefensePlacements =
+        new List<PendingDefensePlacement>();
 
     private InGameMatchState _matchState;
     private InGameCardState _cardState;
@@ -13,6 +27,7 @@ public sealed class CardPlayController : IDisposable
     private DefensePlacementManager _placementService;
     private NetworkGateway _gateway;
     private bool _preparationActive;
+    private bool _combatActive;
     private bool _initialized;
 
     public event Action PlacementFinished;
@@ -53,6 +68,26 @@ public sealed class CardPlayController : IDisposable
         _preparationActive = active;
     }
 
+    public void EnterCombat()
+    {
+        _combatActive = true;
+
+        for (int i = 0; i < _pendingOpponentDefensePlacements.Count; i++)
+        {
+            PendingDefensePlacement placement = _pendingOpponentDefensePlacements[i];
+            _placementService?.PlaceRemoteDefenseUnit(
+                placement.Card,
+                placement.GroundPosition);
+        }
+
+        _pendingOpponentDefensePlacements.Clear();
+    }
+
+    public void ExitCombat()
+    {
+        _combatActive = false;
+    }
+
     public void Dispose()
     {
         if (!_initialized) return;
@@ -64,6 +99,8 @@ public sealed class CardPlayController : IDisposable
             _gateway.OpponentDefensePlacementReceived -= HandleOpponentDefensePlacement;
         }
 
+        _pendingOpponentDefensePlacements.Clear();
+        _combatActive = false;
         _initialized = false;
     }
 
@@ -115,13 +152,13 @@ public sealed class CardPlayController : IDisposable
         return true;
     }
 
-    private void CompleteDefensePlacement(CardData card, Vector3 position)
+    private void CompleteDefensePlacement(CardData card, Vector3 groundPosition)
     {
         _cardState.AddSelectedDefenseCard(card);
         _hudView.AddUsedDefenseCard(card);
         if (!GameConfig.ENABLE_TEST_MODE)
         {
-            _gateway?.SendDefensePlacement(card.cardId, position.x, position.y);
+            _gateway?.SendDefensePlacement(card.cardId, groundPosition.x, groundPosition.y);
         }
     }
 
@@ -151,8 +188,14 @@ public sealed class CardPlayController : IDisposable
         CardData card = _cardState.GetCardDataById(packet.cardId);
         if (card == null || card.cardType != CardType.Defense) return;
 
-        _placementService.PlaceRemoteDefenseUnit(
-            card,
-            new Vector3(packet.x, packet.y, 0f));
+        Vector3 localGroundPosition = new Vector3(-packet.x, -packet.y, 0f);
+        if (_combatActive)
+        {
+            _placementService.PlaceRemoteDefenseUnit(card, localGroundPosition);
+            return;
+        }
+
+        _pendingOpponentDefensePlacements.Add(
+            new PendingDefensePlacement(card, localGroundPosition));
     }
 }

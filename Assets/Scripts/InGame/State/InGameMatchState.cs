@@ -14,7 +14,6 @@ public enum InGameResult
     None,
     Victory,
     Defeat,
-    Draw
 }
 
 public sealed class InGameMatchState
@@ -112,26 +111,17 @@ public sealed class InGameMatchState
         LifeChanged?.Invoke(PlayerLife, OpponentLife);
     }
 
-    public InGameResult DecideResult()
+    public InGameResult DecideResult(bool isWinner)
     {
-        if (Result != InGameResult.None) return Result;
-
-        if (PlayerLife <= 0 && OpponentLife <= 0)
-        {
-            Result = InGameResult.Draw;
-        }
-        else if (OpponentLife <= 0 || PlayerLife > OpponentLife)
+        if (isWinner)
         {
             Result = InGameResult.Victory;
         }
-        else if (PlayerLife <= 0 || OpponentLife > PlayerLife)
+        else
         {
             Result = InGameResult.Defeat;
         }
-        else
-        {
-            Result = InGameResult.Draw;
-        }
+
 
         SetPhase(InGamePhase.Result);
         ResultChanged?.Invoke(Result);

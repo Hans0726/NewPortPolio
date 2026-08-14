@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class NetworkGateway
 {
     private readonly NetworkMananger _networkManager;
+    public int LocalPlayerId { get; private set; }
 
     public NetworkGateway(NetworkMananger networkManager)
     {
@@ -13,23 +14,24 @@ public class NetworkGateway
     #region LobbyCard
     public event Action<List<(short, bool)>> PlayerDeckInfoReceived;
     
-    public void PlayerDeckInfoHandle(S_PlayerDeckInfo packet)
+    public void PlayerInfoHandle(S_PlayerInfo packet)
     {
         List<(short, bool)> cardDataList = new List<(short cardId, bool isInDeck)>();
-        foreach (S_PlayerDeckInfo.Card deckFromServer in packet.cards)
+        foreach (S_PlayerInfo.Card deckFromServer in packet.cards)
         {
             cardDataList.Add((deckFromServer.cardId, deckFromServer.isInDeck));
         }
+        LocalPlayerId = packet.playerId;
         PlayerDeckInfoReceived?.Invoke(cardDataList);
     }
 
     public void UpdatePlayerDeckInfo(IReadOnlyList<Card> cards)
     {
-        C_PlayerDeckInfo deckPacket = new C_PlayerDeckInfo();
+        C_PlayerInfo deckPacket = new C_PlayerInfo();
 
         foreach (Card card in cards)
         {
-            deckPacket.cards.Add(new C_PlayerDeckInfo.Card { cardId = card.cardId, isInDeck = card.isInDeck });
+            deckPacket.cards.Add(new C_PlayerInfo.Card { cardId = card.cardId, isInDeck = card.isInDeck });
         }
 
         _networkManager.Send(deckPacket.Serialize());
@@ -69,7 +71,6 @@ public class NetworkGateway
     public event Action CombatStartRequested;
     public event Action<S_CardSelectResult> OpponentCardSelectionReceived;
     public event Action<S_UnitPlacementResult> OpponentDefensePlacementReceived;
-    public event Action<S_LifeUpdate> LifeUpdated;
     public event Action<S_GameResult> GameResultReceived;
 
     public void TurnStartHandle(S_TurnStart packet) => TurnStarted?.Invoke(packet);
@@ -82,9 +83,9 @@ public class NetworkGateway
     public void UnitPlacementResultHandle(S_UnitPlacementResult packet) =>
         OpponentDefensePlacementReceived?.Invoke(packet);
 
-    public void LifeUpdateHandle(S_LifeUpdate packet) => LifeUpdated?.Invoke(packet);
-
     public void GameResultHandle(S_GameResult packet) => GameResultReceived?.Invoke(packet);
+    public void BroadcastLeaveGameHandle(S_BroadcastLeaveGame packet) => GameResultReceived?.Invoke(new S_GameResult { winnerId = LocalPlayerId, reason = InGameResult.Victory.ToString()});
+
 
     public void SendTurnStartReady()
     {
@@ -112,6 +113,18 @@ public class NetworkGateway
             x = x,
             y = y
         };
+        _networkManager.Send(packet.Serialize());
+    }
+
+    public void SendPlayerLife(int life)
+    {
+        C_LifeUpdate packet = new C_LifeUpdate { playerId = LocalPlayerId , life = life };
+        _networkManager.Send(packet.Serialize());
+    }
+
+    public void SendPlayerLeave()
+    {
+        C_LeaveGame packet = new();
         _networkManager.Send(packet.Serialize());
     }
 

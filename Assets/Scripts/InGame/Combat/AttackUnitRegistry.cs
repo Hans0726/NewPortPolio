@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public static class AttackUnitRegistry
@@ -68,6 +69,17 @@ public static class AttackUnitRegistry
             if (unit == null || unit.IsDead)
             {
                 _activeUnits.RemoveAt(i);
+            }
+        }
+    }
+
+    public static void InActivateAttackUnits()
+    {
+        foreach (var unit in _activeUnits)
+        {
+            if (unit != null)
+            {
+                unit.ShouldStop = true;
             }
         }
     }

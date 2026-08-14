@@ -1,4 +1,4 @@
-﻿using ServerCore;
+using ServerCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,12 +34,7 @@ namespace Server.Session
         public override void OnDisconnected(EndPoint endPoint)
         {
             SessionManager.Instance.Remove(this);
-            if (Room != null)
-            {
-                GameRoom room = Room;
-                room.Push(()=> room.Leave(this));
-                Room = null;
-            }
+            Dispose();
             Console.WriteLine($"OnDisconnected: {endPoint}");
         }
 
@@ -51,6 +46,16 @@ namespace Server.Session
         public override void OnSend(int numOfBytes)
         {
             //Console.WriteLine($"Transferred bytes: {numOfBytes}");
+        }
+
+        public void Dispose()
+        {
+            if (Room != null)
+            {
+                GameRoom room = Room;
+                room.Push(() => room.Leave(this));
+                Room = null;
+            }
         }
 
         //public void OnMatched()

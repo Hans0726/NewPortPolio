@@ -78,7 +78,7 @@
     <int name="unitId"/>
   </packet>
 
-  <packet name="S_LifeUpdate">
+  <packet name="C_LifeUpdate">
     <int name="playerId"/>
     <int name="life"/>
   </packet>

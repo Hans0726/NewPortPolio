@@ -1,7 +1,7 @@
+using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -268,5 +268,21 @@ public class InGameHUDView : MonoBehaviour
         cardInDeckRect.anchoredPosition = Vector2.zero;
         cardInDeckRect.sizeDelta = Vector2.zero;
         cardInDeckRect.localScale = Vector3.one;
+    }
+
+    public void ShowGameResult(InGameResult reason)
+    {
+        GameObject gameResultPopup = _mainCanvas.transform.Find("UIPopup_GameResult")?.gameObject;
+        if (gameResultPopup == null)
+        {
+            gameResultPopup = Instantiate(Resources.Load<GameObject>("Prefabs/UIPopup"), transform.parent);
+            gameResultPopup.name = "UIPopup_GameResult";
+        }
+
+        UIPopup gameResult = gameResultPopup.GetComponent<UIPopup>();
+        gameResultPopup.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 0f);
+        gameResult.OpenPopup($"{(reason == InGameResult.Victory ? "승리!":"패배!")}\n잠시 후 로비로 이동됩니다.", 
+            0.5f);
+
     }
 }

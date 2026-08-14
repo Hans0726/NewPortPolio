@@ -36,6 +36,7 @@ public class AttackUnit : MonoBehaviour
     private WorldHealthBar _healthBar;
 
     public bool IsDead => _currentHealth <= 0;
+    public bool ShouldStop { get; set; } = false;
     public bool IsHiding => _isHiding;
     public int MaxHealth => _maxHealth;
     public int CurrentHealth => _currentHealth;
@@ -125,7 +126,7 @@ public class AttackUnit : MonoBehaviour
 
     private void Update()
     {
-        if (IsDead) return;
+        if (IsDead || ShouldStop) return;
 
         MoveAlongPath();
         AnimateVisual();

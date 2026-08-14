@@ -1,10 +1,11 @@
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class InGameFlowController : MonoBehaviour
 {
     [Header("Round")]
     [SerializeField] private int _currentRound = 1;
-    [SerializeField] private int _maxRound = 10;
+    [SerializeField] private int _maxRound = 99;
 
     [Header("Cost")]
     [SerializeField] private int _startingCost = 1;
@@ -67,7 +68,12 @@ public class InGameFlowController : MonoBehaviour
         {
             _gateway.TurnStarted += ApplyTurnStart;
             _gateway.CombatStartRequested += BeginCombat;
+            _gateway.GameResultReceived += FinishGame;
         }
+        _matchState.LifeChanged += (playerLife, opponentLife) =>
+        {
+            _gateway.SendPlayerLife(playerLife);
+        };
 
         _initialized = true;
     }
@@ -94,6 +100,7 @@ public class InGameFlowController : MonoBehaviour
         {
             _gateway.TurnStarted -= ApplyTurnStart;
             _gateway.CombatStartRequested -= BeginCombat;
+            _gateway.GameResultReceived -= FinishGame;
         }
 
         _initialized = false;
@@ -130,46 +137,24 @@ public class InGameFlowController : MonoBehaviour
         _combatInProgress = true;
         _matchState.SetPhase(InGamePhase.Combat);
         _hudView.HideHandForCombat();
+        _cardPlayController.EnterCombat();
         _combatService.StartCombatRound(
             _cardState.SelectedAttackCards,
             _cardPlayController.OpponentAttackCards,
-            ApplyAttackUnitDestinationDamage,
+            _matchState.ApplyDestinationDamage,
             CompleteCombatRound);
-    }
-
-    private void ApplyAttackUnitDestinationDamage(AttackUnitOwner owner)
-    {
-        _matchState.ApplyDestinationDamage(owner);
-        if (_matchState.PlayerLife <= 0 || _matchState.OpponentLife <= 0)
-        {
-            FinishGame();
-        }
     }
 
     private void CompleteCombatRound()
     {
         _combatInProgress = false;
+        _cardPlayController.ExitCombat();
         if (_matchState.IsGameEnded) return;
-
-        if (_matchState.PlayerLife <= 0 ||
-            _matchState.OpponentLife <= 0 ||
-            _matchState.CurrentRound >= _matchState.MaxRound)
-        {
-            FinishGame();
-            return;
-        }
-
         _preparationController.NotifyCombatRoundFinished();
     }
 
     private void StartNextRoundForTest()
     {
-        if (_matchState.CurrentRound >= _matchState.MaxRound)
-        {
-            FinishGame();
-            return;
-        }
-
         _matchState.ApplyRound(_matchState.CurrentRound + 1);
         _cardState.PrepareNextRound();
         _cardState.DrawCards(_cardsToDrawPerRound);
@@ -177,10 +162,26 @@ public class InGameFlowController : MonoBehaviour
         _preparationController.BeginPreparation(_matchState.CurrentRound, 30);
     }
 
-    private void FinishGame()
+    private void FinishGame(S_GameResult packet)
     {
+        // 퇴장 시 Broadcast로 인한 방어코드
+        if (_matchState.IsGameEnded)
+            return;
+
         _combatInProgress = false;
-        InGameResult result = _matchState.DecideResult();
+        _combatService.StopCombatRound();
+        _cardPlayController.ExitCombat();
+        InGameResult result = _matchState.DecideResult(packet.winnerId == _gateway.LocalPlayerId);
+        _hudView.ShowGameResult(result);
+
         Debug.Log($"[InGameFlowController] Game finished: {result}");
+
+        _gateway.SendPlayerLeave();
+        GameManager.Instance.LoadLobbyScene(5f);
+    }
+
+    private void OnApplicationQuit()
+    {
+        _gateway.SendPlayerLeave();
     }
 }
