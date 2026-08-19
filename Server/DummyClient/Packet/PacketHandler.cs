@@ -25,12 +25,12 @@ static class PacketHandler
     //    ServerSession serverSession = session as ServerSession;
     //}
 
-    //public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
-    //{
-    //    _logger.Log("[Dummy] Called", nameof(S_BroadcastLeaveGameHandler));
-    //    S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
-    //    ServerSession serverSession = session as ServerSession;
-    //}
+    public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("[Dummy] Called", nameof(S_BroadcastLeaveGameHandler));
+        S_BroadcastLeaveGame pkt = packet as S_BroadcastLeaveGame;
+        ServerSession serverSession = session as ServerSession;
+    }
 
     public static void S_PlayerInfoHandler(PacketSession session, IPacket packet)
     {
@@ -119,6 +119,24 @@ static class PacketHandler
         _logger.Log("[Dummy] Called", nameof(S_UnitDestroyHandler));
         S_UnitDestroy pkt = packet as S_UnitDestroy;
         ServerSession serverSession = session as ServerSession;
+    }
+
+    public static void S_DefenseTargetHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("[Dummy] Called", nameof(S_DefenseTargetHandler));
+        S_DefenseTarget pkt = packet as S_DefenseTarget;
+    }
+
+    public static void S_UnitHealthHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("[Dummy] Called", nameof(S_UnitHealthHandler));
+        S_UnitHealth pkt = packet as S_UnitHealth;
+    }
+
+    public static void S_UnitReachedDestinationHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("[Dummy] Called", nameof(S_UnitReachedDestinationHandler));
+        S_UnitReachedDestination pkt = packet as S_UnitReachedDestination;
     }
 
     public static void S_GameResultHandler(PacketSession session, IPacket packet)

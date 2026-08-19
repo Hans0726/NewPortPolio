@@ -62,6 +62,16 @@ public class InGameFlowController : MonoBehaviour
         _combatService = combatService;
         _gateway = gateway;
 
+        if (_combatService != null)
+        {
+            _combatService.OwnedAttackUnitDestroyed += HandleOwnedAttackUnitDestroyed;
+            _combatService.OwnedAttackUnitHealthChanged += HandleOwnedAttackUnitHealthChanged;
+            _combatService.OwnedDefenseTargetChanged += HandleOwnedDefenseTargetChanged;
+            _combatService.OwnedUnitMovementChanged += HandleOwnedUnitMovementChanged;
+            _combatService.OwnedDefenseAttack += HandleOwnedDefenseAttack;
+            _combatService.OwnedAttackUnitReachedDestination += HandleOwnedAttackReachedDestination;
+        }
+
         _preparationController.TestCombatRequested += BeginCombat;
         _preparationController.TestNextRoundRequested += StartNextRoundForTest;
         if (_gateway != null)
@@ -69,6 +79,12 @@ public class InGameFlowController : MonoBehaviour
             _gateway.TurnStarted += ApplyTurnStart;
             _gateway.CombatStartRequested += BeginCombat;
             _gateway.GameResultReceived += FinishGame;
+            _gateway.OpponentAttackUnitDestroyed += HandleOpponentAttackUnitDestroyed;
+            _gateway.OpponentAttackUnitHealthChanged += HandleOpponentAttackUnitHealthChanged;
+            _gateway.OpponentDefenseTargetChanged += HandleOpponentDefenseTargetChanged;
+            _gateway.OpponentUnitMovementReceived += HandleOpponentUnitMovement;
+            _gateway.OpponentDefenseAttackReceived += HandleOpponentDefenseAttack;
+            _gateway.OpponentAttackReachedDestination += HandleOpponentAttackReachedDestination;
         }
         _matchState.LifeChanged += (playerLife, opponentLife) =>
         {
@@ -96,11 +112,26 @@ public class InGameFlowController : MonoBehaviour
 
         _preparationController.TestCombatRequested -= BeginCombat;
         _preparationController.TestNextRoundRequested -= StartNextRoundForTest;
+        if (_combatService != null)
+        {
+            _combatService.OwnedAttackUnitDestroyed -= HandleOwnedAttackUnitDestroyed;
+            _combatService.OwnedAttackUnitHealthChanged -= HandleOwnedAttackUnitHealthChanged;
+            _combatService.OwnedDefenseTargetChanged -= HandleOwnedDefenseTargetChanged;
+            _combatService.OwnedUnitMovementChanged -= HandleOwnedUnitMovementChanged;
+            _combatService.OwnedDefenseAttack -= HandleOwnedDefenseAttack;
+            _combatService.OwnedAttackUnitReachedDestination -= HandleOwnedAttackReachedDestination;
+        }
         if (_gateway != null)
         {
             _gateway.TurnStarted -= ApplyTurnStart;
             _gateway.CombatStartRequested -= BeginCombat;
             _gateway.GameResultReceived -= FinishGame;
+            _gateway.OpponentAttackUnitDestroyed -= HandleOpponentAttackUnitDestroyed;
+            _gateway.OpponentAttackUnitHealthChanged -= HandleOpponentAttackUnitHealthChanged;
+            _gateway.OpponentDefenseTargetChanged -= HandleOpponentDefenseTargetChanged;
+            _gateway.OpponentUnitMovementReceived -= HandleOpponentUnitMovement;
+            _gateway.OpponentDefenseAttackReceived -= HandleOpponentDefenseAttack;
+            _gateway.OpponentAttackReachedDestination -= HandleOpponentAttackReachedDestination;
         }
 
         _initialized = false;
@@ -136,6 +167,7 @@ public class InGameFlowController : MonoBehaviour
 
         _combatInProgress = true;
         _matchState.SetPhase(InGamePhase.Combat);
+        _hudView.SetPreparationTimeVisible(false);
         _hudView.HideHandForCombat();
         _cardPlayController.EnterCombat();
         _combatService.StartCombatRound(
@@ -178,6 +210,85 @@ public class InGameFlowController : MonoBehaviour
 
         _gateway.SendPlayerLeave();
         GameManager.Instance.LoadLobbyScene(5f);
+    }
+
+    private void HandleOwnedAttackUnitDestroyed(int networkUnitId)
+    {
+        if (!GameConfig.ENABLE_TEST_MODE)
+        {
+            _gateway?.SendOwnedAttackUnitDestroyed(networkUnitId);
+        }
+    }
+
+    private void HandleOpponentAttackUnitDestroyed(int networkUnitId)
+    {
+        _combatService?.DestroyOpponentAttackUnit(networkUnitId);
+    }
+
+    private void HandleOwnedAttackUnitHealthChanged(int networkUnitId, int currentHealth)
+    {
+        _gateway?.SendOwnedAttackUnitHealth(networkUnitId, currentHealth);
+    }
+
+    private void HandleOpponentAttackUnitHealthChanged(int networkUnitId, int currentHealth)
+    {
+        _combatService?.ApplyOpponentAttackUnitHealth(networkUnitId, currentHealth);
+    }
+
+    private void HandleOwnedDefenseTargetChanged(int defenseUnitId, int targetUnitId)
+    {
+        if (!GameConfig.ENABLE_TEST_MODE)
+        {
+            _gateway?.SendDefenseTarget(defenseUnitId, targetUnitId);
+        }
+    }
+
+    private void HandleOpponentDefenseTargetChanged(int defenseUnitId, int targetUnitId)
+    {
+        _combatService?.ApplyOpponentDefenseTarget(defenseUnitId, targetUnitId);
+    }
+
+    private void HandleOwnedUnitMovementChanged(
+        CombatUnitType unitType,
+        int unitId,
+        Vector3 position,
+        bool flipX,
+        bool isHiding)
+    {
+        _gateway?.SendOwnedUnitMovement(unitType, unitId, position, flipX, isHiding);
+    }
+
+    private void HandleOpponentUnitMovement(S_UnitMove packet)
+    {
+        if (packet == null || !System.Enum.IsDefined(typeof(CombatUnitType), packet.unitType)) return;
+
+        _combatService?.ApplyOpponentUnitMovement(
+            (CombatUnitType)packet.unitType,
+            packet.unitId,
+            new Vector3(packet.x, packet.y, 0f),
+            packet.flipX,
+            packet.isHiding);
+    }
+
+    private void HandleOwnedDefenseAttack(int attackerId, int targetId, int damage)
+    {
+        _gateway?.SendOwnedDefenseAttack(attackerId, targetId, damage);
+    }
+
+    private void HandleOpponentDefenseAttack(S_UnitAttack packet)
+    {
+        if (packet == null) return;
+        _combatService?.ApplyOpponentDefenseAttack(packet.targetId, packet.damage);
+    }
+
+    private void HandleOwnedAttackReachedDestination(int unitId)
+    {
+        _gateway?.SendOwnedAttackReachedDestination(unitId);
+    }
+
+    private void HandleOpponentAttackReachedDestination(int unitId)
+    {
+        _combatService?.ApplyOpponentAttackReachedDestination(unitId);
     }
 
     private void OnApplicationQuit()

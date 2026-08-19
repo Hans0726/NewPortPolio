@@ -42,6 +42,15 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.S_UnitDestroy, MakePacket<S_UnitDestroy>);
         _handler.Add((ushort)PacketID.S_UnitDestroy, PacketHandler.S_UnitDestroyHandler);
 
+        _makeFunc.Add((ushort)PacketID.S_DefenseTarget, MakePacket<S_DefenseTarget>);
+        _handler.Add((ushort)PacketID.S_DefenseTarget, PacketHandler.S_DefenseTargetHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_UnitHealth, MakePacket<S_UnitHealth>);
+        _handler.Add((ushort)PacketID.S_UnitHealth, PacketHandler.S_UnitHealthHandler);
+
+        _makeFunc.Add((ushort)PacketID.S_UnitReachedDestination, MakePacket<S_UnitReachedDestination>);
+        _handler.Add((ushort)PacketID.S_UnitReachedDestination, PacketHandler.S_UnitReachedDestinationHandler);
+
         _makeFunc.Add((ushort)PacketID.S_GameResult, MakePacket<S_GameResult>);
         _handler.Add((ushort)PacketID.S_GameResult, PacketHandler.S_GameResultHandler);
 

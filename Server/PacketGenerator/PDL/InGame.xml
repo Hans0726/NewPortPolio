@@ -32,12 +32,14 @@
 
   <!-- ===================== Unit Placement Packets ===================== -->
   <packet name="C_UnitPlacement">
+    <int name="unitId"/>
     <short name="cardId"/>
     <float name="x"/>
     <float name="y"/>
   </packet>
 
   <packet name="S_UnitPlacementResult">
+    <int name="unitId"/>
     <int name="playerId"/>
     <short name="cardId"/>
     <float name="x"/>
@@ -63,9 +65,21 @@
   </packet>
 
   <packet name="S_UnitMove">
+    <int name="unitType"/>
     <int name="unitId"/>
     <float name="x"/>
     <float name="y"/>
+    <bool name="flipX"/>
+    <bool name="isHiding"/>
+  </packet>
+
+  <packet name="C_UnitMove">
+    <int name="unitType"/>
+    <int name="unitId"/>
+    <float name="x"/>
+    <float name="y"/>
+    <bool name="flipX"/>
+    <bool name="isHiding"/>
   </packet>
 
   <packet name="S_UnitAttack">
@@ -75,6 +89,44 @@
   </packet>
 
   <packet name="S_UnitDestroy">
+    <int name="unitId"/>
+  </packet>
+
+  <packet name="C_UnitDestroy">
+    <int name="unitId"/>
+  </packet>
+
+  <packet name="C_UnitAttack">
+    <int name="attackerId"/>
+    <int name="targetId"/>
+    <int name="damage"/>
+  </packet>
+
+  <packet name="C_DefenseTarget">
+    <int name="defenseUnitId"/>
+    <int name="targetUnitId"/>
+  </packet>
+
+  <packet name="S_DefenseTarget">
+    <int name="defenseUnitId"/>
+    <int name="targetUnitId"/>
+  </packet>
+
+  <packet name="C_UnitHealth">
+    <int name="unitId"/>
+    <int name="currentHealth"/>
+  </packet>
+
+  <packet name="S_UnitHealth">
+    <int name="unitId"/>
+    <int name="currentHealth"/>
+  </packet>
+
+  <packet name="C_UnitReachedDestination">
+    <int name="unitId"/>
+  </packet>
+
+  <packet name="S_UnitReachedDestination">
     <int name="unitId"/>
   </packet>
 

@@ -61,6 +61,16 @@ public static class AttackUnitRegistry
         return closest;
     }
 
+    public static AttackUnit FindByNetworkId(int networkUnitId, AttackUnitOwner owner)
+    {
+        RemoveInactiveUnits();
+        return _activeUnits.Find(unit =>
+            unit != null &&
+            !unit.IsDead &&
+            unit.NetworkUnitId == networkUnitId &&
+            unit.Owner == owner);
+    }
+
     private static void RemoveInactiveUnits()
     {
         for (int i = _activeUnits.Count - 1; i >= 0; i--)

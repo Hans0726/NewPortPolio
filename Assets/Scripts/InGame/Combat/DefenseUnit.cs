@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class DefenseUnit : MonoBehaviour
@@ -9,6 +10,9 @@ public class DefenseUnit : MonoBehaviour
     [SerializeField] private float _bobAmplitude = 0.035f;
     [SerializeField] private float _bobFrequency = 8f;
     [SerializeField, Min(0f)] private float _pursuitPredictionMultiplier = 1.5f;
+    [SerializeField] private Color _opponentTint = new Color(1f, 0.45f, 0.45f, 1f);
+    [SerializeField] private float _networkSendInterval = 0.1f;
+    [SerializeField] private float _networkInterpolationSpeed = 18f;
     [Header("Debug")]
     [SerializeField] private bool _enableDebugLogs = true;
 
@@ -37,25 +41,46 @@ public class DefenseUnit : MonoBehaviour
     private AttackUnitOwner _owner = AttackUnitOwner.Player;
     private DefensePlacementManager _placementService;
     private bool _combatActive;
+    private int _networkUnitId;
+    private int _authoritativeTargetUnitId = -1;
+    private Action<int, int> _onOwnedTargetChanged;
+    private Action<CombatUnitType, int, Vector3, bool, bool> _onOwnedMovementChanged;
+    private Action<int, int, int> _onOwnedAttack;
+    private Vector3 _networkTargetPosition;
+    private bool _hasNetworkPosition;
+    private float _nextNetworkSendTime;
 
     public void Initialize(
         CardData card,
         Vector3 homePosition,
         Vector3 homeGroundPosition,
         AttackUnitOwner owner = AttackUnitOwner.Player,
-        DefensePlacementManager placementService = null)
+        int networkUnitId = 0,
+        DefensePlacementManager placementService = null,
+        Action<int, int> onOwnedTargetChanged = null,
+        Action<CombatUnitType, int, Vector3, bool, bool> onOwnedMovementChanged = null,
+        Action<int, int, int> onOwnedAttack = null)
     {
         _card = card;
         _homePosition = homePosition;
         _groundOffsetFromTransform = homeGroundPosition - homePosition;
         _owner = owner;
+        _networkUnitId = networkUnitId;
+        _onOwnedTargetChanged = onOwnedTargetChanged;
+        _onOwnedMovementChanged = onOwnedMovementChanged;
+        _onOwnedAttack = onOwnedAttack;
         _placementService = placementService;
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _attack = Mathf.Max(1, card != null ? card.attack : 1);
         _attackSpeed = Mathf.Max(0.1f, card != null ? card.attackSpeed : 1f);
         _isFixedUnit = card != null && card.isFixedDefenseUnit;
         _renderer = GetComponentInChildren<SpriteRenderer>();
+        if (_renderer != null && _owner == AttackUnitOwner.Opponent)
+        {
+            _renderer.color = _opponentTint;
+        }
         _visualBaseLocalPosition = _renderer != null ? _renderer.transform.localPosition : Vector3.zero;
+        _networkTargetPosition = transform.position;
 
         LogDebug($"Initialized | State={_moveState}");
     }
@@ -71,7 +96,21 @@ public class DefenseUnit : MonoBehaviour
             return;
         }
 
-        RefreshTarget();
+        if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
+        {
+            UpdateRemoteMovement();
+            AnimateVisual();
+            return;
+        }
+
+        if (_owner == AttackUnitOwner.Player || GameConfig.ENABLE_TEST_MODE)
+        {
+            RefreshTarget();
+        }
+        else
+        {
+            RefreshAuthoritativeTarget();
+        }
 
         if (_target != null && !_target.IsDead)
         {
@@ -82,7 +121,54 @@ public class DefenseUnit : MonoBehaviour
             HandleNoTarget();
         }
 
+        SendMovementIfNeeded();
         AnimateVisual();
+    }
+
+    public void ApplyAuthoritativeMovement(Vector3 position, bool flipX)
+    {
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+
+        position -= _groundOffsetFromTransform;
+        position.z = transform.position.z;
+        _networkTargetPosition = position;
+        if (!_hasNetworkPosition)
+        {
+            transform.position = position;
+            _hasNetworkPosition = true;
+        }
+
+        if (_renderer != null)
+        {
+            _renderer.flipX = flipX;
+        }
+    }
+
+    private void UpdateRemoteMovement()
+    {
+        if (!_hasNetworkPosition) return;
+
+        Vector3 previousPosition = transform.position;
+        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, _networkTargetPosition, blend);
+        _isMovingThisFrame = (transform.position - previousPosition).sqrMagnitude > 0.000001f;
+    }
+
+    private void SendMovementIfNeeded()
+    {
+        if (_owner != AttackUnitOwner.Player || GameConfig.ENABLE_TEST_MODE ||
+            Time.time < _nextNetworkSendTime)
+        {
+            return;
+        }
+
+        _nextNetworkSendTime = Time.time + _networkSendInterval;
+        _onOwnedMovementChanged?.Invoke(
+            CombatUnitType.Defense,
+            _networkUnitId,
+            GetGroundPosition(transform.position),
+            _renderer != null && _renderer.flipX,
+            false);
     }
 
     private bool IsCombatActive()
@@ -146,6 +232,10 @@ public class DefenseUnit : MonoBehaviour
         {
             _chaseElapsedTime = 0f;
             LogDebug($"Target acquired | {GetAttackUnitName(previousTarget)} -> {GetAttackUnitName(_target)}");
+            if (_owner == AttackUnitOwner.Player)
+            {
+                _onOwnedTargetChanged?.Invoke(_networkUnitId, _target.NetworkUnitId);
+            }
         }
 
         ChangeMoveState(MoveState.Guarding, "Target acquired");
@@ -164,6 +254,41 @@ public class DefenseUnit : MonoBehaviour
         _target = null;
         _chaseElapsedTime = 0f;
         LogDebug($"Target released | Target={targetName} | Reason={reason}");
+        if (_owner == AttackUnitOwner.Player)
+        {
+            _onOwnedTargetChanged?.Invoke(_networkUnitId, -1);
+        }
+    }
+
+    public void ApplyAuthoritativeTarget(int targetUnitId)
+    {
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+
+        _authoritativeTargetUnitId = targetUnitId;
+        RefreshAuthoritativeTarget();
+    }
+
+    private void RefreshAuthoritativeTarget()
+    {
+        if (_authoritativeTargetUnitId < 0)
+        {
+            ClearTarget("Owner cleared target");
+            return;
+        }
+
+        AttackUnit target = AttackUnitRegistry.FindByNetworkId(
+            _authoritativeTargetUnitId,
+            AttackUnitOwner.Player);
+        if (target != null && target != _target)
+        {
+            SetTarget(target);
+            return;
+        }
+
+        if (_target != null && _target.IsDead)
+        {
+            ClearTarget("Authoritative target is dead");
+        }
     }
 
     private bool CanAttackTarget(AttackUnit target)
@@ -215,7 +340,14 @@ public class DefenseUnit : MonoBehaviour
         if (_target == null || Time.time < _nextAttackTime || _target.IsHiding) return;
 
         string targetName = GetAttackUnitName(_target);
-        _target.TakeDamage(_attack);
+        if (_owner == AttackUnitOwner.Player && !GameConfig.ENABLE_TEST_MODE)
+        {
+            _onOwnedAttack?.Invoke(_networkUnitId, _target.NetworkUnitId, _attack);
+        }
+        else
+        {
+            _target.TakeDamage(_attack);
+        }
         _nextAttackTime = Time.time + GetAttackCooldown();
         LogDebug($"Attack | Target={targetName} | Damage={_attack} | Cooldown={GetAttackCooldown():0.00}s");
     }

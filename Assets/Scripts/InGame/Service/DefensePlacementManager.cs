@@ -12,6 +12,7 @@ public class DefensePlacementManager : MonoBehaviour
 
     [Header("Placement Preview")]
     [SerializeField] private Camera _worldCamera;
+    [SerializeField] private Transform _battlefieldCenter;
     [SerializeField] private Transform _placedUnitRoot;
     [SerializeField] private float _previewZ = -1f;
     [SerializeField] private float _previewScale = 1f;
@@ -21,12 +22,21 @@ public class DefensePlacementManager : MonoBehaviour
 
    
     private CardData _pendingCard;
-    private Action<CardData, Vector3> _onPlaced;
+    private Action<CardData, Vector3, int> _onPlaced;
     private Action _onPlacementEnded;
     private GameObject _previewObject;
     private SpriteRenderer _previewRenderer;
     private bool _isPlacing;
     private readonly List<DefenseUnit> _placedUnits = new List<DefenseUnit>();
+    private readonly Dictionary<int, DefenseUnit> _opponentUnitsById = new Dictionary<int, DefenseUnit>();
+    private readonly Dictionary<int, int> _pendingOpponentTargets = new Dictionary<int, int>();
+    private readonly Dictionary<int, (Vector3 Position, bool FlipX)> _pendingOpponentMovements =
+        new Dictionary<int, (Vector3, bool)>();
+    private int _nextLocalUnitId = 1;
+
+    public event Action<int, int> OwnedDefenseTargetChanged;
+    public event Action<CombatUnitType, int, Vector3, bool, bool> OwnedUnitMovementChanged;
+    public event Action<int, int, int> OwnedDefenseAttack;
 
     public bool IsPlacing => _isPlacing;
 
@@ -46,8 +56,7 @@ public class DefensePlacementManager : MonoBehaviour
     {
         if (owner == AttackUnitOwner.Opponent)
         {
-            worldPosition.x = -worldPosition.x;
-            worldPosition.y = -worldPosition.y;
+            worldPosition = MirrorWorldPosition(worldPosition);
         }
 
         return IsWorldPositionPlaceable(worldPosition);
@@ -74,7 +83,7 @@ public class DefensePlacementManager : MonoBehaviour
 
     }
 
-    public bool BeginPlacement(CardData card, Action<CardData, Vector3> onPlaced, Action onPlacementEnded = null)
+    public bool BeginPlacement(CardData card, Action<CardData, Vector3, int> onPlaced, Action onPlacementEnded = null)
     {
         if (_isPlacing)
         {
@@ -175,18 +184,31 @@ public class DefensePlacementManager : MonoBehaviour
         Vector3 placePosition = groundPosition;
         Sprite unitSprite = GetCardSprite(_pendingCard);
         placePosition = GetSpritePositionFromBottomAnchor(placePosition, unitSprite);
-        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Player);
-        _onPlaced?.Invoke(_pendingCard, groundPosition);
+        int unitId = _nextLocalUnitId++;
+        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Player, unitId);
+        _onPlaced?.Invoke(_pendingCard, groundPosition, unitId);
         EndPlacement();
     }
 
-    public void PlaceRemoteDefenseUnit(CardData card, Vector3 groundPosition)
+    public Vector3 MirrorWorldPosition(Vector3 worldPosition)
+    {
+        Vector3 center = _battlefieldCenter != null
+            ? _battlefieldCenter.position
+            : (_worldCamera != null ? _worldCamera.transform.position : Vector3.zero);
+
+        return new Vector3(
+            center.x * 2f - worldPosition.x,
+            center.y * 2f - worldPosition.y,
+            worldPosition.z);
+    }
+
+    public void PlaceRemoteDefenseUnit(CardData card, Vector3 groundPosition, int unitId)
     {
         if (card == null) return;
 
         Sprite sprite = GetCardSprite(card);
         Vector3 position = GetSpritePositionFromBottomAnchor(groundPosition, sprite);
-        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Opponent);
+        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Opponent, unitId);
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -200,7 +222,8 @@ public class DefensePlacementManager : MonoBehaviour
         CardData card,
         Vector3 position,
         Vector3 groundPosition,
-        AttackUnitOwner owner)
+        AttackUnitOwner owner,
+        int unitId)
     {
         GameObject unitObject = new GameObject($"DefenseUnit_{card.cardName}");
         if (_placedUnitRoot != null)
@@ -220,8 +243,71 @@ public class DefensePlacementManager : MonoBehaviour
         renderer.sortingOrder = _previewSortingOrder - 1;
 
         DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
-        defenseUnit.Initialize(card, position, groundPosition, owner, this);
+        defenseUnit.Initialize(
+            card,
+            position,
+            groundPosition,
+            owner,
+            unitId,
+            this,
+            HandleOwnedDefenseTargetChanged,
+            HandleOwnedUnitMovementChanged,
+            HandleOwnedDefenseAttack);
         _placedUnits.Add(defenseUnit);
+        if (owner == AttackUnitOwner.Opponent)
+        {
+            _opponentUnitsById[unitId] = defenseUnit;
+            if (_pendingOpponentTargets.Remove(unitId, out int targetUnitId))
+            {
+                defenseUnit.ApplyAuthoritativeTarget(targetUnitId);
+            }
+            if (_pendingOpponentMovements.Remove(unitId, out var movement))
+            {
+                defenseUnit.ApplyAuthoritativeMovement(movement.Position, movement.FlipX);
+            }
+        }
+    }
+
+    public void ApplyOpponentDefenseTarget(int defenseUnitId, int targetUnitId)
+    {
+        if (_opponentUnitsById.TryGetValue(defenseUnitId, out DefenseUnit unit) && unit != null)
+        {
+            unit.ApplyAuthoritativeTarget(targetUnitId);
+            return;
+        }
+
+        _pendingOpponentTargets[defenseUnitId] = targetUnitId;
+    }
+
+    private void HandleOwnedDefenseTargetChanged(int defenseUnitId, int targetUnitId)
+    {
+        OwnedDefenseTargetChanged?.Invoke(defenseUnitId, targetUnitId);
+    }
+
+    public void ApplyOpponentDefenseMovement(int unitId, Vector3 position, bool flipX)
+    {
+        if (_opponentUnitsById.TryGetValue(unitId, out DefenseUnit unit) && unit != null)
+        {
+            unit.ApplyAuthoritativeMovement(position, flipX);
+            return;
+        }
+
+        _pendingOpponentMovements[unitId] = (position, flipX);
+    }
+
+    private void HandleOwnedUnitMovementChanged(
+        CombatUnitType unitType,
+        int unitId,
+        Vector3 position,
+        bool flipX,
+        bool isHiding)
+    {
+        OwnedUnitMovementChanged?.Invoke(unitType, unitId, position, flipX, isHiding);
+    }
+
+    private void HandleOwnedDefenseAttack(int attackerId, int targetId, int damage)
+    {
+        OwnedDefenseAttack?.Invoke(attackerId, targetId, damage);
     }
 
     public void SetPlacedUnitsCombatActive(bool active)

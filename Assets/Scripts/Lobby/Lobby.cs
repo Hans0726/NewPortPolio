@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.UI;
+using TMPro;
 
 public class Lobby : MonoBehaviour
 {
@@ -21,10 +22,11 @@ public class Lobby : MonoBehaviour
     [SerializeField] private UIPopup option;
     [SerializeField] private UIPopup_Deck deck;
     
-    [SerializeField]
-    private Dropdown dropdownDisplayMode;
+    [SerializeField] private TMP_Dropdown dropdownDisplayMode;
+    [SerializeField] private TextMeshProUGUI currentDisplayMode;
 
-    [SerializeField] private Dropdown dropdownResolution;
+    [SerializeField] private TMP_Dropdown dropdownResolution;
+    [SerializeField] private TextMeshProUGUI currentResolution;
     private Resolution[] resolutions;
 
     [SerializeField] private AudioMixer audioMixer;
@@ -45,6 +47,7 @@ public class Lobby : MonoBehaviour
         btnOption.onClick.AddListener(option.OpenPopup);
         btnQuit.onClick.AddListener(Application.Quit);
 
+        currentResolution.text = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
         SetupDropdowns();
         LoadVolumeSettings();
 
@@ -55,6 +58,7 @@ public class Lobby : MonoBehaviour
         sliderSfxVolume.onValueChanged.AddListener((float val) => { SetVolume(val, "SFX"); });
         toggleSfxMute.onValueChanged.AddListener((bool isOn) => { SetMute(isOn, "SFX"); });
     }
+
 
     #region 화면모드, 해상도
     private void SetupDropdowns()
@@ -101,7 +105,7 @@ public class Lobby : MonoBehaviour
 
         // 현재 해상도에 맞는 드롭다운 값 설정 (선택 사항)
         int currentResolutionIndex = -1;
-        string currentScreenOption = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
+        string currentScreenOption = currentResolution.text = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
         for (int i = 0; i < uniqueResolutionStrings.Count; ++i)
         {
             if (uniqueResolutionStrings[i] == currentScreenOption)
@@ -146,12 +150,15 @@ public class Lobby : MonoBehaviour
         {
             case 0: // 전체 화면
                 Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+                currentDisplayMode.text = "전체 화면";
                 break;
             case 1: // 창 모드
                 Screen.fullScreenMode = FullScreenMode.Windowed;
+                currentDisplayMode.text = "창 모드";
                 break;
             case 2: // 테두리 없는 창 모드
                 Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+                currentDisplayMode.text = "테두리 없는 창 모드";
                 break;
         }
     }

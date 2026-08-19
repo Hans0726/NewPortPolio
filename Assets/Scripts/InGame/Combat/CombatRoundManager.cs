@@ -21,14 +21,41 @@ public class CombatRoundManager : MonoBehaviour
     private Action<AttackUnitOwner> _onAttackUnitReachedDestination;
     private Action _onCombatRoundFinished;
     private DefensePlacementManager _placementService;
+    private readonly HashSet<int> _pendingOpponentUnitDestroys = new HashSet<int>();
+    private readonly Dictionary<int, int> _pendingOpponentUnitHealth = new Dictionary<int, int>();
+    private readonly Dictionary<int, (Vector3 Position, bool FlipX, bool IsHiding)> _pendingOpponentAttackMovements =
+        new Dictionary<int, (Vector3, bool, bool)>();
+    private readonly HashSet<int> _pendingOpponentDestinations = new HashSet<int>();
+    private int _combatSequence;
+
+    public event Action<int> OwnedAttackUnitDestroyed;
+    public event Action<int, int> OwnedAttackUnitHealthChanged;
+    public event Action<int, int> OwnedDefenseTargetChanged;
+    public event Action<CombatUnitType, int, Vector3, bool, bool> OwnedUnitMovementChanged;
+    public event Action<int, int, int> OwnedDefenseAttack;
+    public event Action<int> OwnedAttackUnitReachedDestination;
 
     public void Configure(DefensePlacementManager placementService)
     {
+        if (_placementService != null)
+        {
+            _placementService.OwnedDefenseTargetChanged -= HandleOwnedDefenseTargetChanged;
+            _placementService.OwnedUnitMovementChanged -= HandleOwnedUnitMovementChanged;
+            _placementService.OwnedDefenseAttack -= HandleOwnedDefenseAttack;
+        }
+
         _placementService = placementService;
+        if (_placementService != null)
+        {
+            _placementService.OwnedDefenseTargetChanged += HandleOwnedDefenseTargetChanged;
+            _placementService.OwnedUnitMovementChanged += HandleOwnedUnitMovementChanged;
+            _placementService.OwnedDefenseAttack += HandleOwnedDefenseAttack;
+        }
     }
 
     public void StartCombatRound(IReadOnlyList<CardData> playerAttackCards, IReadOnlyList<CardData> opponentAttackCards = null, Action<AttackUnitOwner> onAttackUnitReachedDestination = null, Action onCombatRoundFinished = null)
     {
+        _combatSequence++;
         EnsureAttackPath();
         _placementService?.SetPlacedUnitsCombatActive(true);
         _onAttackUnitReachedDestination = onAttackUnitReachedDestination;
@@ -45,6 +72,10 @@ public class CombatRoundManager : MonoBehaviour
     public void StopCombatRound()
     {
         AttackUnitRegistry.InActivateAttackUnits();
+        _pendingOpponentUnitDestroys.Clear();
+        _pendingOpponentUnitHealth.Clear();
+        _pendingOpponentAttackMovements.Clear();
+        _pendingOpponentDestinations.Clear();
         if (_combatRoutine != null)
         {
             StopCoroutine(_combatRoutine);
@@ -91,13 +122,14 @@ public class CombatRoundManager : MonoBehaviour
             CardData card = attackCards[i];
             if (card != null && card.cardType == CardType.Attack)
             {
-                SpawnAttackUnit(card, path, owner, reversePath);
+                int networkUnitId = (_combatSequence * 10000) + i;
+                SpawnAttackUnit(card, path, owner, reversePath, networkUnitId);
                 yield return new WaitForSeconds(_spawnInterval);
             }
         }
     }
 
-    private void SpawnAttackUnit(CardData card, WaypointPath path, AttackUnitOwner owner, bool reversePath)
+    private void SpawnAttackUnit(CardData card, WaypointPath path, AttackUnitOwner owner, bool reversePath, int networkUnitId)
     {
         GameObject unitObject = new GameObject($"AttackUnit_{owner}_{card.cardName}");
         if (_attackUnitRoot != null)
@@ -106,7 +138,166 @@ public class CombatRoundManager : MonoBehaviour
         }
 
         AttackUnit unit = unitObject.AddComponent<AttackUnit>();
-        unit.Initialize(card, path, reversePath, ResolveSortingLayerID(), _attackUnitSortingOrder, _unitZ, _attackUnitBaseScale, _attackUnitBottomAnchorYOffset, owner, _onAttackUnitReachedDestination);
+        unit.Initialize(
+            card,
+            path,
+            reversePath,
+            ResolveSortingLayerID(),
+            _attackUnitSortingOrder,
+            _unitZ,
+            _attackUnitBaseScale,
+            _attackUnitBottomAnchorYOffset,
+            owner,
+            networkUnitId,
+            _onAttackUnitReachedDestination,
+            HandleOwnedAttackUnitDestroyed,
+            HandleOwnedAttackUnitHealthChanged,
+            HandleOwnedUnitMovementChanged,
+            HandleOwnedAttackUnitReachedDestination);
+
+        if (owner == AttackUnitOwner.Opponent && _pendingOpponentDestinations.Remove(networkUnitId))
+        {
+            unit.ApplyAuthoritativeDestroy();
+            _onAttackUnitReachedDestination?.Invoke(AttackUnitOwner.Opponent);
+            return;
+        }
+
+        if (owner == AttackUnitOwner.Opponent && _pendingOpponentUnitDestroys.Remove(networkUnitId))
+        {
+            _pendingOpponentUnitHealth.Remove(networkUnitId);
+            unit.ApplyAuthoritativeDestroy();
+            return;
+        }
+
+        if (owner == AttackUnitOwner.Opponent &&
+            _pendingOpponentUnitHealth.Remove(networkUnitId, out int currentHealth))
+        {
+            unit.ApplyAuthoritativeHealth(currentHealth);
+        }
+
+        if (owner == AttackUnitOwner.Opponent &&
+            _pendingOpponentAttackMovements.Remove(networkUnitId, out var movement))
+        {
+            unit.ApplyAuthoritativeMovement(movement.Position, movement.FlipX, movement.IsHiding);
+        }
+    }
+
+    public void DestroyOpponentAttackUnit(int networkUnitId)
+    {
+        AttackUnit unit = AttackUnitRegistry.FindByNetworkId(
+            networkUnitId,
+            AttackUnitOwner.Opponent);
+
+        if (unit != null)
+        {
+            unit.ApplyAuthoritativeDestroy();
+            return;
+        }
+
+        _pendingOpponentUnitDestroys.Add(networkUnitId);
+    }
+
+    public void ApplyOpponentAttackUnitHealth(int networkUnitId, int currentHealth)
+    {
+        AttackUnit unit = AttackUnitRegistry.FindByNetworkId(
+            networkUnitId,
+            AttackUnitOwner.Opponent);
+        if (unit != null)
+        {
+            unit.ApplyAuthoritativeHealth(currentHealth);
+            return;
+        }
+
+        _pendingOpponentUnitHealth[networkUnitId] = currentHealth;
+    }
+
+    public void ApplyOpponentDefenseTarget(int defenseUnitId, int targetUnitId)
+    {
+        _placementService?.ApplyOpponentDefenseTarget(defenseUnitId, targetUnitId);
+    }
+
+    private void HandleOwnedAttackUnitDestroyed(int networkUnitId)
+    {
+        OwnedAttackUnitDestroyed?.Invoke(networkUnitId);
+    }
+
+    public void ApplyOpponentUnitMovement(
+        CombatUnitType unitType,
+        int unitId,
+        Vector3 ownerPosition,
+        bool ownerFlipX,
+        bool isHiding)
+    {
+        bool localFlipX = !ownerFlipX;
+
+        if (unitType == CombatUnitType.Defense)
+        {
+            Vector3 localPosition = _placementService != null
+                ? _placementService.MirrorWorldPosition(ownerPosition)
+                : new Vector3(-ownerPosition.x, -ownerPosition.y, ownerPosition.z);
+            _placementService?.ApplyOpponentDefenseMovement(unitId, localPosition, localFlipX);
+            return;
+        }
+
+        AttackUnit unit = AttackUnitRegistry.FindByNetworkId(unitId, AttackUnitOwner.Opponent);
+        if (unit != null)
+        {
+            unit.ApplyAuthoritativeMovement(ownerPosition, localFlipX, isHiding);
+            return;
+        }
+
+        _pendingOpponentAttackMovements[unitId] = (ownerPosition, localFlipX, isHiding);
+    }
+
+    public void ApplyOpponentDefenseAttack(int targetUnitId, int damage)
+    {
+        AttackUnit target = AttackUnitRegistry.FindByNetworkId(
+            targetUnitId,
+            AttackUnitOwner.Player);
+        target?.TakeDamage(damage);
+    }
+
+    public void ApplyOpponentAttackReachedDestination(int unitId)
+    {
+        AttackUnit unit = AttackUnitRegistry.FindByNetworkId(unitId, AttackUnitOwner.Opponent);
+        if (unit != null)
+        {
+            unit.ApplyAuthoritativeDestroy();
+            _onAttackUnitReachedDestination?.Invoke(AttackUnitOwner.Opponent);
+            return;
+        }
+
+        _pendingOpponentDestinations.Add(unitId);
+    }
+
+    private void HandleOwnedAttackUnitHealthChanged(int networkUnitId, int currentHealth)
+    {
+        OwnedAttackUnitHealthChanged?.Invoke(networkUnitId, currentHealth);
+    }
+
+    private void HandleOwnedDefenseTargetChanged(int defenseUnitId, int targetUnitId)
+    {
+        OwnedDefenseTargetChanged?.Invoke(defenseUnitId, targetUnitId);
+    }
+
+    private void HandleOwnedUnitMovementChanged(
+        CombatUnitType unitType,
+        int unitId,
+        Vector3 position,
+        bool flipX,
+        bool isHiding)
+    {
+        OwnedUnitMovementChanged?.Invoke(unitType, unitId, position, flipX, isHiding);
+    }
+
+    private void HandleOwnedDefenseAttack(int attackerId, int targetId, int damage)
+    {
+        OwnedDefenseAttack?.Invoke(attackerId, targetId, damage);
+    }
+
+    private void HandleOwnedAttackUnitReachedDestination(int unitId)
+    {
+        OwnedAttackUnitReachedDestination?.Invoke(unitId);
     }
 
     private void EnsureAttackPath()

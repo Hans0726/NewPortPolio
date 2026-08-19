@@ -43,11 +43,18 @@ static class PacketHandler
     {
         _logger.Log("Called", nameof(C_PlayerMatchingReqHandler));
         ClientSession clientSession = session as ClientSession;
- 
-        if (Program.MatchingRooms.Count == 0 || Program.MatchingRooms.Peek().IsFull == true)
-            Program.MatchingRooms.Enqueue(new GameRoom());
+        GameRoom room;
 
-        GameRoom room = Program.MatchingRooms.Peek();
+        lock (Program.RoomsLock)
+        {
+            if (Program.MatchingRooms.Count == 0)
+            {
+                Program.MatchingRooms.Enqueue(new GameRoom());
+            }
+
+            room = Program.MatchingRooms.Peek();
+        }
+
         room.Push(() => room.RequestMatch(clientSession));
     }
 
@@ -120,8 +127,80 @@ static class PacketHandler
         ClientSession clientSession = session as ClientSession;
         C_LifeUpdate lifeUpdatePacket = packet as C_LifeUpdate;
 
+        if (clientSession?.Room == null || lifeUpdatePacket == null)
+            return;
+
         GameRoom room = clientSession.Room;
         room.Push(() => room.RelayLifeUpdate(clientSession, lifeUpdatePacket));
+    }
+
+    public static void C_UnitDestroyHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("Called", nameof(C_UnitDestroyHandler));
+        ClientSession clientSession = session as ClientSession;
+        C_UnitDestroy destroyPacket = packet as C_UnitDestroy;
+
+        if (clientSession?.Room == null || destroyPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitDestroy(clientSession, destroyPacket));
+    }
+
+    public static void C_DefenseTargetHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("Called", nameof(C_DefenseTargetHandler));
+        ClientSession clientSession = session as ClientSession;
+        C_DefenseTarget targetPacket = packet as C_DefenseTarget;
+
+        if (clientSession?.Room == null || targetPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayDefenseTarget(clientSession, targetPacket));
+    }
+
+    public static void C_UnitHealthHandler(PacketSession session, IPacket packet)
+    {
+        _logger.Log("Called", nameof(C_UnitHealthHandler));
+        ClientSession clientSession = session as ClientSession;
+        C_UnitHealth healthPacket = packet as C_UnitHealth;
+
+        if (clientSession?.Room == null || healthPacket == null)
+            return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitHealth(clientSession, healthPacket));
+    }
+
+    public static void C_UnitMoveHandler(PacketSession session, IPacket packet)
+    {
+        ClientSession clientSession = session as ClientSession;
+        C_UnitMove movePacket = packet as C_UnitMove;
+        if (clientSession?.Room == null || movePacket == null) return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitMovement(clientSession, movePacket));
+    }
+
+    public static void C_UnitAttackHandler(PacketSession session, IPacket packet)
+    {
+        ClientSession clientSession = session as ClientSession;
+        C_UnitAttack attackPacket = packet as C_UnitAttack;
+        if (clientSession?.Room == null || attackPacket == null) return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitAttack(clientSession, attackPacket));
+    }
+
+    public static void C_UnitReachedDestinationHandler(PacketSession session, IPacket packet)
+    {
+        ClientSession clientSession = session as ClientSession;
+        C_UnitReachedDestination destinationPacket = packet as C_UnitReachedDestination;
+        if (clientSession?.Room == null || destinationPacket == null) return;
+
+        GameRoom room = clientSession.Room;
+        room.Push(() => room.RelayUnitReachedDestination(clientSession, destinationPacket));
     }
 
     //public static void C_MoveHandler(PacketSession session, IPacket packet)

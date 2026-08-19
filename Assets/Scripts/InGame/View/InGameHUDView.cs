@@ -8,6 +8,12 @@ using UnityEngine.UI;
 
 public class InGameHUDView : MonoBehaviour
 {
+    private sealed class UsedCardEntry
+    {
+        public CardUI CardUI;
+        public int Count;
+    }
+
     [Header("Opening Sequence UI")]
     [SerializeField] private CanvasGroup _openingSequenceCanvasGroup;
     [SerializeField] private TextMeshProUGUI _openingSequenceText;
@@ -45,6 +51,8 @@ public class InGameHUDView : MonoBehaviour
     [SerializeField] private Button _btnTurnEnd;
 
     private readonly List<GameObject> _usedCardUIRoots = new List<GameObject>();
+    private readonly Dictionary<GameObject, Dictionary<short, UsedCardEntry>> _usedCardEntries =
+        new Dictionary<GameObject, Dictionary<short, UsedCardEntry>>();
     private InGameHandUI _handUI;
     private InGameMatchState _matchState;
     private bool _initialized;
@@ -75,6 +83,7 @@ public class InGameHUDView : MonoBehaviour
         _handUI.Initialize(cardState, () => _matchState.CurrentCost);
         RenderCost(_matchState.CurrentCost);
         SetTurnEndInteractable(false);
+        SetPreparationTimeVisible(false);
         _initialized = true;
     }
 
@@ -204,6 +213,21 @@ public class InGameHUDView : MonoBehaviour
     {
         if (card == null || contentRoot == null || _cardUIPrefab == null) return;
 
+        ConfigureUsedCardScrollRect(contentRoot);
+
+        if (!_usedCardEntries.TryGetValue(contentRoot, out Dictionary<short, UsedCardEntry> entries))
+        {
+            entries = new Dictionary<short, UsedCardEntry>();
+            _usedCardEntries.Add(contentRoot, entries);
+        }
+
+        if (entries.TryGetValue(card.cardId, out UsedCardEntry existingEntry))
+        {
+            existingEntry.Count++;
+            existingEntry.CardUI?.SetStackCount(existingEntry.Count);
+            return;
+        }
+
         GameObject cardRoot = Instantiate(_cardUIPrefab, contentRoot.transform);
         cardRoot.name = $"UsedCardUI_{card.cardName}";
         cardRoot.SetActive(true);
@@ -218,6 +242,7 @@ public class InGameHUDView : MonoBehaviour
 
         cardUI.InitializeDisplay(card);
         cardUI.UpdateView(true);
+        cardUI.SetStackCount(1);
         FitUsedCardInDeckDisplay(cardRoot);
 
         CanvasGroup canvasGroup = cardRoot.GetComponent<CanvasGroup>();
@@ -228,6 +253,29 @@ public class InGameHUDView : MonoBehaviour
         }
 
         _usedCardUIRoots.Add(cardRoot);
+        entries.Add(card.cardId, new UsedCardEntry
+        {
+            CardUI = cardUI,
+            Count = 1
+        });
+    }
+
+    public void SetPreparationTimeVisible(bool visible)
+    {
+        if (_preparationTimeText != null)
+        {
+            _preparationTimeText.gameObject.SetActive(visible);
+        }
+    }
+
+    private static void ConfigureUsedCardScrollRect(GameObject contentRoot)
+    {
+        ScrollRect scrollRect = contentRoot.GetComponentInParent<ScrollRect>();
+        if (scrollRect == null) return;
+
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Clamped;
     }
 
     private void ConfigureUsedCardRect(GameObject cardRoot)
@@ -272,17 +320,30 @@ public class InGameHUDView : MonoBehaviour
 
     public void ShowGameResult(InGameResult reason)
     {
+        if (_mainCanvas == null) return;
+
         GameObject gameResultPopup = _mainCanvas.transform.Find("UIPopup_GameResult")?.gameObject;
         if (gameResultPopup == null)
         {
-            gameResultPopup = Instantiate(Resources.Load<GameObject>("Prefabs/UIPopup"), transform.parent);
+            GameObject popupPrefab = Resources.Load<GameObject>("Prefabs/UIPopup");
+            if (popupPrefab == null)
+            {
+                Debug.LogError("[InGameHUDView] Result popup prefab was not found.");
+                return;
+            }
+
+            gameResultPopup = Instantiate(popupPrefab, _mainCanvas.transform, false);
             gameResultPopup.name = "UIPopup_GameResult";
         }
 
         UIPopup gameResult = gameResultPopup.GetComponent<UIPopup>();
-        gameResultPopup.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 0f);
-        gameResult.OpenPopup($"{(reason == InGameResult.Victory ? "승리!":"패배!")}\n잠시 후 로비로 이동됩니다.", 
-            0.5f);
+        if (gameResult == null) return;
 
+        gameResultPopup.SetActive(true);
+        gameResultPopup.transform.SetAsLastSibling();
+        gameResultPopup.transform.localScale = Vector3.one;
+        gameResult.OpenPopup(
+            $"{(reason == InGameResult.Victory ? "승리!" : "패배!")}\n잠시 후 로비로 이동됩니다.",
+            1f);
     }
 }

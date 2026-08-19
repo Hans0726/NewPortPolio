@@ -7,6 +7,12 @@ public enum AttackUnitOwner
     Opponent
 }
 
+public enum CombatUnitType
+{
+    Attack = 0,
+    Defense = 1
+}
+
 public class AttackUnit : MonoBehaviour
 {
     [SerializeField] private float _waypointReachDistance = 0.05f;
@@ -15,6 +21,11 @@ public class AttackUnit : MonoBehaviour
     [SerializeField] private Vector2 _healthBarSize = new Vector2(1.1f, 0.1f);
     [SerializeField] private float _healthBarTopPadding = 0.18f;
     [SerializeField] private int _healthBarSortingOrderOffset = 20;
+    [SerializeField] private Color _opponentTint = new Color(1f, 0.45f, 0.45f, 1f);
+    [SerializeField] private Color _playerHealthBarColor = new Color(0.2f, 0.9f, 0.25f, 0.95f);
+    [SerializeField] private Color _opponentHealthBarColor = new Color(0.95f, 0.2f, 0.2f, 0.95f);
+    [SerializeField] private float _networkSendInterval = 0.1f;
+    [SerializeField] private float _networkInterpolationSpeed = 18f;
 
     private CardData _card;
     private WaypointPath _path;
@@ -34,6 +45,16 @@ public class AttackUnit : MonoBehaviour
     private bool _isHiding = false;
     private Vector3 _visualBaseLocalPosition;
     private WorldHealthBar _healthBar;
+    private int _networkUnitId;
+    private Action<int> _onOwnedUnitDestroyed;
+    private Action<int, int> _onOwnedHealthChanged;
+    private Action<CombatUnitType, int, Vector3, bool, bool> _onOwnedMovementChanged;
+    private Action<int> _onOwnedReachedDestination;
+    private Vector3 _networkTargetPosition;
+    private bool _hasNetworkPosition;
+    private float _nextNetworkSendTime;
+    private Vector3 _networkVelocity;
+    private float _lastNetworkReceiveTime;
 
     public bool IsDead => _currentHealth <= 0;
     public bool ShouldStop { get; set; } = false;
@@ -44,9 +65,15 @@ public class AttackUnit : MonoBehaviour
     public float HitRadius => _hitRadius;
     public Vector3 HitCenter => _renderer != null ? _renderer.bounds.center : transform.position;
     public AttackUnitOwner Owner => _owner;
+    public int NetworkUnitId => _networkUnitId;
 
     public Vector3 GetPredictedHitCenter(float secondsAhead)
     {
+        if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
+        {
+            return HitCenter + _networkVelocity * secondsAhead;
+        }
+
         if (_path == null || _path.Count == 0 || secondsAhead <= 0f)
         {
             return HitCenter;
@@ -79,12 +106,17 @@ public class AttackUnit : MonoBehaviour
         return HitCenter + (predictedPosition - transform.position);
     }
 
-    public void Initialize(CardData card, WaypointPath path, bool reversePath, int sortingLayerId, int sortingOrder, float unitZ, float baseScale, float bottomAnchorYOffset, AttackUnitOwner owner, Action<AttackUnitOwner> onReachedDestination)
+    public void Initialize(CardData card, WaypointPath path, bool reversePath, int sortingLayerId, int sortingOrder, float unitZ, float baseScale, float bottomAnchorYOffset, AttackUnitOwner owner, int networkUnitId, Action<AttackUnitOwner> onReachedDestination, Action<int> onOwnedUnitDestroyed, Action<int, int> onOwnedHealthChanged, Action<CombatUnitType, int, Vector3, bool, bool> onOwnedMovementChanged, Action<int> onOwnedReachedDestination)
     {
         _card = card;
         _path = path;
         _owner = owner;
+        _networkUnitId = networkUnitId;
         _onReachedDestination = onReachedDestination;
+        _onOwnedUnitDestroyed = onOwnedUnitDestroyed;
+        _onOwnedHealthChanged = onOwnedHealthChanged;
+        _onOwnedMovementChanged = onOwnedMovementChanged;
+        _onOwnedReachedDestination = onOwnedReachedDestination;
         _unitZ = unitZ;
         _bottomAnchorYOffset = bottomAnchorYOffset;
         _waypointStep = reversePath ? -1 : 1;
@@ -103,6 +135,10 @@ public class AttackUnit : MonoBehaviour
         _renderer.sortingLayerID = sortingLayerId;
         _renderer.sortingOrder = sortingOrder;
         _renderer.transform.localScale = Vector3.one * _fieldSpriteScale;
+        if (_owner == AttackUnitOwner.Opponent)
+        {
+            _renderer.color = _opponentTint;
+        }
         _visualBaseLocalPosition = GetBottomAnchoredVisualPosition(_renderer.sprite);
 
         if (_path != null && _path.Count > 0)
@@ -111,6 +147,7 @@ public class AttackUnit : MonoBehaviour
             Vector3 startPosition = _path.GetWaypointPosition(startWaypointIndex);
             startPosition.z = _unitZ;
             transform.position = startPosition;
+            _networkTargetPosition = startPosition;
             _nextWaypointIndex = startWaypointIndex + _waypointStep;
         }
 
@@ -128,19 +165,108 @@ public class AttackUnit : MonoBehaviour
     {
         if (IsDead || ShouldStop) return;
 
+        if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
+        {
+            UpdateRemoteMovement();
+            AnimateVisual();
+            return;
+        }
+
         MoveAlongPath();
+        SendMovementIfNeeded();
         AnimateVisual();
+    }
+
+    public void ApplyAuthoritativeMovement(Vector3 position, bool flipX, bool isHiding)
+    {
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+
+        if (_path != null && _path.Count > 1)
+        {
+            position = _path.GetOppositePathPosition(position);
+        }
+        position.z = _unitZ;
+        float elapsed = Time.time - _lastNetworkReceiveTime;
+        if (_hasNetworkPosition && elapsed > 0.001f)
+        {
+            _networkVelocity = (position - _networkTargetPosition) / elapsed;
+        }
+        _lastNetworkReceiveTime = Time.time;
+        _networkTargetPosition = position;
+        if (!_hasNetworkPosition)
+        {
+            transform.position = position;
+            _hasNetworkPosition = true;
+        }
+
+        if (_renderer != null)
+        {
+            _renderer.flipX = flipX;
+        }
+        if (_isHiding != isHiding)
+        {
+            _isHiding = isHiding;
+            SetAlpha(_isHiding ? 0.3f : 1f);
+        }
+    }
+
+    private void UpdateRemoteMovement()
+    {
+        if (!_hasNetworkPosition) return;
+
+        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, _networkTargetPosition, blend);
+    }
+
+    private void SendMovementIfNeeded()
+    {
+        if (_owner != AttackUnitOwner.Player || GameConfig.ENABLE_TEST_MODE ||
+            Time.time < _nextNetworkSendTime)
+        {
+            return;
+        }
+
+        _nextNetworkSendTime = Time.time + _networkSendInterval;
+        _onOwnedMovementChanged?.Invoke(
+            CombatUnitType.Attack,
+            _networkUnitId,
+            transform.position,
+            _renderer != null && _renderer.flipX,
+            _isHiding);
     }
 
     public void TakeDamage(int rawDamage)
     {
+        // 네트워크 게임에서 상대 유닛의 HP는 그 유닛 소유 클라이언트가 보낸 값만 적용한다.
+        if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
+        {
+            return;
+        }
+
         int actualDamage = Mathf.Max(1, rawDamage - _defense);
         _currentHealth -= actualDamage;
         _healthBar?.SetValue(_currentHealth, _maxHealth);
 
+        if (_owner == AttackUnitOwner.Player && !GameConfig.ENABLE_TEST_MODE)
+        {
+            _onOwnedHealthChanged?.Invoke(_networkUnitId, Mathf.Max(0, _currentHealth));
+        }
+
         if (_currentHealth <= 0)
         {
             Die();
+        }
+    }
+
+    public void ApplyAuthoritativeHealth(int currentHealth)
+    {
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+
+        _currentHealth = Mathf.Clamp(currentHealth, 0, _maxHealth);
+        _healthBar?.SetValue(_currentHealth, _maxHealth);
+        if (_currentHealth <= 0)
+        {
+            ApplyAuthoritativeDestroy();
         }
     }
 
@@ -213,7 +339,17 @@ public class AttackUnit : MonoBehaviour
     {
         Vector3 offset = new Vector3(0f, GetHealthBarHeightOffset(), 0f);
         Vector2 size = _healthBarSize * Mathf.Max(0.75f, _fieldSpriteScale);
-        _healthBar = WorldHealthBar.Create(transform, offset, size, new Color(0.2f, 0.9f, 0.25f, 0.95f), sortingLayerId, sortingOrder + _healthBarSortingOrderOffset);
+        Color fillColor = _owner == AttackUnitOwner.Opponent
+            ? _opponentHealthBarColor
+            : _playerHealthBarColor;
+        _healthBar = WorldHealthBar.Create(
+            transform,
+            offset,
+            size,
+            fillColor,
+            sortingLayerId,
+            sortingOrder + _healthBarSortingOrderOffset,
+            keepInsideCamera: true);
         _healthBar.SetValue(_currentHealth, _maxHealth);
     }
 
@@ -251,10 +387,24 @@ public class AttackUnit : MonoBehaviour
     {
         Debug.Log($"[AttackUnit] Reached destination: {(_card != null ? _card.cardName : name)}");
         _onReachedDestination?.Invoke(_owner);
+        if (_owner == AttackUnitOwner.Player && !GameConfig.ENABLE_TEST_MODE)
+        {
+            _onOwnedReachedDestination?.Invoke(_networkUnitId);
+        }
         Destroy(gameObject);
     }
 
     private void Die()
+    {
+        if (_owner == AttackUnitOwner.Player)
+        {
+            _onOwnedUnitDestroyed?.Invoke(_networkUnitId);
+        }
+
+        Destroy(gameObject);
+    }
+
+    public void ApplyAuthoritativeDestroy()
     {
         Destroy(gameObject);
     }

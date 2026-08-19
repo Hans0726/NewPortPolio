@@ -30,6 +30,24 @@ public class PacketManager
         _makeFunc.Add((ushort)PacketID.C_UnitPlacement, MakePacket<C_UnitPlacement>);
         _handler.Add((ushort)PacketID.C_UnitPlacement, PacketHandler.C_UnitPlacementHandler);
 
+        _makeFunc.Add((ushort)PacketID.C_UnitMove, MakePacket<C_UnitMove>);
+        _handler.Add((ushort)PacketID.C_UnitMove, PacketHandler.C_UnitMoveHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_UnitDestroy, MakePacket<C_UnitDestroy>);
+        _handler.Add((ushort)PacketID.C_UnitDestroy, PacketHandler.C_UnitDestroyHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_UnitAttack, MakePacket<C_UnitAttack>);
+        _handler.Add((ushort)PacketID.C_UnitAttack, PacketHandler.C_UnitAttackHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_DefenseTarget, MakePacket<C_DefenseTarget>);
+        _handler.Add((ushort)PacketID.C_DefenseTarget, PacketHandler.C_DefenseTargetHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_UnitHealth, MakePacket<C_UnitHealth>);
+        _handler.Add((ushort)PacketID.C_UnitHealth, PacketHandler.C_UnitHealthHandler);
+
+        _makeFunc.Add((ushort)PacketID.C_UnitReachedDestination, MakePacket<C_UnitReachedDestination>);
+        _handler.Add((ushort)PacketID.C_UnitReachedDestination, PacketHandler.C_UnitReachedDestinationHandler);
+
         _makeFunc.Add((ushort)PacketID.C_LifeUpdate, MakePacket<C_LifeUpdate>);
         _handler.Add((ushort)PacketID.C_LifeUpdate, PacketHandler.C_LifeUpdateHandler);
 

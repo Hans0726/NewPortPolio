@@ -86,7 +86,11 @@ namespace Server
             
             if(IsEmpty)
             {
-                Program.ActiveRooms.Remove(this);
+                lock (Program.RoomsLock)
+                {
+                    Program.ActiveRooms.Remove(this);
+                }
+                return;
             }
 
             // 모두에게 알림
@@ -108,7 +112,11 @@ namespace Server
 
             if (IsFull)
             {
-                Program.ActiveRooms.Add(Program.MatchingRooms.Dequeue());
+                lock (Program.RoomsLock)
+                {
+                    Program.ActiveRooms.Add(Program.MatchingRooms.Dequeue());
+                }
+
                 S_MatchingSuccess s = new S_MatchingSuccess();
                 BroadCast(s.Serialize());
                 _lifeUpdateSessions.Add(_sessions[0].SessionId, PlayerLife);
@@ -187,6 +195,7 @@ namespace Server
 
             S_UnitPlacementResult result = new S_UnitPlacementResult
             {
+                unitId = packet.unitId,
                 playerId = sender.SessionId,
                 cardId = packet.cardId,
                 x = packet.x,
@@ -195,6 +204,83 @@ namespace Server
                 errorMessage = string.Empty
             };
             SendToOpponent(sender, result.Serialize());
+        }
+
+        public void RelayUnitDestroy(ClientSession sender, C_UnitDestroy packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_UnitDestroy
+            {
+                unitId = packet.unitId
+            }.Serialize());
+        }
+
+        public void RelayDefenseTarget(ClientSession sender, C_DefenseTarget packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_DefenseTarget
+            {
+                defenseUnitId = packet.defenseUnitId,
+                targetUnitId = packet.targetUnitId
+            }.Serialize());
+        }
+
+        public void RelayUnitHealth(ClientSession sender, C_UnitHealth packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_UnitHealth
+            {
+                unitId = packet.unitId,
+                currentHealth = packet.currentHealth
+            }.Serialize());
+        }
+
+        public void RelayUnitMovement(ClientSession sender, C_UnitMove packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_UnitMove
+            {
+                unitType = packet.unitType,
+                unitId = packet.unitId,
+                x = packet.x,
+                y = packet.y,
+                flipX = packet.flipX,
+                isHiding = packet.isHiding
+            }.Serialize());
+        }
+
+        public void RelayUnitAttack(ClientSession sender, C_UnitAttack packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_UnitAttack
+            {
+                attackerId = packet.attackerId,
+                targetId = packet.targetId,
+                damage = packet.damage
+            }.Serialize());
+        }
+
+        public void RelayUnitReachedDestination(
+            ClientSession sender,
+            C_UnitReachedDestination packet)
+        {
+            if (sender == null || packet == null || !ContainsSession(sender))
+                return;
+
+            SendToOpponent(sender, new S_UnitReachedDestination
+            {
+                unitId = packet.unitId
+            }.Serialize());
         }
 
         public void RelayLifeUpdate(ClientSession sender, C_LifeUpdate packet)

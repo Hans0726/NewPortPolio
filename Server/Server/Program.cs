@@ -13,10 +13,18 @@ namespace ServerCore
         static Listener _listener = new Listener();
         public static Queue<GameRoom> MatchingRooms = new();
         public static List<GameRoom> ActiveRooms = new();
+        public static readonly object RoomsLock = new();
 
         static void FlushRoom()
         {
-            foreach (GameRoom room in ActiveRooms)
+            GameRoom[] rooms;
+
+            lock (RoomsLock)
+            {
+                rooms = ActiveRooms.ToArray();
+            }
+
+            foreach (GameRoom room in rooms)
                 room.Push(() => room.Flush());
             JobTimer.Instance.Push(FlushRoom, 250);
         }

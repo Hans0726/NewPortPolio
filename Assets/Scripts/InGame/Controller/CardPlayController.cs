@@ -6,14 +6,16 @@ public sealed class CardPlayController : IDisposable
 {
     private readonly struct PendingDefensePlacement
     {
-        public PendingDefensePlacement(CardData card, Vector3 groundPosition)
+        public PendingDefensePlacement(CardData card, Vector3 groundPosition, int unitId)
         {
             Card = card;
             GroundPosition = groundPosition;
+            UnitId = unitId;
         }
 
         public CardData Card { get; }
         public Vector3 GroundPosition { get; }
+        public int UnitId { get; }
     }
 
     private readonly List<CardData> _opponentAttackCards = new List<CardData>();
@@ -77,7 +79,8 @@ public sealed class CardPlayController : IDisposable
             PendingDefensePlacement placement = _pendingOpponentDefensePlacements[i];
             _placementService?.PlaceRemoteDefenseUnit(
                 placement.Card,
-                placement.GroundPosition);
+                placement.GroundPosition,
+                placement.UnitId);
         }
 
         _pendingOpponentDefensePlacements.Clear();
@@ -152,13 +155,13 @@ public sealed class CardPlayController : IDisposable
         return true;
     }
 
-    private void CompleteDefensePlacement(CardData card, Vector3 groundPosition)
+    private void CompleteDefensePlacement(CardData card, Vector3 groundPosition, int unitId)
     {
         _cardState.AddSelectedDefenseCard(card);
         _hudView.AddUsedDefenseCard(card);
         if (!GameConfig.ENABLE_TEST_MODE)
         {
-            _gateway?.SendDefensePlacement(card.cardId, groundPosition.x, groundPosition.y);
+            _gateway?.SendDefensePlacement(unitId, card.cardId, groundPosition.x, groundPosition.y);
         }
     }
 
@@ -188,14 +191,15 @@ public sealed class CardPlayController : IDisposable
         CardData card = _cardState.GetCardDataById(packet.cardId);
         if (card == null || card.cardType != CardType.Defense) return;
 
-        Vector3 localGroundPosition = new Vector3(-packet.x, -packet.y, 0f);
+        Vector3 localGroundPosition = _placementService.MirrorWorldPosition(
+            new Vector3(packet.x, packet.y, 0f));
         if (_combatActive)
         {
-            _placementService.PlaceRemoteDefenseUnit(card, localGroundPosition);
+            _placementService.PlaceRemoteDefenseUnit(card, localGroundPosition, packet.unitId);
             return;
         }
 
         _pendingOpponentDefensePlacements.Add(
-            new PendingDefensePlacement(card, localGroundPosition));
+            new PendingDefensePlacement(card, localGroundPosition, packet.unitId));
     }
 }

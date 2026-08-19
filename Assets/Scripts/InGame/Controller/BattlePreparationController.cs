@@ -78,6 +78,7 @@ public class BattlePreparationController : MonoBehaviour
         _cardPlayController.SetPreparationActive(true);
         _handView.SetInteractionLocked(false);
         _hudView.SetTurnEndInteractable(true);
+        _hudView.SetPreparationTimeVisible(true);
 
         if (_timerRoutine != null)
         {

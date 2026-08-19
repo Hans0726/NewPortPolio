@@ -82,7 +82,7 @@ class PacketHandler
         S_UnitMove pkt = packet as S_UnitMove;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.UnitMoveHandle(pkt);
     }
 
     public static void S_UnitAttackHandler(PacketSession session, IPacket packet)
@@ -90,15 +90,31 @@ class PacketHandler
         S_UnitAttack pkt = packet as S_UnitAttack;
         ServerSession serverSession = session as ServerSession;
 
-        // 필요한 로직 추가 가능
+        NetworkMananger.Instance.Gateway.UnitAttackHandle(pkt);
     }
 
     public static void S_UnitDestroyHandler(PacketSession session, IPacket packet)
     {
         S_UnitDestroy pkt = packet as S_UnitDestroy;
-        ServerSession serverSession = session as ServerSession;
+        NetworkMananger.Instance.Gateway.UnitDestroyHandle(pkt);
+    }
 
-        // 필요한 로직 추가 가능
+    public static void S_DefenseTargetHandler(PacketSession session, IPacket packet)
+    {
+        S_DefenseTarget pkt = packet as S_DefenseTarget;
+        NetworkMananger.Instance.Gateway.DefenseTargetHandle(pkt);
+    }
+
+    public static void S_UnitHealthHandler(PacketSession session, IPacket packet)
+    {
+        S_UnitHealth pkt = packet as S_UnitHealth;
+        NetworkMananger.Instance.Gateway.UnitHealthHandle(pkt);
+    }
+
+    public static void S_UnitReachedDestinationHandler(PacketSession session, IPacket packet)
+    {
+        S_UnitReachedDestination pkt = packet as S_UnitReachedDestination;
+        NetworkMananger.Instance.Gateway.UnitReachedDestinationHandle(pkt);
     }
 
     public static void S_GameResultHandler(PacketSession session, IPacket packet)

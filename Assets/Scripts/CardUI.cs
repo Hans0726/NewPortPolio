@@ -139,6 +139,15 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         _cardInDeckDisplayObject.SetActive(isInDeckView);
     }
 
+    public void SetStackCount(int count)
+    {
+        if (_textNameInDeck == null || _currentCardData == null) return;
+
+        _textNameInDeck.text = count > 1
+            ? $"{_currentCardData.cardName} x{count}"
+            : _currentCardData.cardName;
+    }
+
     public void SetPlayableState(bool isInteractable)
     {
         if (CanvasGroup == null) return;
