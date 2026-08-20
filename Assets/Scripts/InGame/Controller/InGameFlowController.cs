@@ -167,8 +167,8 @@ public class InGameFlowController : MonoBehaviour
 
         _combatInProgress = true;
         _matchState.SetPhase(InGamePhase.Combat);
-        _hudView.SetPreparationTimeVisible(false);
         _hudView.HideHandForCombat();
+        _hudView.SetPreparationTimeOrCurrentRoundText(-1);
         _cardPlayController.EnterCombat();
         _combatService.StartCombatRound(
             _cardState.SelectedAttackCards,

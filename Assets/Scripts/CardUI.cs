@@ -31,6 +31,8 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     [SerializeField] private Button _btnAddToDeckAction; // 카드 전체 목록에서 덱으로 추가하는 버튼
     [SerializeField] private Button _btnRemoveFromDeckAction; // 덱 목록에서 덱에서 제거하는 버튼
 
+    [SerializeField] private GameObject _imgCountBadge;
+
     [Space(5), Header("AttackOff Specifics")]
     [SerializeField] private GameObject _imgAttack;
     [SerializeField] private GameObject _imgAttackSpeed;
@@ -146,6 +148,12 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
         _textNameInDeck.text = count > 1
             ? $"{_currentCardData.cardName} x{count}"
             : _currentCardData.cardName;
+    }
+
+    public void SetCountBadgeActive(bool isActive)
+    {
+        if (_imgCountBadge == null) return;
+        _imgCountBadge.SetActive(isActive);
     }
 
     public void SetPlayableState(bool isInteractable)

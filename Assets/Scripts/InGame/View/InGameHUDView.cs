@@ -29,6 +29,7 @@ public class InGameHUDView : MonoBehaviour
     [SerializeField] private UIPopup_CardSelect _cardSelectPopup;
     [SerializeField] private GameObject _blockingPanel;
     [SerializeField] private Transform _cardPoolContainer;
+    [SerializeField] private UIPopup_CardPile _cardPilePopup;
 
     [Header("Hand Layout")]
     [SerializeField] private float _spreadAngle = 10f;
@@ -43,18 +44,21 @@ public class InGameHUDView : MonoBehaviour
     [SerializeField] private float _lerpSpeed = 10f;
 
     [Header("Battle HUD")]
-    [SerializeField] private TextMeshProUGUI _preparationTimeText;
+    [SerializeField] private TextMeshProUGUI _preparationTimeAndCurrentRoundText;
     [SerializeField] private TextMeshProUGUI _playerCurrentCost;
     [SerializeField] private GameObject _usedAttackCardsContent;
     [SerializeField] private GameObject _usedDefenseCardsContent;
     [SerializeField] private Vector2 _usedCardUISize = new Vector2(246f, 90f);
     [SerializeField] private Button _btnTurnEnd;
+    [SerializeField] private Button _btnDrawPile;
+    [SerializeField] private Button _btnDiscardPile;
 
     private readonly List<GameObject> _usedCardUIRoots = new List<GameObject>();
     private readonly Dictionary<GameObject, Dictionary<short, UsedCardEntry>> _usedCardEntries =
         new Dictionary<GameObject, Dictionary<short, UsedCardEntry>>();
     private InGameHandUI _handUI;
     private InGameMatchState _matchState;
+    private InGameCardState _cardState;
     private bool _initialized;
     private bool _openingSequenceStarted;
 
@@ -64,7 +68,6 @@ public class InGameHUDView : MonoBehaviour
 
     private void Awake()
     {
-        ResolvePreparationTimeText();
         ConfigureHandView();
     }
 
@@ -78,12 +81,14 @@ public class InGameHUDView : MonoBehaviour
         }
 
         _matchState = matchState;
+        _cardState = cardState;
         _matchState.CostChanged += RenderCost;
         _btnTurnEnd?.onClick.AddListener(HandleTurnEndClicked);
+        _btnDrawPile?.onClick.AddListener(HandleDrawPileClicked);
+        _btnDiscardPile?.onClick.AddListener(HandleDiscardPileClicked);
         _handUI.Initialize(cardState, () => _matchState.CurrentCost);
         RenderCost(_matchState.CurrentCost);
         SetTurnEndInteractable(false);
-        SetPreparationTimeVisible(false);
         _initialized = true;
     }
 
@@ -93,6 +98,9 @@ public class InGameHUDView : MonoBehaviour
 
         _matchState.CostChanged -= RenderCost;
         _btnTurnEnd?.onClick.RemoveListener(HandleTurnEndClicked);
+        _btnDrawPile?.onClick.RemoveListener(HandleDrawPileClicked);
+        _btnDiscardPile?.onClick.RemoveListener(HandleDiscardPileClicked);
+        _cardState = null;
         _initialized = false;
     }
 
@@ -104,11 +112,14 @@ public class InGameHUDView : MonoBehaviour
         StartCoroutine(OpeningSequenceCoroutine(onFinished));
     }
 
-    public void SetPreparationTime(int remainingSeconds)
+    public void SetPreparationTimeOrCurrentRoundText(int remainingSeconds)
     {
-        if (_preparationTimeText != null)
+        if (_preparationTimeAndCurrentRoundText != null)
         {
-            _preparationTimeText.text = $"전투 준비 남은 시간: {remainingSeconds}";
+            if (remainingSeconds > 0)
+                _preparationTimeAndCurrentRoundText.text = $"전투 준비 남은 시간: {remainingSeconds}";
+            else
+                _preparationTimeAndCurrentRoundText.text = $"현재 라운드: {_matchState.CurrentRound}";
         }
     }
 
@@ -187,17 +198,6 @@ public class InGameHUDView : MonoBehaviour
             _lerpSpeed);
     }
 
-    private void ResolvePreparationTimeText()
-    {
-        if (_preparationTimeText != null) return;
-
-        GameObject timerObject = GameObject.Find("TxtRoundInfo");
-        if (timerObject != null)
-        {
-            _preparationTimeText = timerObject.GetComponent<TextMeshProUGUI>();
-        }
-    }
-
     private void RenderCost(int currentCost)
     {
         _handUI?.UpdateCardInteractableStates(currentCost);
@@ -208,6 +208,18 @@ public class InGameHUDView : MonoBehaviour
     }
 
     private void HandleTurnEndClicked() => TurnEndRequested?.Invoke();
+
+    private void HandleDrawPileClicked()
+    {
+        if (_cardState == null || _cardPilePopup == null) return;
+        _cardPilePopup.Open(CardPileViewType.DrawPile, _cardState.PlayerDeck);
+    }
+
+    private void HandleDiscardPileClicked()
+    {
+        if (_cardState == null || _cardPilePopup == null) return;
+        _cardPilePopup.Open(CardPileViewType.DiscardPile, _cardState.PlayerDiscardPile);
+    }
 
     private void AddUsedCardToInfoPanel(CardData card, GameObject contentRoot)
     {
@@ -258,14 +270,6 @@ public class InGameHUDView : MonoBehaviour
             CardUI = cardUI,
             Count = 1
         });
-    }
-
-    public void SetPreparationTimeVisible(bool visible)
-    {
-        if (_preparationTimeText != null)
-        {
-            _preparationTimeText.gameObject.SetActive(visible);
-        }
     }
 
     private static void ConfigureUsedCardScrollRect(GameObject contentRoot)
