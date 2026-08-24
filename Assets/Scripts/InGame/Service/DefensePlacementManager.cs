@@ -137,7 +137,7 @@ public class DefensePlacementManager : MonoBehaviour
         _previewRenderer.color = new Color(1f, 1f, 1f, 0.75f);
         _previewRenderer.sortingLayerID = ResolveSortingLayerID();
         _previewRenderer.sortingOrder = _previewSortingOrder;
-        _previewObject.transform.localScale = Vector3.one * _previewScale;
+        _previewObject.transform.localScale = Vector3.one * GetFieldVisualScale(card);
 
         Vector3 centerBottom = _worldCamera.ViewportToWorldPoint(new Vector3(0.5f, 0.2f, Mathf.Abs(_worldCamera.transform.position.z)));
         centerBottom.z = _previewZ;
@@ -146,13 +146,7 @@ public class DefensePlacementManager : MonoBehaviour
 
     private Sprite GetCardSprite(CardData card)
     {
-        if (card.cardImage != null)
-        {
-            return card.cardImage;
-        }
-
-        Sprite resourceSprite = Resources.Load<Sprite>("CardImage/" + card.cardName);
-        return resourceSprite;
+        return CombatSpriteUtility.GetCardSprite(card);
     }
 
     private void UpdatePreviewPosition()
@@ -161,7 +155,12 @@ public class DefensePlacementManager : MonoBehaviour
 
         Vector3 mouseWorldPosition = GetMouseWorldPosition();
         Sprite previewSprite = _previewRenderer != null ? _previewRenderer.sprite : null;
-        _previewObject.transform.position = GetSpritePositionFromBottomAnchor(mouseWorldPosition, previewSprite);
+        float visualScale = GetFieldVisualScale(_pendingCard);
+        _previewObject.transform.localScale = Vector3.one * visualScale;
+        _previewObject.transform.position = GetSpritePositionFromBottomAnchor(
+            mouseWorldPosition,
+            previewSprite,
+            visualScale);
 
         if (_previewRenderer != null)
         {
@@ -181,11 +180,8 @@ public class DefensePlacementManager : MonoBehaviour
         }
 
         Vector3 groundPosition = mouseWorldPosition;
-        Vector3 placePosition = groundPosition;
-        Sprite unitSprite = GetCardSprite(_pendingCard);
-        placePosition = GetSpritePositionFromBottomAnchor(placePosition, unitSprite);
         int unitId = _nextLocalUnitId++;
-        PlaceUnit(_pendingCard, placePosition, groundPosition, AttackUnitOwner.Player, unitId);
+        PlaceUnit(_pendingCard, groundPosition, AttackUnitOwner.Player, unitId);
         _onPlaced?.Invoke(_pendingCard, groundPosition, unitId);
         EndPlacement();
     }
@@ -206,9 +202,7 @@ public class DefensePlacementManager : MonoBehaviour
     {
         if (card == null) return;
 
-        Sprite sprite = GetCardSprite(card);
-        Vector3 position = GetSpritePositionFromBottomAnchor(groundPosition, sprite);
-        PlaceUnit(card, position, groundPosition, AttackUnitOwner.Opponent, unitId);
+        PlaceUnit(card, groundPosition, AttackUnitOwner.Opponent, unitId);
     }
 
     private Vector3 GetMouseWorldPosition()
@@ -220,7 +214,6 @@ public class DefensePlacementManager : MonoBehaviour
 
     private void PlaceUnit(
         CardData card,
-        Vector3 position,
         Vector3 groundPosition,
         AttackUnitOwner owner,
         int unitId)
@@ -231,8 +224,9 @@ public class DefensePlacementManager : MonoBehaviour
             unitObject.transform.SetParent(_placedUnitRoot, true);
         }
 
-        unitObject.transform.position = position;
-        unitObject.transform.localScale = Vector3.one * _previewScale;
+        Vector3 unitPosition = groundPosition;
+        unitPosition.z = _previewZ;
+        unitObject.transform.position = unitPosition;
 
         GameObject visualObject = new GameObject("Visual");
         visualObject.transform.SetParent(unitObject.transform, false);
@@ -245,14 +239,16 @@ public class DefensePlacementManager : MonoBehaviour
         DefenseUnit defenseUnit = unitObject.AddComponent<DefenseUnit>();
         defenseUnit.Initialize(
             card,
-            position,
+            unitPosition,
             groundPosition,
             owner,
             unitId,
             this,
             HandleOwnedDefenseTargetChanged,
             HandleOwnedUnitMovementChanged,
-            HandleOwnedDefenseAttack);
+            HandleOwnedDefenseAttack,
+            _previewScale,
+            _bottomAnchorYOffset);
         _placedUnits.Add(defenseUnit);
         if (owner == AttackUnitOwner.Opponent)
         {
@@ -325,18 +321,27 @@ public class DefensePlacementManager : MonoBehaviour
         }
     }
 
-    private Vector3 GetSpritePositionFromBottomAnchor(Vector3 bottomAnchorPosition, Sprite sprite)
+    private Vector3 GetSpritePositionFromBottomAnchor(
+        Vector3 bottomAnchorPosition,
+        Sprite sprite,
+        float visualScale)
     {
         Vector3 position = bottomAnchorPosition;
         position.z = _previewZ;
 
         if (sprite != null)
         {
-            position.y -= sprite.bounds.min.y * _previewScale;
+            position.y -= sprite.bounds.min.y * visualScale;
         }
 
         position.y += _bottomAnchorYOffset;
         return position;
+    }
+
+    private float GetFieldVisualScale(CardData card)
+    {
+        float cardScale = card != null ? card.fieldSpriteScale : 1f;
+        return Mathf.Max(0.01f, _previewScale * cardScale);
     }
 
     private int ResolveSortingLayerID()

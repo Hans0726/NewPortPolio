@@ -44,6 +44,14 @@ public class WorldHealthBar : MonoBehaviour
         SetFillRatio(ratio);
     }
 
+    public void SetLayout(Vector3 offset, Vector2 size)
+    {
+        _offset = offset;
+        _size = new Vector2(Mathf.Max(0.01f, size.x), Mathf.Max(0.01f, size.y));
+        UpdatePosition();
+        ApplyVisuals();
+    }
+
     private void Initialize(
         Transform target,
         Vector3 offset,

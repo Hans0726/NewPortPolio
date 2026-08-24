@@ -21,6 +21,8 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     [Header("CardUI References")]
     [SerializeField] private Image _imgCard;
+    [SerializeField] private Color _attackCardBackgroundColor;
+    [SerializeField] private Color _defenseCardBackgroundColor;
     [SerializeField] private TextMeshProUGUI _textName;
     [SerializeField] private TextMeshProUGUI _textEffect;
     [SerializeField] private TextMeshProUGUI _textCost;
@@ -94,7 +96,9 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
         // --- 이미지 로드 및 텍스트 설정 ---
         try {
-            Sprite cardSprite = Resources.Load<Sprite>("CardImage/" + _currentCardData.cardName);
+            Sprite cardSprite = _currentCardData.cardIllustration != null
+                ? _currentCardData.cardIllustration
+                : Resources.Load<Sprite>("CardImage/" + _currentCardData.cardName);
             _imgCard.sprite = cardSprite;
             _imgCardMinimize.sprite = cardSprite;
         }

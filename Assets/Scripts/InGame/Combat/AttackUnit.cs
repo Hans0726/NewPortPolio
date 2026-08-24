@@ -13,7 +13,7 @@ public enum CombatUnitType
     Defense = 1
 }
 
-public class AttackUnit : MonoBehaviour
+public class AttackUnit : CombatUnit
 {
     [SerializeField] private float _waypointReachDistance = 0.05f;
     [SerializeField] private float _bobAmplitude = 0.05f;
@@ -27,9 +27,7 @@ public class AttackUnit : MonoBehaviour
     [SerializeField] private float _networkSendInterval = 0.1f;
     [SerializeField] private float _networkInterpolationSpeed = 18f;
 
-    private CardData _card;
     private WaypointPath _path;
-    private SpriteRenderer _renderer;
     private int _nextWaypointIndex;
     private int _waypointStep = 1;
     private float _moveSpeed;
@@ -39,11 +37,8 @@ public class AttackUnit : MonoBehaviour
     private AttackUnitOwner _owner;
     private Action<AttackUnitOwner> _onReachedDestination;
     private float _unitZ;
-    private float _fieldSpriteScale = 1f;
     private float _hitRadius = 5f;
-    private float _bottomAnchorYOffset;
     private bool _isHiding = false;
-    private Vector3 _visualBaseLocalPosition;
     private WorldHealthBar _healthBar;
     private int _networkUnitId;
     private Action<int> _onOwnedUnitDestroyed;
@@ -118,10 +113,7 @@ public class AttackUnit : MonoBehaviour
         _onOwnedMovementChanged = onOwnedMovementChanged;
         _onOwnedReachedDestination = onOwnedReachedDestination;
         _unitZ = unitZ;
-        _bottomAnchorYOffset = bottomAnchorYOffset;
         _waypointStep = reversePath ? -1 : 1;
-        _fieldSpriteScale = Mathf.Max(0.01f, baseScale * (card != null ? card.fieldSpriteScale : 1f));
-        _hitRadius = Mathf.Max(0f, (card != null ? card.fieldHitRadius : 0.25f) * _fieldSpriteScale);
         _moveSpeed = Mathf.Max(0.1f, card != null ? card.moveSpeed : 1f);
         _maxHealth = Mathf.Max(1, card != null ? card.health : 1);
         _currentHealth = _maxHealth;
@@ -134,13 +126,12 @@ public class AttackUnit : MonoBehaviour
         _renderer.sprite = CombatSpriteUtility.GetCardSprite(card);
         _renderer.sortingLayerID = sortingLayerId;
         _renderer.sortingOrder = sortingOrder;
-        _renderer.transform.localScale = Vector3.one * _fieldSpriteScale;
+        InitializeFieldVisual(card, _renderer, baseScale, bottomAnchorYOffset);
+        _hitRadius = GetConfiguredHitRadius();
         if (_owner == AttackUnitOwner.Opponent)
         {
             _renderer.color = _opponentTint;
         }
-        _visualBaseLocalPosition = GetBottomAnchoredVisualPosition(_renderer.sprite);
-
         if (_path != null && _path.Count > 0)
         {
             int startWaypointIndex = reversePath ? _path.Count - 1 : 0;
@@ -163,6 +154,10 @@ public class AttackUnit : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_EDITOR
+        RefreshFieldVisualTuning();
+        RefreshHitRadiusTuning();
+#endif
         if (IsDead || ShouldStop) return;
 
         if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
@@ -332,26 +327,49 @@ public class AttackUnit : MonoBehaviour
         if (_renderer == null) return;
 
         float offsetY = Mathf.Sin(Time.time * _bobFrequency) * _bobAmplitude;
-        _renderer.transform.localPosition = _visualBaseLocalPosition + new Vector3(0f, offsetY, 0f);
+        SetVisualBobOffset(offsetY);
     }
 
     private void CreateHealthBar(int sortingLayerId, int sortingOrder)
     {
         Vector3 offset = new Vector3(0f, GetHealthBarHeightOffset(), 0f);
-        Vector2 size = _healthBarSize * Mathf.Max(0.75f, _fieldSpriteScale);
         Color fillColor = _owner == AttackUnitOwner.Opponent
             ? _opponentHealthBarColor
             : _playerHealthBarColor;
         _healthBar = WorldHealthBar.Create(
             transform,
             offset,
-            size,
+            _healthBarSize,
             fillColor,
             sortingLayerId,
             sortingOrder + _healthBarSortingOrderOffset,
             keepInsideCamera: true);
         _healthBar.SetValue(_currentHealth, _maxHealth);
     }
+
+    protected override void OnFieldVisualScaleChanged()
+    {
+        _hitRadius = GetConfiguredHitRadius();
+        _healthBar?.SetLayout(
+            new Vector3(0f, GetHealthBarHeightOffset(), 0f),
+            _healthBarSize);
+    }
+
+    private float GetConfiguredHitRadius()
+    {
+        float radius = _card != null ? _card.fieldHitRadius : 0.25f;
+        return Mathf.Max(0f, radius * _fieldSpriteScale);
+    }
+
+#if UNITY_EDITOR
+    private void RefreshHitRadiusTuning()
+    {
+        float nextHitRadius = GetConfiguredHitRadius();
+        if (Mathf.Approximately(nextHitRadius, _hitRadius)) return;
+
+        _hitRadius = nextHitRadius;
+    }
+#endif
 
     private float GetHealthBarHeightOffset()
     {
@@ -361,17 +379,6 @@ public class AttackUnit : MonoBehaviour
         }
 
         return _renderer.sprite.bounds.size.y * _fieldSpriteScale + _bottomAnchorYOffset + _healthBarTopPadding;
-    }
-
-    private Vector3 GetBottomAnchoredVisualPosition(Sprite sprite)
-    {
-        if (sprite == null)
-        {
-            return new Vector3(0f, _bottomAnchorYOffset, 0f);
-        }
-
-        float bottomToOrigin = -sprite.bounds.min.y * _fieldSpriteScale;
-        return new Vector3(0f, bottomToOrigin + _bottomAnchorYOffset, 0f);
     }
 
     private void SetAlpha(float alpha)

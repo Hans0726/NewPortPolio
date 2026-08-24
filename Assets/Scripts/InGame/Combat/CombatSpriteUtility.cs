@@ -6,18 +6,32 @@ public static class CombatSpriteUtility
 
     public static Sprite GetCardSprite(CardData card)
     {
-        if (card != null && card.cardImage != null)
+        if (card == null)
         {
-            return card.cardImage;
+            return GetFallbackSprite();
         }
 
-        if (card != null)
+        if (card.fieldSprite != null)
         {
-            Sprite resourceSprite = Resources.Load<Sprite>("CardImage/" + card.cardName);
-            if (resourceSprite != null)
-            {
-                return resourceSprite;
-            }
+            return card.fieldSprite;
+        }
+
+        Sprite fieldSprite = Resources.Load<Sprite>("FieldSprites/" + card.cardName);
+        if (fieldSprite != null)
+        {
+            return fieldSprite;
+        }
+
+        // Existing cards continue to work until each one receives a dedicated field sprite.
+        if (card.cardIllustration != null)
+        {
+            return card.cardIllustration;
+        }
+
+        Sprite legacyCardSprite = Resources.Load<Sprite>("CardImage/" + card.cardName);
+        if (legacyCardSprite != null)
+        {
+            return legacyCardSprite;
         }
 
         return GetFallbackSprite();

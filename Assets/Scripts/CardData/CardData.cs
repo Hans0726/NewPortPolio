@@ -37,7 +37,8 @@ public class CardData : ScriptableObject
     public float moveSpeed = 1.0f;      // 이동 속도 (공격/방어 공통 가능)
     public int cost = 1;
 
-    public Sprite cardImage;            // 카드 이미지
+    public Sprite cardIllustration; // 카드에 표시할 원화
+    public Sprite fieldSprite;      // 전투 필드용 도트
     public CardType cardType;
 
     [Header("Field Visual")]

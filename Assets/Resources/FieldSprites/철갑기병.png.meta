@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 47aabf5bd5703db44a56787bab92f726
+guid: 973c258c10db58e418ad4335b2600955
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6340769212958768653
-    second: "\uBC15\uACA9\uD3EC_0"
+      213: 1851343006065143952
+    second: IroncladCavalier_Field_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,23 +100,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "\uBC15\uACA9\uD3EC_0"
+      name: "\uCCA0\uAC11\uAE30\uBCD1_0"
       rect:
         serializedVersion: 2
-        x: 40
-        y: 11
-        width: 247
-        height: 274
-      alignment: 0
-      pivot: {x: 0, y: 0}
+        x: 2
+        y: 5
+        width: 117
+        height: 95
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d0ef32d1100fef750800000000000000
-      internalID: 6340769212958768653
+      spriteID: 7c85c5596897fad44bafd03d35b983bb
+      internalID: 102123834
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 28077ec095deace4ea7684bb8263a540
     internalID: 0
     vertices: []
     indices: 
@@ -133,9 +133,11 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.0},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":7,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      "\uBC15\uACA9\uD3EC_0": 6340769212958768653
+      "\uCCA0\uAC11\uAE30\uBCD1_0": 102123834
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

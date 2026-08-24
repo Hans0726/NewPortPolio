@@ -764,6 +764,9 @@ MonoBehaviour:
   _cardDisplayObject: {fileID: 857295601682886814}
   _cardInDeckDisplayObject: {fileID: 723577937688244947}
   _imgCard: {fileID: 6363935945120525858}
+  _imgCardBackGroundByType: {fileID: 4714626306890338759}
+  _attackCardBackgroundColor: {r: 0.56078434, g: 0.25490198, b: 0.25490198, a: 0}
+  _defenseCardBackgroundColor: {r: 0.27450982, g: 0.4117647, b: 0.5294118, a: 1}
   _textName: {fileID: 5635357513370877851}
   _textEffect: {fileID: 2832451509261653815}
   _textCost: {fileID: 5039409807672167408}
@@ -1074,7 +1077,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.8666667, g: 0.83137256, b: 0.76862746, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1337,8 +1340,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1.9104, y: 57.2}
-  m_SizeDelta: {x: 160, y: 100}
+  m_AnchoredPosition: {x: -0.000037193, y: 58.3}
+  m_SizeDelta: {x: 92.8361, y: 92.836}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3835705652214482177
 CanvasRenderer:

@@ -293,6 +293,7 @@ public class InGameFlowController : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        if (GameConfig.ENABLE_TEST_MODE) return;
         _gateway.SendPlayerLeave();
     }
 }

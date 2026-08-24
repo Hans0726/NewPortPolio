@@ -16,10 +16,11 @@ MonoBehaviour:
   cardName: "\uC2A4\uCF00\uC774\uD305\uC120\uC218"
   moveSpeed: 2
   cost: 1
-  cardImage: {fileID: 0}
+  cardIllustration: {fileID: 0}
+  fieldSprite: {fileID: 0}
   cardType: 1
-  fieldSpriteScale: 0.8
-  fieldHitRadius: 1.3
+  fieldSpriteScale: 2
+  fieldHitRadius: 0.58
   health: 50
   defense: 0
   attack: 0

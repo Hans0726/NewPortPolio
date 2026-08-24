@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class DefenseUnit : MonoBehaviour
+public class DefenseUnit : CombatUnit
 {
     [SerializeField] private float _attackRange = 2.5f;
     [SerializeField, Min(0f)] private float _maxChaseDuration = 2f;
@@ -23,8 +23,6 @@ public class DefenseUnit : MonoBehaviour
         ReturningHome
     }
 
-    private CardData _card;
-    private SpriteRenderer _renderer;
     private Vector3 _homePosition;
     private Vector3 _groundOffsetFromTransform;
     private AttackUnit _target;
@@ -37,7 +35,6 @@ public class DefenseUnit : MonoBehaviour
     private float _chaseElapsedTime;
     private bool _isFixedUnit;
     private bool _isMovingThisFrame;
-    private Vector3 _visualBaseLocalPosition;
     private AttackUnitOwner _owner = AttackUnitOwner.Player;
     private DefensePlacementManager _placementService;
     private bool _combatActive;
@@ -59,7 +56,9 @@ public class DefenseUnit : MonoBehaviour
         DefensePlacementManager placementService = null,
         Action<int, int> onOwnedTargetChanged = null,
         Action<CombatUnitType, int, Vector3, bool, bool> onOwnedMovementChanged = null,
-        Action<int, int, int> onOwnedAttack = null)
+        Action<int, int, int> onOwnedAttack = null,
+        float baseFieldSpriteScale = 1f,
+        float bottomAnchorOffset = 0f)
     {
         _card = card;
         _homePosition = homePosition;
@@ -75,11 +74,11 @@ public class DefenseUnit : MonoBehaviour
         _attackSpeed = Mathf.Max(0.1f, card != null ? card.attackSpeed : 1f);
         _isFixedUnit = card != null && card.isFixedDefenseUnit;
         _renderer = GetComponentInChildren<SpriteRenderer>();
+        InitializeFieldVisual(card, _renderer, baseFieldSpriteScale, bottomAnchorOffset);
         if (_renderer != null && _owner == AttackUnitOwner.Opponent)
         {
             _renderer.color = _opponentTint;
         }
-        _visualBaseLocalPosition = _renderer != null ? _renderer.transform.localPosition : Vector3.zero;
         _networkTargetPosition = transform.position;
 
         LogDebug($"Initialized | State={_moveState}");
@@ -87,6 +86,9 @@ public class DefenseUnit : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_EDITOR
+        RefreshFieldVisualTuning();
+#endif
         _isMovingThisFrame = false;
 
         if (!IsCombatActive())
@@ -191,10 +193,7 @@ public class DefenseUnit : MonoBehaviour
         transform.position = _homePosition;
         ChangeMoveState(MoveState.Guarding, "Combat ended");
 
-        if (_renderer != null)
-        {
-            _renderer.transform.localPosition = _visualBaseLocalPosition;
-        }
+        ResetVisualPosition();
     }
 
     private void RefreshTarget()
@@ -205,7 +204,7 @@ public class DefenseUnit : MonoBehaviour
         }
 
         AttackUnit attackableTarget = AttackUnitRegistry.FindClosest(
-            transform.position,
+            GetVisualCenter(),
             _attackRange,
             GetEnemyOwner());
 
@@ -239,7 +238,7 @@ public class DefenseUnit : MonoBehaviour
         }
 
         ChangeMoveState(MoveState.Guarding, "Target acquired");
-        _lastKnownTargetPosition = _target.HitCenter;
+        _lastKnownTargetPosition = GetGroundPositionForVisualCenter(_target.HitCenter);
     }
 
     private void ClearTarget(string reason)
@@ -296,7 +295,7 @@ public class DefenseUnit : MonoBehaviour
         if (target == null || target.IsDead) return false;
         if (target.Owner == _owner) return false;
 
-        return GetDistanceToTargetEdge(transform.position, target) <= _attackRange;
+        return GetDistanceToTargetEdge(GetVisualCenter(), target) <= _attackRange;
     }
 
     private AttackUnitOwner GetEnemyOwner()
@@ -331,7 +330,8 @@ public class DefenseUnit : MonoBehaviour
         }
 
         float predictionTime = GetAttackCooldown() * _pursuitPredictionMultiplier;
-        _lastKnownTargetPosition = _target.GetPredictedHitCenter(predictionTime);
+        _lastKnownTargetPosition = GetGroundPositionForVisualCenter(
+            _target.GetPredictedHitCenter(predictionTime));
         ChaseTarget();
     }
 
@@ -473,13 +473,14 @@ public class DefenseUnit : MonoBehaviour
         return true;
     }
 
+
     private void AnimateVisual()
     {
         if (_renderer == null) return;
 
         float isMoving = _isMovingThisFrame ? 1f : 0f;
         float offsetY = Mathf.Sin(Time.time * _bobFrequency) * _bobAmplitude * isMoving;
-        _renderer.transform.localPosition = _visualBaseLocalPosition + new Vector3(0f, offsetY, 0f);
+        SetVisualBobOffset(offsetY);
     }
 
     private float GetDistanceToTargetEdge(Vector3 origin, AttackUnit target)
@@ -511,6 +512,14 @@ public class DefenseUnit : MonoBehaviour
         return unitPosition + _groundOffsetFromTransform;
     }
 
+    private Vector3 GetGroundPositionForVisualCenter(Vector3 desiredVisualCenter)
+    {
+        Vector3 centerOffset = GetVisualCenter() - transform.position;
+        Vector3 groundPosition = desiredVisualCenter - centerOffset;
+        groundPosition.z = transform.position.z;
+        return groundPosition;
+    }
+
     private bool IsAtPosition(Vector3 position)
     {
         Vector3 offset = transform.position - position;
@@ -532,7 +541,7 @@ public class DefenseUnit : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, _attackRange);
+        Gizmos.DrawWireSphere(GetVisualCenter(), _attackRange);
 
         if (!Application.isPlaying) return;
 
