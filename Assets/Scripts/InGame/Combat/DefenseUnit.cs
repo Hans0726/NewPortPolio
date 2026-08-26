@@ -340,6 +340,8 @@ public class DefenseUnit : CombatUnit
         if (_target == null || Time.time < _nextAttackTime || _target.IsHiding) return;
 
         string targetName = GetAttackUnitName(_target);
+        PlayAttackFeedback();
+        GameManager.Instance?.PlaySfx(GetAttackSfx(), 0.55f);
         if (_owner == AttackUnitOwner.Player && !GameConfig.ENABLE_TEST_MODE)
         {
             _onOwnedAttack?.Invoke(_networkUnitId, _target.NetworkUnitId, _attack);
@@ -352,6 +354,14 @@ public class DefenseUnit : CombatUnit
         LogDebug($"Attack | Target={targetName} | Damage={_attack} | Cooldown={GetAttackCooldown():0.00}s");
     }
 
+    public void PlayAuthoritativeAttackFeedback()
+    {
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+
+        PlayAttackFeedback();
+        GameManager.Instance?.PlaySfx(GetAttackSfx(), 0.55f);
+    }
+
     private bool IsRecoveringFromAttack()
     {
         return Time.time < _nextAttackTime;
@@ -360,6 +370,18 @@ public class DefenseUnit : CombatUnit
     private float GetAttackCooldown()
     {
         return 1f / _attackSpeed;
+    }
+
+    private GameSfx GetAttackSfx()
+    {
+        if (_card == null) return GameSfx.Attack;
+
+        return _card.cardId switch
+        {
+            101 or 104 => GameSfx.HeavyAttack,
+            103 => GameSfx.MagicAttack,
+            _ => GameSfx.Attack
+        };
     }
 
     private void HandleNoTarget()

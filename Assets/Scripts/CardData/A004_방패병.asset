@@ -20,6 +20,7 @@ MonoBehaviour:
   fieldSprite: {fileID: 0}
   cardType: 1
   fieldSpriteScale: 2.06
+  fieldSpriteYOffset: 0
   fieldHitRadius: 0.58
   health: 100
   defense: 20

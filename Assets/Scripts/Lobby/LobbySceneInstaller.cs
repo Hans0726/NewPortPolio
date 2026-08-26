@@ -11,7 +11,7 @@ public class LobbySceneInstaller : MonoBehaviour
 
     private void Awake()
     {
-        _lobbyDeckState = new LobbyDeckState(maxDeckSize: 10);
+        _lobbyDeckState = new LobbyDeckState(maxDeckSize: 15);
     }
 
     private void Start()

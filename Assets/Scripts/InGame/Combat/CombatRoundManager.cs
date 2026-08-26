@@ -249,8 +249,9 @@ public class CombatRoundManager : MonoBehaviour
         _pendingOpponentAttackMovements[unitId] = (ownerPosition, localFlipX, isHiding);
     }
 
-    public void ApplyOpponentDefenseAttack(int targetUnitId, int damage)
+    public void ApplyOpponentDefenseAttack(int attackerUnitId, int targetUnitId, int damage)
     {
+        _placementService?.PlayOpponentDefenseAttackFeedback(attackerUnitId);
         AttackUnit target = AttackUnitRegistry.FindByNetworkId(
             targetUnitId,
             AttackUnitOwner.Player);

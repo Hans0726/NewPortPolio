@@ -140,6 +140,7 @@ public class InGameFlowController : MonoBehaviour
     private void HandleOpeningSequenceFinished()
     {
         _cardState.DrawInitialHand();
+        GameManager.Instance?.PlaySfx(GameSfx.CardDraw);
         _hudView.ShowInitialHand();
         _preparationController.NotifyOpeningSequenceFinished();
     }
@@ -153,12 +154,14 @@ public class InGameFlowController : MonoBehaviour
         {
             _cardState.PrepareNextRound();
             _cardState.DrawCards(_cardsToDrawPerRound);
+            GameManager.Instance?.PlaySfx(GameSfx.CardDraw);
             _hudView.ShowHandForNewRound();
         }
 
         _preparationController.BeginPreparation(
             _matchState.CurrentRound,
             packet.turnTime);
+        GameManager.Instance?.PlaySfx(GameSfx.RoundStart);
     }
 
     private void BeginCombat()
@@ -205,6 +208,8 @@ public class InGameFlowController : MonoBehaviour
         _cardPlayController.ExitCombat();
         InGameResult result = _matchState.DecideResult(packet.winnerId == _gateway.LocalPlayerId);
         _hudView.ShowGameResult(result);
+        GameManager.Instance?.PlaySfx(
+            result == InGameResult.Victory ? GameSfx.Victory : GameSfx.Defeat);
 
         Debug.Log($"[InGameFlowController] Game finished: {result}");
 
@@ -278,7 +283,10 @@ public class InGameFlowController : MonoBehaviour
     private void HandleOpponentDefenseAttack(S_UnitAttack packet)
     {
         if (packet == null) return;
-        _combatService?.ApplyOpponentDefenseAttack(packet.targetId, packet.damage);
+        _combatService?.ApplyOpponentDefenseAttack(
+            packet.attackerId,
+            packet.targetId,
+            packet.damage);
     }
 
     private void HandleOwnedAttackReachedDestination(int unitId)

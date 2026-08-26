@@ -131,6 +131,7 @@ public sealed class CardPlayController : IDisposable
 
             _cardState.AddSelectedAttackCard(card);
             _hudView.AddUsedAttackCard(card);
+            GameManager.Instance?.PlaySfx(GameSfx.CardUse);
             if (!GameConfig.ENABLE_TEST_MODE)
             {
                 _gateway?.SendSelectedAttackCard(card.cardId);
@@ -159,9 +160,11 @@ public sealed class CardPlayController : IDisposable
     {
         _cardState.AddSelectedDefenseCard(card);
         _hudView.AddUsedDefenseCard(card);
+        GameManager.Instance?.PlaySfx(GameSfx.Placement);
         if (!GameConfig.ENABLE_TEST_MODE)
         {
             _gateway?.SendDefensePlacement(unitId, card.cardId, groundPosition.x, groundPosition.y);
+            Debug.Log($"Sent defense placement: {card.cardName} at {groundPosition}");
         }
     }
 
@@ -193,6 +196,7 @@ public sealed class CardPlayController : IDisposable
 
         Vector3 localGroundPosition = _placementService.MirrorWorldPosition(
             new Vector3(packet.x, packet.y, 0f));
+        Debug.Log($"Received opponent defense placement: {card.cardName} at {localGroundPosition}");
         if (_combatActive)
         {
             _placementService.PlaceRemoteDefenseUnit(card, localGroundPosition, packet.unitId);

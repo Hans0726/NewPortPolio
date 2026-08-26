@@ -14,6 +14,7 @@ public class LobbyDeckState
     public IReadOnlyList<short> CurrentDeckCardIds => _currentDeckCardIds;
     public int NumCardInDeck => _currentDeckCardIds.Count;
     private int _maxDeckSize;
+    public int MaxDeckSize => _maxDeckSize;
     public bool IsDeckComplete =>
     _currentDeckCardIds.Count == _maxDeckSize;
 

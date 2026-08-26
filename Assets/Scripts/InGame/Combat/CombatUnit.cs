@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public abstract class CombatUnit : MonoBehaviour
@@ -6,8 +7,12 @@ public abstract class CombatUnit : MonoBehaviour
     protected SpriteRenderer _renderer;
     protected float _baseFieldSpriteScale = 1f;
     protected float _fieldSpriteScale = 1f;
+    protected float _fieldSpriteYOffset;
     protected float _bottomAnchorYOffset;
     protected Vector3 _visualBaseLocalPosition;
+    private Coroutine _visualFeedbackRoutine;
+    private Color _visualFeedbackOriginalColor;
+    private bool _hasVisualFeedback;
 
     protected void InitializeFieldVisual(
         CardData card,
@@ -29,7 +34,9 @@ public abstract class CombatUnit : MonoBehaviour
         if (_card == null || _renderer == null) return;
 
         float nextScale = GetConfiguredFieldScale();
-        if (Mathf.Approximately(nextScale, _fieldSpriteScale)) return;
+        float nextYOffset = GetConfiguredFieldYOffset();
+        if (Mathf.Approximately(nextScale, _fieldSpriteScale) &&
+            Mathf.Approximately(nextYOffset, _fieldSpriteYOffset)) return;
 
         ApplyFieldVisualScale();
         OnFieldVisualScaleChanged();
@@ -60,9 +67,34 @@ public abstract class CombatUnit : MonoBehaviour
         return _renderer != null ? _renderer.bounds.center : transform.position;
     }
 
+    protected void PlayAttackFeedback()
+    {
+        PlayVisualFeedback(new Color(1f, 0.75f, 0.25f, 1f), 1.08f, 0.09f);
+    }
+
+    protected void PlayHitFeedback()
+    {
+        PlayVisualFeedback(new Color(1f, 0.2f, 0.2f, 1f), 0.94f, 0.11f);
+    }
+
+    protected void CancelVisualFeedback()
+    {
+        if (_visualFeedbackRoutine != null)
+        {
+            StopCoroutine(_visualFeedbackRoutine);
+            _visualFeedbackRoutine = null;
+        }
+
+        if (_hasVisualFeedback)
+        {
+            RestoreVisualFeedback();
+        }
+    }
+
     private void ApplyFieldVisualScale()
     {
         _fieldSpriteScale = GetConfiguredFieldScale();
+        _fieldSpriteYOffset = GetConfiguredFieldYOffset();
         _renderer.transform.localScale = Vector3.one * _fieldSpriteScale;
         _visualBaseLocalPosition = GetBottomAnchoredVisualPosition(_renderer.sprite);
         _renderer.transform.localPosition = _visualBaseLocalPosition;
@@ -74,14 +106,56 @@ public abstract class CombatUnit : MonoBehaviour
         return Mathf.Max(0.01f, _baseFieldSpriteScale * cardScale);
     }
 
+    private float GetConfiguredFieldYOffset()
+    {
+        return _card != null ? _card.fieldSpriteYOffset : 0f;
+    }
+
     private Vector3 GetBottomAnchoredVisualPosition(Sprite sprite)
     {
         if (sprite == null)
         {
-            return new Vector3(0f, _bottomAnchorYOffset, 0f);
+            return new Vector3(0f, _bottomAnchorYOffset + _fieldSpriteYOffset, 0f);
         }
 
         float bottomToOrigin = -sprite.bounds.min.y * _fieldSpriteScale;
-        return new Vector3(0f, bottomToOrigin + _bottomAnchorYOffset, 0f);
+        return new Vector3(
+            0f,
+            bottomToOrigin + _bottomAnchorYOffset + _fieldSpriteYOffset,
+            0f);
+    }
+
+    private void PlayVisualFeedback(Color feedbackColor, float scaleMultiplier, float duration)
+    {
+        if (_renderer == null) return;
+
+        CancelVisualFeedback();
+        _visualFeedbackOriginalColor = _renderer.color;
+        _hasVisualFeedback = true;
+
+        _visualFeedbackRoutine = StartCoroutine(
+            RunVisualFeedback(feedbackColor, scaleMultiplier, duration));
+    }
+
+    private IEnumerator RunVisualFeedback(Color feedbackColor, float scaleMultiplier, float duration)
+    {
+        Vector3 originalScale = Vector3.one * _fieldSpriteScale;
+        feedbackColor.a = _visualFeedbackOriginalColor.a;
+
+        _renderer.color = Color.Lerp(_visualFeedbackOriginalColor, feedbackColor, 0.7f);
+        _renderer.transform.localScale = originalScale * scaleMultiplier;
+        yield return new WaitForSeconds(duration);
+
+        RestoreVisualFeedback();
+        _visualFeedbackRoutine = null;
+    }
+
+    private void RestoreVisualFeedback()
+    {
+        if (_renderer == null) return;
+
+        _renderer.color = _visualFeedbackOriginalColor;
+        _renderer.transform.localScale = Vector3.one * _fieldSpriteScale;
+        _hasVisualFeedback = false;
     }
 }

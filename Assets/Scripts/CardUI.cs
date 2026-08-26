@@ -21,8 +21,9 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
     [Header("CardUI References")]
     [SerializeField] private Image _imgCard;
-    [SerializeField] private Color _attackCardBackgroundColor;
-    [SerializeField] private Color _defenseCardBackgroundColor;
+    [SerializeField] private Image _imgNameLabel;
+    [SerializeField] private Color _attackCardColor;
+    [SerializeField] private Color _defenseCardColor;
     [SerializeField] private TextMeshProUGUI _textName;
     [SerializeField] private TextMeshProUGUI _textEffect;
     [SerializeField] private TextMeshProUGUI _textCost;
@@ -100,6 +101,14 @@ public class CardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
                 ? _currentCardData.cardIllustration
                 : Resources.Load<Sprite>("CardImage/" + _currentCardData.cardName);
             _imgCard.sprite = cardSprite;
+            if (cardData.cardType == CardType.Attack)
+            {
+                _imgNameLabel.color = _attackCardColor;
+            }
+            else if (cardData.cardType == CardType.Defense)
+            {
+                _imgNameLabel.color = _defenseCardColor;
+            }
             _imgCardMinimize.sprite = cardSprite;
         }
         catch (Exception e) { Debug.LogError($"Error loading image for {_currentCardData.cardName}: {e.Message}"); }

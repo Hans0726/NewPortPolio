@@ -5549,8 +5549,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InGameFlowController
   _currentRound: 1
   _maxRound: 10
-  _startingCost: 99
-  _maxCost: 99
+  _startingCost: 1
+  _maxCost: 10
   _playerLife: 10
   _opponentLife: 10
   _lifeDamagePerAttackUnit: 1
@@ -13662,7 +13662,6 @@ MonoBehaviour:
   - {fileID: 879461707}
   _placeableColor: {r: 0.1, g: 1, b: 0.1, a: 0.35}
   _worldCamera: {fileID: 2017025068}
-  _battlefieldCenter: {fileID: 0}
   _placedUnitRoot: {fileID: 0}
   _previewZ: -1
   _previewScale: 1

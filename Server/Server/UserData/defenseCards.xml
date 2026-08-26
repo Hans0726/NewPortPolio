@@ -20,4 +20,34 @@
     <attack>50</attack>
     <attackSpeed>1</attackSpeed>
   </card>
+  <card>
+    <cardId>102</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>석궁병</cardName>
+    <moveSpeed>1.35</moveSpeed>
+    <cost>1</cost>
+    <specialEffect></specialEffect>
+    <attack>16</attack>
+    <attackSpeed>1.5</attackSpeed>
+  </card>
+  <card>
+    <cardId>103</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>화염술사</cardName>
+    <moveSpeed>1.05</moveSpeed>
+    <cost>2</cost>
+    <specialEffect></specialEffect>
+    <attack>32</attack>
+    <attackSpeed>0.85</attackSpeed>
+  </card>
+  <card>
+    <cardId>104</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>대포탑</cardName>
+    <moveSpeed>0</moveSpeed>
+    <cost>3</cost>
+    <specialEffect></specialEffect>
+    <attack>65</attack>
+    <attackSpeed>0.4</attackSpeed>
+  </card>
 </defenseCards>

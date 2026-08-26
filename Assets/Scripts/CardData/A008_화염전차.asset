@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ecbba26f2fe4ad4e97796a048adaad4, type: 3}
+  m_Name: "A008_\uD654\uC5FC\uC804\uCC28"
+  m_EditorClassIdentifier: 
+  cardId: 8
+  cardName: "\uD654\uC5FC\uC804\uCC28"
+  moveSpeed: 0.75
+  cost: 4
+  cardIllustration: {fileID: 0}
+  fieldSprite: {fileID: 0}
+  cardType: 1
+  fieldSpriteScale: 4
+  fieldSpriteYOffset: 0
+  fieldHitRadius: 0.65
+  health: 420
+  defense: 30
+  attack: 0
+  attackSpeed: 0
+  isFixedDefenseUnit: 0
+  specialEffect: 

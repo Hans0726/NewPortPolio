@@ -70,8 +70,8 @@ public class InGameCardState : MonoBehaviour
         while (_playerDeck.Count < deckSize && attempts++ < deckSize * 20)
         {
             short cardId = UnityEngine.Random.value < 0.5f
-                ? (short)UnityEngine.Random.Range(0, 8)
-                : (short)UnityEngine.Random.Range(100, 102);
+                ? (short)UnityEngine.Random.Range(0, 10)
+                : (short)UnityEngine.Random.Range(100, 105);
             CardData card = _cardDatabase.GetCardDataById(cardId);
             if (card == null) continue;
 

@@ -19,7 +19,8 @@ MonoBehaviour:
   cardIllustration: {fileID: 0}
   fieldSprite: {fileID: 0}
   cardType: 2
-  fieldSpriteScale: 3
+  fieldSpriteScale: 2
+  fieldSpriteYOffset: 0
   fieldHitRadius: 1
   health: 0
   defense: 0

@@ -12,7 +12,6 @@ public class DefensePlacementManager : MonoBehaviour
 
     [Header("Placement Preview")]
     [SerializeField] private Camera _worldCamera;
-    [SerializeField] private Transform _battlefieldCenter;
     [SerializeField] private Transform _placedUnitRoot;
     [SerializeField] private float _previewZ = -1f;
     [SerializeField] private float _previewScale = 1f;
@@ -188,14 +187,12 @@ public class DefensePlacementManager : MonoBehaviour
 
     public Vector3 MirrorWorldPosition(Vector3 worldPosition)
     {
-        Vector3 center = _battlefieldCenter != null
-            ? _battlefieldCenter.position
-            : (_worldCamera != null ? _worldCamera.transform.position : Vector3.zero);
-
+        Vector3 center = _worldCamera.transform.position;
         return new Vector3(
             center.x * 2f - worldPosition.x,
             center.y * 2f - worldPosition.y,
             worldPosition.z);
+;
     }
 
     public void PlaceRemoteDefenseUnit(CardData card, Vector3 groundPosition, int unitId)
@@ -306,6 +303,14 @@ public class DefensePlacementManager : MonoBehaviour
         OwnedDefenseAttack?.Invoke(attackerId, targetId, damage);
     }
 
+    public void PlayOpponentDefenseAttackFeedback(int unitId)
+    {
+        if (_opponentUnitsById.TryGetValue(unitId, out DefenseUnit unit) && unit != null)
+        {
+            unit.PlayAuthoritativeAttackFeedback();
+        }
+    }
+
     public void SetPlacedUnitsCombatActive(bool active)
     {
         for (int i = _placedUnits.Count - 1; i >= 0; i--)
@@ -335,6 +340,7 @@ public class DefensePlacementManager : MonoBehaviour
         }
 
         position.y += _bottomAnchorYOffset;
+        position.y += _pendingCard != null ? _pendingCard.fieldSpriteYOffset : 0f;
         return position;
     }
 

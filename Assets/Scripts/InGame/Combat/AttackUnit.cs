@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public enum AttackUnitOwner
@@ -26,6 +27,7 @@ public class AttackUnit : CombatUnit
     [SerializeField] private Color _opponentHealthBarColor = new Color(0.95f, 0.2f, 0.2f, 0.95f);
     [SerializeField] private float _networkSendInterval = 0.1f;
     [SerializeField] private float _networkInterpolationSpeed = 18f;
+    [SerializeField, Min(0.05f)] private float _deathFadeDuration = 0.3f;
 
     private WaypointPath _path;
     private int _nextWaypointIndex;
@@ -50,6 +52,7 @@ public class AttackUnit : CombatUnit
     private float _nextNetworkSendTime;
     private Vector3 _networkVelocity;
     private float _lastNetworkReceiveTime;
+    private bool _isDying;
 
     public bool IsDead => _currentHealth <= 0;
     public bool ShouldStop { get; set; } = false;
@@ -232,6 +235,8 @@ public class AttackUnit : CombatUnit
 
     public void TakeDamage(int rawDamage)
     {
+        if (_isDying) return;
+
         // 네트워크 게임에서 상대 유닛의 HP는 그 유닛 소유 클라이언트가 보낸 값만 적용한다.
         if (_owner == AttackUnitOwner.Opponent && !GameConfig.ENABLE_TEST_MODE)
         {
@@ -240,6 +245,8 @@ public class AttackUnit : CombatUnit
 
         int actualDamage = Mathf.Max(1, rawDamage - _defense);
         _currentHealth -= actualDamage;
+        PlayHitFeedback();
+        GameManager.Instance?.PlaySfx(GameSfx.Hit, 0.35f);
         _healthBar?.SetValue(_currentHealth, _maxHealth);
 
         if (_owner == AttackUnitOwner.Player && !GameConfig.ENABLE_TEST_MODE)
@@ -255,9 +262,15 @@ public class AttackUnit : CombatUnit
 
     public void ApplyAuthoritativeHealth(int currentHealth)
     {
-        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE) return;
+        if (_owner != AttackUnitOwner.Opponent || GameConfig.ENABLE_TEST_MODE || _isDying) return;
 
+        bool tookDamage = currentHealth < _currentHealth;
         _currentHealth = Mathf.Clamp(currentHealth, 0, _maxHealth);
+        if (tookDamage)
+        {
+            PlayHitFeedback();
+            GameManager.Instance?.PlaySfx(GameSfx.Hit, 0.35f);
+        }
         _healthBar?.SetValue(_currentHealth, _maxHealth);
         if (_currentHealth <= 0)
         {
@@ -378,7 +391,10 @@ public class AttackUnit : CombatUnit
             return 1f + _healthBarTopPadding;
         }
 
-        return _renderer.sprite.bounds.size.y * _fieldSpriteScale + _bottomAnchorYOffset + _healthBarTopPadding;
+        return _renderer.sprite.bounds.size.y * _fieldSpriteScale
+            + _bottomAnchorYOffset
+            + _fieldSpriteYOffset
+            + _healthBarTopPadding;
     }
 
     private void SetAlpha(float alpha)
@@ -403,16 +419,57 @@ public class AttackUnit : CombatUnit
 
     private void Die()
     {
-        if (_owner == AttackUnitOwner.Player)
-        {
-            _onOwnedUnitDestroyed?.Invoke(_networkUnitId);
-        }
-
-        Destroy(gameObject);
+        BeginDeathFade(notifyOwner: _owner == AttackUnitOwner.Player);
     }
 
     public void ApplyAuthoritativeDestroy()
     {
+        BeginDeathFade(notifyOwner: false);
+    }
+
+    private void BeginDeathFade(bool notifyOwner)
+    {
+        if (_isDying) return;
+
+        _isDying = true;
+        _currentHealth = 0;
+        ShouldStop = true;
+        CancelVisualFeedback();
+        AttackUnitRegistry.Unregister(this);
+        if (_healthBar != null)
+        {
+            _healthBar.gameObject.SetActive(false);
+        }
+
+        GameManager.Instance?.PlaySfx(GameSfx.Death, 0.5f);
+        if (notifyOwner)
+        {
+            _onOwnedUnitDestroyed?.Invoke(_networkUnitId);
+        }
+
+        StartCoroutine(FadeOutAndDestroy());
+    }
+
+    private IEnumerator FadeOutAndDestroy()
+    {
+        if (_renderer == null)
+        {
+            Destroy(gameObject);
+            yield break;
+        }
+
+        Color startColor = _renderer.color;
+        float duration = Mathf.Max(0.05f, _deathFadeDuration);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            Color color = startColor;
+            color.a = Mathf.Lerp(startColor.a, 0f, elapsed / duration);
+            _renderer.color = color;
+            yield return null;
+        }
+
         Destroy(gameObject);
     }
 

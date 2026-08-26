@@ -44,6 +44,26 @@
             <cardId>101</cardId>
             <isInDeck>false</isInDeck>
           </Card>
+          <Card>
+            <cardId>8</cardId>
+            <isInDeck>false</isInDeck>
+          </Card>
+          <Card>
+            <cardId>9</cardId>
+            <isInDeck>false</isInDeck>
+          </Card>
+          <Card>
+            <cardId>102</cardId>
+            <isInDeck>false</isInDeck>
+          </Card>
+          <Card>
+            <cardId>103</cardId>
+            <isInDeck>false</isInDeck>
+          </Card>
+          <Card>
+            <cardId>104</cardId>
+            <isInDeck>false</isInDeck>
+          </Card>
         </cards>
       </UserData>
     </KeyValuePair>
@@ -88,6 +108,26 @@
           </Card>
           <Card>
             <cardId>101</cardId>
+            <isInDeck>true</isInDeck>
+          </Card>
+          <Card>
+            <cardId>8</cardId>
+            <isInDeck>true</isInDeck>
+          </Card>
+          <Card>
+            <cardId>9</cardId>
+            <isInDeck>true</isInDeck>
+          </Card>
+          <Card>
+            <cardId>102</cardId>
+            <isInDeck>true</isInDeck>
+          </Card>
+          <Card>
+            <cardId>103</cardId>
+            <isInDeck>true</isInDeck>
+          </Card>
+          <Card>
+            <cardId>104</cardId>
             <isInDeck>true</isInDeck>
           </Card>
         </cards>

@@ -80,4 +80,24 @@
     <health>50</health>
     <defense>0</defense>
   </card>
+  <card>
+    <cardId>008</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>화염전차</cardName>
+    <moveSpeed>0.75</moveSpeed>
+    <cost>4</cost>
+    <specialEffect></specialEffect>
+    <health>420</health>
+    <defense>30</defense>
+  </card>
+  <card>
+    <cardId>009</cardId>
+    <isInDeck>false</isInDeck>
+    <cardName>성채골렘</cardName>
+    <moveSpeed>0.55</moveSpeed>
+    <cost>5</cost>
+    <specialEffect></specialEffect>
+    <health>650</health>
+    <defense>45</defense>
+  </card>
 </attackCards>

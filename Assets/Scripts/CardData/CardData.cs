@@ -43,6 +43,8 @@ public class CardData : ScriptableObject
 
     [Header("Field Visual")]
     public float fieldSpriteScale = 1f;
+    [Tooltip("필드에서 스프라이트만 위아래로 보정하는 월드 좌표 오프셋입니다.")]
+    public float fieldSpriteYOffset = 0f;
     public float fieldHitRadius = 1f;
 
     [Header("공격 카드 스탯")]

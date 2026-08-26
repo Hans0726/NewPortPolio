@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MatchingController : MonoBehaviour
 {
@@ -37,6 +36,11 @@ public class MatchingController : MonoBehaviour
 
     public void RequestMatching()
     {
+        if (_deckState.IsDeckComplete == false)
+        {
+            _view.UpdateMatchingStatusText($"덱에 카드가 부족합니다.\n{_deckState.MaxDeckSize}장의 카드를 구성해야 합니다.");
+            return;
+        }
         _gateway.RequestMatching();
         _view.UpdateMatchingStatusText("매칭 요청 중...");
     }

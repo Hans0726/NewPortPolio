@@ -14,12 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardId: 0
   cardName: "\uB2E4\uB78C\uC950"
-  moveSpeed: 1
-  cost: 0
+  moveSpeed: 2
+  cost: 1
   cardIllustration: {fileID: 0}
   fieldSprite: {fileID: 0}
   cardType: 1
   fieldSpriteScale: 1.35
+  fieldSpriteYOffset: 0
   fieldHitRadius: 0.8
   health: 50
   defense: 0
