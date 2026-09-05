@@ -86,10 +86,7 @@ public class InGameFlowController : MonoBehaviour
             _gateway.OpponentDefenseAttackReceived += HandleOpponentDefenseAttack;
             _gateway.OpponentAttackReachedDestination += HandleOpponentAttackReachedDestination;
         }
-        _matchState.LifeChanged += (playerLife, opponentLife) =>
-        {
-            _gateway.SendPlayerLife(playerLife);
-        };
+        _matchState.LifeChanged += HandleLifeChanged;
 
         _initialized = true;
     }
@@ -109,6 +106,8 @@ public class InGameFlowController : MonoBehaviour
     public void Dispose()
     {
         if (!_initialized) return;
+
+        _matchState.LifeChanged -= HandleLifeChanged;
 
         _preparationController.TestCombatRequested -= BeginCombat;
         _preparationController.TestNextRoundRequested -= StartNextRoundForTest;
@@ -137,8 +136,19 @@ public class InGameFlowController : MonoBehaviour
         _initialized = false;
     }
 
+    private void OnDestroy()
+    {
+        Dispose();
+    }
+
+    private void HandleLifeChanged(int playerLife, int opponentLife)
+    {
+        _gateway?.SendPlayerLife(playerLife);
+    }
+
     private void HandleOpeningSequenceFinished()
     {
+        if (!_initialized || _preparationController == null || _hudView == null) return;
         _cardState.DrawInitialHand();
         GameManager.Instance?.PlaySfx(GameSfx.CardDraw);
         _hudView.ShowInitialHand();

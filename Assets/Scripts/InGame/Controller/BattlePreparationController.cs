@@ -57,6 +57,11 @@ public class BattlePreparationController : MonoBehaviour
         _initialized = false;
     }
 
+    private void OnDestroy()
+    {
+        Dispose();
+    }
+
     public void NotifyOpeningSequenceFinished()
     {
         if (GameConfig.ENABLE_TEST_MODE)

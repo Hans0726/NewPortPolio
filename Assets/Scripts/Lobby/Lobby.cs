@@ -27,7 +27,6 @@ public class Lobby : MonoBehaviour
 
     [SerializeField] private TMP_Dropdown dropdownResolution;
     [SerializeField] private TextMeshProUGUI currentResolution;
-    private Resolution[] resolutions;
 
     [SerializeField] private AudioMixer audioMixer;
 
@@ -47,7 +46,6 @@ public class Lobby : MonoBehaviour
         btnOption.onClick.AddListener(option.OpenPopup);
         btnQuit.onClick.AddListener(Application.Quit);
 
-        currentResolution.text = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
         SetupDropdowns();
         LoadVolumeSettings();
 
@@ -61,106 +59,99 @@ public class Lobby : MonoBehaviour
 
 
     #region 화면모드, 해상도
+    private readonly List<Resolution> _resolutionChoices = new List<Resolution>();
+    private int _displayedWidth = -1;
+    private int _displayedHeight = -1;
+    private FullScreenMode _displayedMode;
+    private bool _refreshDisplayRequested;
+    private int _customResolutionIndex = -1;
+
     private void SetupDropdowns()
     {
+        dropdownResolution.ClearOptions();
+        _resolutionChoices.Clear();
+        _customResolutionIndex = -1;
+        foreach (Resolution resolution in Screen.resolutions.Reverse())
+        {
+            if (_resolutionChoices.Any(item => item.width == resolution.width && item.height == resolution.height))
+                continue;
+
+            _resolutionChoices.Add(resolution);
+            dropdownResolution.options.Add(new TMP_Dropdown.OptionData(
+                $"{resolution.width} x {resolution.height}"));
+        }
+
+        RefreshDisplaySettings();
+        dropdownResolution.onValueChanged.AddListener(HandleResolutionSelected);
         dropdownDisplayMode.onValueChanged.AddListener(SetDisplayMode);
+    }
 
-        // resolutions는 여기서 한 번만 가져와서 사용 (멤버 변수에 저장해두고 재활용)
-        resolutions = Screen.resolutions;
-        if (resolutions == null || resolutions.Length == 0)
+    private void Update()
+    {
+        if (_refreshDisplayRequested || Screen.width != _displayedWidth ||
+            Screen.height != _displayedHeight || Screen.fullScreenMode != _displayedMode)
         {
-            Debug.LogError("Screen.resolutions returned no resolutions!");
-            return;
-        }
-
-        dropdownResolution.options.Clear(); // 기존 옵션 모두 제거
-
-        List<string> uniqueResolutionStrings = new List<string>();
-        List<Resolution> uniqueResolutionsForSelection = new List<Resolution>(); // 실제 선택에 사용할 Resolution 객체 리스트
-
-        // 해상도를 역순으로 순회하면서 고유한 "너비 x 높이" 문자열만 추가
-        // Screen.resolutions는 보통 낮은 해상도부터 높은 해상도 순으로 정렬되어 있음
-        // 뒤에서부터 순회하면 같은 해상도 중 가장 높은 주사율을 가진 것을 먼저 만나게 될 가능성이 높음 (항상 보장되진 않음)
-        for (int i = resolutions.Length - 1; i >= 0; i--)
-        {
-            Resolution currentRes = resolutions[i];
-            string option = currentRes.width + " x " + currentRes.height;
-
-            // 이미 추가된 "너비 x 높이" 문자열인지 확인
-            if (!uniqueResolutionStrings.Contains(option))
-            {
-                uniqueResolutionStrings.Add(option);
-                uniqueResolutionsForSelection.Add(currentRes); // 해당 Resolution 객체도 저장
-            }
-        }
-
-        // 유니티 에디터에서는 resolutions 순서가 빌드와 다를 수 있으므로,
-        // 문자열 리스트를 다시 정렬하거나, uniqueResolutionsForSelection를 너비/높이 기준으로 정렬할 수 있음.
-        // 여기서는 일단 추가된 순서대로 사용 (보통 높은 해상도가 먼저 추가됨)
-        // 필요하다면 uniqueResolutionStrings.Sort() 또는 Reverse() 등을 사용
-
-        dropdownResolution.AddOptions(uniqueResolutionStrings); // 드롭다운에 고유한 해상도 문자열 추가
-        dropdownResolution.onValueChanged.RemoveAllListeners(); // 기존 리스너 제거 (중복 방지)
-        dropdownResolution.onValueChanged.AddListener(index => SetResolutionByIndex(index, uniqueResolutionsForSelection)); // 수정된 리스너 연결
-
-        // 현재 해상도에 맞는 드롭다운 값 설정 (선택 사항)
-        int currentResolutionIndex = -1;
-        string currentScreenOption = currentResolution.text = Screen.currentResolution.width + " x " + Screen.currentResolution.height;
-        for (int i = 0; i < uniqueResolutionStrings.Count; ++i)
-        {
-            if (uniqueResolutionStrings[i] == currentScreenOption)
-            {
-                currentResolutionIndex = i;
-                break;
-            }
-        }
-        if (currentResolutionIndex != -1)
-        {
-            dropdownResolution.value = currentResolutionIndex;
-            dropdownResolution.RefreshShownValue(); // 현재 선택된 값으로 UI 업데이트
+            RefreshDisplaySettings();
         }
     }
 
-    // SetResolution 함수를 인덱스와 함께 고유 해상도 리스트를 받도록 수정
-    public void SetResolutionByIndex(int uniqueResolutionListIndex, List<Resolution> uniqueResolutions)
+    private void RefreshDisplaySettings()
     {
-        if (uniqueResolutionListIndex < 0 || uniqueResolutionListIndex >= uniqueResolutions.Count)
-        {
-            Debug.LogError($"Invalid resolution index: {uniqueResolutionListIndex}");
-            return;
-        }
+        _refreshDisplayRequested = false;
+        _displayedWidth = Screen.width;
+        _displayedHeight = Screen.height;
+        _displayedMode = Screen.fullScreenMode;
+        string label = $"{_displayedWidth} x {_displayedHeight}";
+        currentResolution.text = label;
 
-        Resolution selectedRes = uniqueResolutions[uniqueResolutionListIndex];
-
-        // 현재 해상도와 다를 경우에만 변경 (불필요한 변경 방지)
-        // 주사율은 selectedRes에 포함된 값을 사용하거나, Screen.currentResolution.refreshRate를 유지할 수 있음
-        // 여기서는 selectedRes에 포함된 주사율 사용
-        if (Screen.width != selectedRes.width || Screen.height != selectedRes.height || Screen.currentResolution.refreshRateRatio.value != selectedRes.refreshRateRatio.value)
+        int index = _resolutionChoices.FindIndex(item =>
+            item.width == _displayedWidth && item.height == _displayedHeight);
+        // Resizable windows can have a size that is absent from the monitor's modes.
+        if (index < 0)
         {
-            Debug.Log($"Setting resolution to: {selectedRes.width}x{selectedRes.height} @ {selectedRes.refreshRateRatio}Hz");
-            Screen.SetResolution(selectedRes.width, selectedRes.height, Screen.fullScreenMode, selectedRes.refreshRateRatio);
+            if (_customResolutionIndex < 0)
+            {
+                _customResolutionIndex = _resolutionChoices.Count;
+                _resolutionChoices.Add(default);
+                dropdownResolution.options.Add(new TMP_Dropdown.OptionData());
+            }
+            index = _customResolutionIndex;
+            _resolutionChoices[index] = new Resolution { width = _displayedWidth, height = _displayedHeight };
+            dropdownResolution.options[index].text = label;
         }
+        dropdownResolution.SetValueWithoutNotify(index);
+        dropdownResolution.RefreshShownValue();
+
+        int modeIndex = _displayedMode == FullScreenMode.ExclusiveFullScreen ? 0 :
+            _displayedMode == FullScreenMode.Windowed ? 1 : 2;
+        dropdownDisplayMode.SetValueWithoutNotify(modeIndex);
+        dropdownDisplayMode.RefreshShownValue();
+        currentDisplayMode.text = modeIndex == 0 ? "전체 화면" :
+            modeIndex == 1 ? "창 모드" : "테두리 없는 창 모드";
     }
 
-
-
-    public void SetDisplayMode(int displayModeIndex)
+    private void HandleResolutionSelected(int index)
     {
-        switch (displayModeIndex)
-        {
-            case 0: // 전체 화면
-                Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
-                currentDisplayMode.text = "전체 화면";
-                break;
-            case 1: // 창 모드
-                Screen.fullScreenMode = FullScreenMode.Windowed;
-                currentDisplayMode.text = "창 모드";
-                break;
-            case 2: // 테두리 없는 창 모드
-                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                currentDisplayMode.text = "테두리 없는 창 모드";
-                break;
-        }
+        SetResolutionByIndex(index, _resolutionChoices);
+    }
+
+    public void SetResolutionByIndex(int index, List<Resolution> choices)
+    {
+        if (index < 0 || index >= choices.Count) return;
+
+        Resolution selected = choices[index];
+        Screen.SetResolution(selected.width, selected.height, Screen.fullScreenMode);
+        // Read the applied size on subsequent frames, not the requested size.
+        _refreshDisplayRequested = true;
+    }
+
+    public void SetDisplayMode(int index)
+    {
+        if (index < 0 || index > 2) return;
+        FullScreenMode mode = index == 0 ? FullScreenMode.ExclusiveFullScreen :
+            index == 1 ? FullScreenMode.Windowed : FullScreenMode.FullScreenWindow;
+        Screen.SetResolution(Screen.width, Screen.height, mode);
+        _refreshDisplayRequested = true;
     }
 
     #endregion

@@ -97,9 +97,9 @@ public class InGameHUDView : MonoBehaviour
         if (!_initialized) return;
 
         _matchState.CostChanged -= RenderCost;
-        _btnTurnEnd?.onClick.RemoveListener(HandleTurnEndClicked);
-        _btnDrawPile?.onClick.RemoveListener(HandleDrawPileClicked);
-        _btnDiscardPile?.onClick.RemoveListener(HandleDiscardPileClicked);
+        if (_btnTurnEnd != null) _btnTurnEnd.onClick.RemoveListener(HandleTurnEndClicked);
+        if (_btnDrawPile != null) _btnDrawPile.onClick.RemoveListener(HandleDrawPileClicked);
+        if (_btnDiscardPile != null) _btnDiscardPile.onClick.RemoveListener(HandleDiscardPileClicked);
         _cardState = null;
         _initialized = false;
     }
@@ -110,6 +110,11 @@ public class InGameHUDView : MonoBehaviour
 
         _openingSequenceStarted = true;
         StartCoroutine(OpeningSequenceCoroutine(onFinished));
+    }
+
+    private void OnDestroy()
+    {
+        Dispose();
     }
 
     public void SetPreparationTimeOrCurrentRoundText(int remainingSeconds)

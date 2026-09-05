@@ -34,10 +34,10 @@ public class InGameSceneInstaller : MonoBehaviour
     {
         if (!_installed) return;
 
-        _flowController?.Dispose();
-        _preparationController?.Dispose();
+        if (_flowController != null) _flowController.Dispose();
+        if (_preparationController != null) _preparationController.Dispose();
         _cardPlayController?.Dispose();
-        _hudView?.Dispose();
+        if (_hudView != null) _hudView.Dispose();
         _installed = false;
     }
 
