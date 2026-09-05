@@ -15,7 +15,8 @@ public class LobbyDeckController : MonoBehaviour
     public void Initialize(
         NetworkGateway gateway,
         UIPopup_Deck view,
-        LobbyDeckState deckState)
+        LobbyDeckState deckState,
+        PlayerCardState playerCardState)
     {
         if (_initialized)
             return;
@@ -32,6 +33,12 @@ public class LobbyDeckController : MonoBehaviour
         _view.OnDeckCardSelected += HandleDeckCardSelected;
 
         _initialized = true;
+
+        // Restore on lobby re-entry, or when the initial packet arrived before subscription.
+        if (playerCardState.TryGetSnapshot(out var cachedCards))
+        {
+            SetDeck(cachedCards);
+        }
     }
 
     public void SetDeck(List<(short cardId, bool isInDeck)> deckFromServer)

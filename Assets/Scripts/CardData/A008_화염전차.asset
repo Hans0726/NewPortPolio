@@ -15,7 +15,7 @@ MonoBehaviour:
   cardId: 8
   cardName: "\uD654\uC5FC\uC804\uCC28"
   moveSpeed: 0.75
-  cost: 4
+  cost: 5
   cardIllustration: {fileID: 0}
   fieldSprite: {fileID: 0}
   cardType: 1

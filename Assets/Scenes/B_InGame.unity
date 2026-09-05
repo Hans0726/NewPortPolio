@@ -5060,8 +5060,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -9919,6 +9919,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde817fbe2414de1b704be633c9fd66a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatRoundManager
+  _enableCombatSpeedUp: 1
+  _speedUpStartSeconds: 20
+  _speedUpRampSeconds: 5
+  _maxCombatSpeed: 5
   _enemyAttackPath: {fileID: 775007954}
   _attackUnitRoot: {fileID: 448493306}
   _spawnInterval: 0.35

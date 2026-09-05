@@ -9,6 +9,13 @@ public static class GameConfig
 {
     // 에디터에서만 변경 가능한 런타임 플래그
     public static bool ENABLE_TEST_MODE = true;
+    
+}
+
+public enum GameScene
+{
+    A_Lobby,
+    B_InGame,
 }
 
 public enum GameSfx
@@ -134,40 +141,23 @@ public class GameManager : MonoBehaviour
         Debug.Log($"GameManager: Deck set for next game with {SelectedDeckIds.Count} cards.");
     }
 
-    public void LoadInGameScene()
+    public void LoadScene(GameScene scene, float waitingTime = 0f)
     {
-        StartCoroutine(LoadInGameSceneAsync());
-    }
-
-    public void LoadLobbyScene(float waitingTime = 0f)
-    {
+        string sceneName = scene.ToString();
         waitingTime = Math.Max(0f, waitingTime);
-        StartCoroutine(LoadLobbySceneAsync(waitingTime));
+        StartCoroutine(LoadSceneAsync(sceneName, waitingTime));
     }
 
-    private IEnumerator LoadInGameSceneAsync()
-    {
-        Debug.Log("Matching success. Moving to InGame scene in 3 seconds...");
-        yield return new WaitForSeconds(3f); // 매칭 성공 UI 표시 시간 등
-
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("B_InGame"); // 씬 이름 확인
-        while (!asyncLoad.isDone)
-        {
-            yield return null;
-        }
-        Debug.Log("InGame scene loaded.");
-    }
-
-    private IEnumerator LoadLobbySceneAsync(float waitingTime = 0f)
+    private IEnumerator LoadSceneAsync(string sceneName, float waitingTime = 0f)
     {
         yield return new WaitForSeconds(waitingTime);
 
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("A_Lobby"); // 씬 이름 확인
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName); // 씬 이름 확인
         while (!asyncLoad.isDone)
         {
             yield return null;
         }
-        Debug.Log("Lobby scene loaded.");
+        Debug.Log(sceneName + " scene loaded.");
     }
 
     public void ShowWarningPopup(string message, Action action = null)

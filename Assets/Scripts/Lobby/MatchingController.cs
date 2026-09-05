@@ -79,7 +79,7 @@ public class MatchingController : MonoBehaviour
         GameManager.Instance.SetDeckForNextMatch(
         _deckState.CurrentDeckCardIds);
 
-        GameManager.Instance.LoadInGameScene();
+        GameManager.Instance.LoadScene(GameScene.B_InGame);
     }
     private IEnumerator RunMatchingTimer()
     {

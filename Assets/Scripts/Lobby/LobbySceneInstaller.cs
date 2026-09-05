@@ -20,7 +20,8 @@ public class LobbySceneInstaller : MonoBehaviour
         _lobbyDeckController.Initialize(
         gateway,
         _deckPopupView,
-        _lobbyDeckState);
+        _lobbyDeckState,
+        NetworkMananger.Instance.PlayerCards);
 
         _matchmakingController.Initialize(
             gateway,

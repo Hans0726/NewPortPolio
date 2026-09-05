@@ -4,15 +4,18 @@ using System.Collections.Generic;
 public class NetworkGateway
 {
     private readonly NetworkMananger _networkManager;
+    private readonly PlayerCardState _playerCardState;
     public int LocalPlayerId { get; private set; } = 1;
 
-    public NetworkGateway(NetworkMananger networkManager)
+    public NetworkGateway(NetworkMananger networkManager, PlayerCardState playerCardState)
     {
         _networkManager = networkManager;
+        _playerCardState = playerCardState;
     }
 
     #region LobbyCard
     public event Action<List<(short, bool)>> PlayerDeckInfoReceived;
+
     
     public void PlayerInfoHandle(S_PlayerInfo packet)
     {
@@ -22,19 +25,24 @@ public class NetworkGateway
             cardDataList.Add((deckFromServer.cardId, deckFromServer.isInDeck));
         }
         LocalPlayerId = packet.playerId;
+        _playerCardState.Replace(cardDataList);
         PlayerDeckInfoReceived?.Invoke(cardDataList);
     }
 
     public void UpdatePlayerDeckInfo(IReadOnlyList<Card> cards)
     {
         C_PlayerInfo deckPacket = new C_PlayerInfo();
+        var updatedCards = new List<(short cardId, bool isInDeck)>(cards.Count);
 
         foreach (Card card in cards)
         {
             deckPacket.cards.Add(new C_PlayerInfo.Card { cardId = card.cardId, isInDeck = card.isInDeck });
+            updatedCards.Add((card.cardId, card.isInDeck));
         }
 
         _networkManager.Send(deckPacket.Serialize());
+        // The current protocol has no save acknowledgement; cache the submitted deck.
+        _playerCardState.Replace(updatedCards);
     }
     #endregion
 

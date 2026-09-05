@@ -214,7 +214,7 @@ public class InGameFlowController : MonoBehaviour
         Debug.Log($"[InGameFlowController] Game finished: {result}");
 
         _gateway.SendPlayerLeave();
-        GameManager.Instance.LoadLobbyScene(5f);
+        GameManager.Instance.LoadScene(GameScene.A_Lobby,5f);
     }
 
     private void HandleOwnedAttackUnitDestroyed(int networkUnitId)

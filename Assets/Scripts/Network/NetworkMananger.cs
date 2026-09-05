@@ -13,6 +13,7 @@ public class NetworkMananger : MonoBehaviour
     private static NetworkMananger _instance = null;
     public static NetworkMananger Instance { get { return _instance; } }
     public NetworkGateway Gateway { get; private set; }
+    public PlayerCardState PlayerCards { get; private set; }
 
     private ServerSession _session;
     public event Action ConnectionFailed;
@@ -34,7 +35,8 @@ public class NetworkMananger : MonoBehaviour
 
         _instance = this;
         _session = new ServerSession(onDisconnected: HandleSessionDisconnected);
-        Gateway = new NetworkGateway(this);
+        PlayerCards = new PlayerCardState();
+        Gateway = new NetworkGateway(this, PlayerCards);
 
         NetworkFailurePresenter failurePresenter = GetComponent<NetworkFailurePresenter>();
         if (failurePresenter == null)
