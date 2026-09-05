@@ -151,7 +151,7 @@ public class DefenseUnit : CombatUnit
         if (!_hasNetworkPosition) return;
 
         Vector3 previousPosition = transform.position;
-        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.deltaTime);
+        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.unscaledDeltaTime);
         transform.position = Vector3.Lerp(transform.position, _networkTargetPosition, blend);
         _isMovingThisFrame = (transform.position - previousPosition).sqrMagnitude > 0.000001f;
     }
@@ -159,12 +159,12 @@ public class DefenseUnit : CombatUnit
     private void SendMovementIfNeeded()
     {
         if (_owner != AttackUnitOwner.Player || GameConfig.ENABLE_TEST_MODE ||
-            Time.time < _nextNetworkSendTime)
+            Time.unscaledTime < _nextNetworkSendTime)
         {
             return;
         }
 
-        _nextNetworkSendTime = Time.time + _networkSendInterval;
+        _nextNetworkSendTime = Time.unscaledTime + _networkSendInterval;
         _onOwnedMovementChanged?.Invoke(
             CombatUnitType.Defense,
             _networkUnitId,
@@ -180,6 +180,11 @@ public class DefenseUnit : CombatUnit
 
     public void SetCombatActive(bool active)
     {
+        if (active && !_combatActive)
+        {
+            _nextAttackTime = CombatTime;
+            _chaseElapsedTime = 0f;
+        }
         _combatActive = active;
         if (!active)
         {
@@ -337,7 +342,7 @@ public class DefenseUnit : CombatUnit
 
     private void TryAttack()
     {
-        if (_target == null || Time.time < _nextAttackTime || _target.IsHiding) return;
+        if (_target == null || CombatTime < _nextAttackTime || _target.IsHiding) return;
 
         string targetName = GetAttackUnitName(_target);
         PlayAttackFeedback();
@@ -350,7 +355,7 @@ public class DefenseUnit : CombatUnit
         {
             _target.TakeDamage(_attack);
         }
-        _nextAttackTime = Time.time + GetAttackCooldown();
+        _nextAttackTime = CombatTime + GetAttackCooldown();
         LogDebug($"Attack | Target={targetName} | Damage={_attack} | Cooldown={GetAttackCooldown():0.00}s");
     }
 
@@ -364,7 +369,7 @@ public class DefenseUnit : CombatUnit
 
     private bool IsRecoveringFromAttack()
     {
-        return Time.time < _nextAttackTime;
+        return CombatTime < _nextAttackTime;
     }
 
     private float GetAttackCooldown()
@@ -412,7 +417,7 @@ public class DefenseUnit : CombatUnit
     private void ChaseTarget()
     {
         ChangeMoveState(MoveState.ChasingTarget, "Target outside attack range");
-        _chaseElapsedTime += Time.deltaTime;
+        _chaseElapsedTime += CombatDeltaTime;
 
         MoveTowards(_lastKnownTargetPosition);
 
@@ -460,7 +465,7 @@ public class DefenseUnit : CombatUnit
     private bool MoveTowards(Vector3 targetPosition)
     {
         Vector3 previousPosition = transform.position;
-        float step = _moveSpeed * Time.deltaTime;
+        float step = _moveSpeed * CombatDeltaTime;
         Vector3 nextPosition = Vector3.MoveTowards(transform.position, targetPosition, step);
 
         if (!TryMoveTo(nextPosition))
@@ -501,7 +506,7 @@ public class DefenseUnit : CombatUnit
         if (_renderer == null) return;
 
         float isMoving = _isMovingThisFrame ? 1f : 0f;
-        float offsetY = Mathf.Sin(Time.time * _bobFrequency) * _bobAmplitude * isMoving;
+        float offsetY = Mathf.Sin(CombatTime * _bobFrequency) * _bobAmplitude * isMoving;
         SetVisualBobOffset(offsetY);
     }
 

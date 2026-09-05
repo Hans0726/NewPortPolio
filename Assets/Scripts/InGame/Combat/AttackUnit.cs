@@ -184,12 +184,13 @@ public class AttackUnit : CombatUnit
             position = _path.GetOppositePathPosition(position);
         }
         position.z = _unitZ;
-        float elapsed = Time.time - _lastNetworkReceiveTime;
+        // Prediction uses combat seconds, matching the defense attack cooldown.
+        float elapsed = CombatTime - _lastNetworkReceiveTime;
         if (_hasNetworkPosition && elapsed > 0.001f)
         {
             _networkVelocity = (position - _networkTargetPosition) / elapsed;
         }
-        _lastNetworkReceiveTime = Time.time;
+        _lastNetworkReceiveTime = CombatTime;
         _networkTargetPosition = position;
         if (!_hasNetworkPosition)
         {
@@ -212,19 +213,19 @@ public class AttackUnit : CombatUnit
     {
         if (!_hasNetworkPosition) return;
 
-        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.deltaTime);
+        float blend = 1f - Mathf.Exp(-_networkInterpolationSpeed * Time.unscaledDeltaTime);
         transform.position = Vector3.Lerp(transform.position, _networkTargetPosition, blend);
     }
 
     private void SendMovementIfNeeded()
     {
         if (_owner != AttackUnitOwner.Player || GameConfig.ENABLE_TEST_MODE ||
-            Time.time < _nextNetworkSendTime)
+            Time.unscaledTime < _nextNetworkSendTime)
         {
             return;
         }
 
-        _nextNetworkSendTime = Time.time + _networkSendInterval;
+        _nextNetworkSendTime = Time.unscaledTime + _networkSendInterval;
         _onOwnedMovementChanged?.Invoke(
             CombatUnitType.Attack,
             _networkUnitId,
@@ -292,7 +293,7 @@ public class AttackUnit : CombatUnit
         target.z = _unitZ;
 
         Vector3 previousPosition = transform.position;
-        transform.position = Vector3.MoveTowards(transform.position, target, _moveSpeed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, target, _moveSpeed * CombatDeltaTime);
 
         Vector3 movement = transform.position - previousPosition;
 
@@ -339,7 +340,7 @@ public class AttackUnit : CombatUnit
     {
         if (_renderer == null) return;
 
-        float offsetY = Mathf.Sin(Time.time * _bobFrequency) * _bobAmplitude;
+        float offsetY = Mathf.Sin(CombatTime * _bobFrequency) * _bobAmplitude;
         SetVisualBobOffset(offsetY);
     }
 
@@ -463,7 +464,7 @@ public class AttackUnit : CombatUnit
         float elapsed = 0f;
         while (elapsed < duration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += CombatDeltaTime;
             Color color = startColor;
             color.a = Mathf.Lerp(startColor.a, 0f, elapsed / duration);
             _renderer.color = color;

@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class LobbyDeckController : MonoBehaviour
 {
@@ -73,7 +71,7 @@ public class LobbyDeckController : MonoBehaviour
     {
         if (!_deckState.IsDeckComplete)
         {
-            _view.ShowDeckValidationWarning();
+            GameManager.Instance.ShowWarningPopup($"덱에 카드가 부족합니다.\n{_deckState.MaxDeckSize}장의 카드를 구성해야 합니다");
             return;
         }
 

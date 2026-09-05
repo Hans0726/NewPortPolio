@@ -319,20 +319,4 @@ public class UIPopup_Deck : UIPopup
             RefreshOwnedCardsDisplay(); // 소유 카드 목록만 페이지 갱신
         }
     }
-
-    public void ShowDeckValidationWarning()
-    {
-        GameObject warningPopup = transform.parent.gameObject.transform.Find("UIPopup_Warning")?.gameObject;
-        if (warningPopup == null)
-        {
-            warningPopup = Instantiate(Resources.Load<GameObject>("Prefabs/UIPopup"), transform.parent);
-            warningPopup.name = "UIPopup_Warning";
-        }
-
-        UIPopup warning = warningPopup.GetComponent<UIPopup>();
-        warningPopup.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 0f);
-        warning.OpenPopup(
-            $"덱에 카드가 부족합니다.\n{_viewModel.MaxDeckSize}장의 카드를 구성해야 합니다.",
-            0.5f);
-    }
 }

@@ -4,6 +4,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using UnityEngine;
 
 public class NetworkMananger : MonoBehaviour
@@ -12,23 +14,33 @@ public class NetworkMananger : MonoBehaviour
     public static NetworkMananger Instance { get { return _instance; } }
     public NetworkGateway Gateway { get; private set; }
 
-    ServerSession _session = new ServerSession();
+    private ServerSession _session;
+    public event Action ConnectionFailed;
+    private int _connectionFailurePending;
+    private int _isShuttingDown;
+
 
     public void Send(ArraySegment<byte> sendBuff)
     {
         _session.Send(sendBuff);
     }
-
-    void Awake()
+    private void Awake()
     {
-        if (_instance != null)
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
         _instance = this;
+        _session = new ServerSession(onDisconnected: HandleSessionDisconnected);
         Gateway = new NetworkGateway(this);
+
+        NetworkFailurePresenter failurePresenter = GetComponent<NetworkFailurePresenter>();
+        if (failurePresenter == null)
+            failurePresenter = gameObject.AddComponent<NetworkFailurePresenter>();
+
+        failurePresenter.Initialize(this);
         DontDestroyOnLoad(gameObject);
     }
 
@@ -43,21 +55,45 @@ public class NetworkMananger : MonoBehaviour
         Connector connector = new Connector();
 
         connector.Connect(endPoint,
-            () => { return _session; }
-        , 1);
+            () => { return _session; },
+            1,
+            HandleConnectFailed);
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (Interlocked.Exchange(ref _connectionFailurePending, 0) == 1)
+        {
+            ConnectionFailed?.Invoke();
+        }
+
         List<IPacket> list = PacketQueue.Instance.PopAll();
         foreach (IPacket packet in list)
             PacketManager.Instance.HandlePacket(_session, packet);
     }
 
+    private void HandleConnectFailed(SocketError socketError)
+    {
+        NotifyConnectionFailure();
+    }
+
+    private void HandleSessionDisconnected(EndPoint endPoint)
+    {
+        if (Interlocked.CompareExchange(ref _isShuttingDown, 0, 0) == 1)
+            return;
+
+        NotifyConnectionFailure();
+    }
+
     private void OnApplicationQuit()
     {
-        if (_session != null)
-            _session.Disconnect();
+        Interlocked.Exchange(ref _isShuttingDown, 1);
+        _session?.Disconnect();
+    }
+
+    public void NotifyConnectionFailure()
+    {
+        Interlocked.Exchange(ref _connectionFailurePending, 1);
     }
 }

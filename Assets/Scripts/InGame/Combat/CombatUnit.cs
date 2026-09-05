@@ -3,6 +3,15 @@ using UnityEngine;
 
 public abstract class CombatUnit : MonoBehaviour
 {
+    private CombatRoundManager _combatClock;
+    protected float CombatTime => _combatClock != null ? _combatClock.CombatTime : Time.time;
+    protected float CombatDeltaTime => _combatClock != null ? _combatClock.CombatDeltaTime : Time.deltaTime;
+
+    public void SetCombatClock(CombatRoundManager combatClock)
+    {
+        _combatClock = combatClock;
+    }
+
     protected CardData _card;
     protected SpriteRenderer _renderer;
     protected float _baseFieldSpriteScale = 1f;
@@ -144,7 +153,12 @@ public abstract class CombatUnit : MonoBehaviour
 
         _renderer.color = Color.Lerp(_visualFeedbackOriginalColor, feedbackColor, 0.7f);
         _renderer.transform.localScale = originalScale * scaleMultiplier;
-        yield return new WaitForSeconds(duration);
+        float remaining = duration;
+        do
+        {
+            yield return null;
+            remaining -= CombatDeltaTime;
+        } while (remaining > 0f);
 
         RestoreVisualFeedback();
         _visualFeedbackRoutine = null;

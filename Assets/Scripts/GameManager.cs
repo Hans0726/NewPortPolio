@@ -168,5 +168,23 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         Debug.Log("Lobby scene loaded.");
-    } 
+    }
+
+    public void ShowWarningPopup(string message, Action action = null)
+    {
+        GameObject mainCanvas = GameObject.Find("Canvas").gameObject;
+        GameObject warningPopup = mainCanvas.transform.Find("UIPopup_Warning")?.gameObject;
+        if (warningPopup == null)
+        {
+            warningPopup = Instantiate(Resources.Load<GameObject>("Prefabs/UIPopup"), mainCanvas.transform);
+            warningPopup.name = "UIPopup_Warning";
+        }
+
+        UIPopup warning = warningPopup.GetComponent<UIPopup>();
+        warningPopup.GetComponent<RectTransform>().localScale = new Vector3(0.5f, 0.5f, 0f);
+        warning.OpenPopup(
+            message,
+            0.5f);
+        warning.ChangeClosedEvent(action);
+    }
 }

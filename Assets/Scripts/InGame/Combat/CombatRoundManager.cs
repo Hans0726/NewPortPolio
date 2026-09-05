@@ -3,8 +3,48 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
+[DefaultExecutionOrder(-100)]
 public class CombatRoundManager : MonoBehaviour
 {
+    [Header("Combat Speed")]
+    [SerializeField] private bool _enableCombatSpeedUp = true;
+    [SerializeField, Min(0f)] private float _speedUpStartSeconds = 20f;
+    [SerializeField, Min(0f)] private float _speedUpRampSeconds = 5f;
+    [SerializeField, Min(1f)] private float _maxCombatSpeed = 2f;
+
+    private bool _combatActive;
+    private float _realCombatElapsed;
+    public float CombatSpeed { get; private set; } = 1f;
+    public float CombatTime { get; private set; }
+    public float CombatDeltaTime { get; private set; }
+
+    // Advance before unit Updates; only the combat clock is accelerated.
+    private void Update()
+    {
+        if (_combatActive) _realCombatElapsed += Time.unscaledDeltaTime;
+        float ramp = _speedUpRampSeconds > 0f
+            ? Mathf.Clamp01((_realCombatElapsed - _speedUpStartSeconds) / _speedUpRampSeconds)
+            : (_realCombatElapsed >= _speedUpStartSeconds ? 1f : 0f);
+        CombatSpeed = _combatActive && _enableCombatSpeedUp
+            ? Mathf.Lerp(1f, Mathf.Max(1f, _maxCombatSpeed), ramp)
+            : 1f;
+        CombatDeltaTime = Time.deltaTime * CombatSpeed;
+        CombatTime += CombatDeltaTime;
+    }
+
+    private void ResetCombatSpeed()
+    {
+        _combatActive = false;
+        _realCombatElapsed = 0f;
+        CombatSpeed = 1f;
+        CombatDeltaTime = Time.deltaTime;
+    }
+
+    private void OnDisable()
+    {
+        StopCombatRound();
+    }
+
     [Header("Attack Unit Spawn")]
     [SerializeField] private WaypointPath _enemyAttackPath;
     [SerializeField] private Transform _attackUnitRoot;
@@ -56,8 +96,10 @@ public class CombatRoundManager : MonoBehaviour
     public void StartCombatRound(IReadOnlyList<CardData> playerAttackCards, IReadOnlyList<CardData> opponentAttackCards = null, Action<AttackUnitOwner> onAttackUnitReachedDestination = null, Action onCombatRoundFinished = null)
     {
         _combatSequence++;
+        ResetCombatSpeed();
+        _combatActive = true;
         EnsureAttackPath();
-        _placementService?.SetPlacedUnitsCombatActive(true);
+        _placementService?.SetPlacedUnitsCombatActive(true, this);
         _onAttackUnitReachedDestination = onAttackUnitReachedDestination;
         _onCombatRoundFinished = onCombatRoundFinished;
 
@@ -71,6 +113,7 @@ public class CombatRoundManager : MonoBehaviour
 
     public void StopCombatRound()
     {
+        ResetCombatSpeed();
         AttackUnitRegistry.InActivateAttackUnits();
         _pendingOpponentUnitDestroys.Clear();
         _pendingOpponentUnitHealth.Clear();
@@ -97,6 +140,7 @@ public class CombatRoundManager : MonoBehaviour
         }
 
         _combatRoutine = null;
+        ResetCombatSpeed();
         _placementService?.SetPlacedUnitsCombatActive(false);
         Action onFinished = _onCombatRoundFinished;
         _onAttackUnitReachedDestination = null;
@@ -124,7 +168,12 @@ public class CombatRoundManager : MonoBehaviour
             {
                 int networkUnitId = (_combatSequence * 10000) + i;
                 SpawnAttackUnit(card, path, owner, reversePath, networkUnitId);
-                yield return new WaitForSeconds(_spawnInterval);
+                float remaining = _spawnInterval;
+                do
+                {
+                    yield return null;
+                    remaining -= CombatDeltaTime;
+                } while (remaining > 0f);
             }
         }
     }
@@ -138,6 +187,7 @@ public class CombatRoundManager : MonoBehaviour
         }
 
         AttackUnit unit = unitObject.AddComponent<AttackUnit>();
+        unit.SetCombatClock(this);
         unit.Initialize(
             card,
             path,

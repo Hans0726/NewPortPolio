@@ -8,14 +8,27 @@ namespace DummyClient
 {
     class ServerSession : PacketSession
     {
+        private readonly Action<EndPoint> _onConnected;
+        private readonly Action<EndPoint> _onDisconnected;
+
+        public ServerSession(
+            Action<EndPoint> onConnected = null,
+            Action<EndPoint> onDisconnected = null)
+        {
+            _onConnected = onConnected;
+            _onDisconnected = onDisconnected;
+        }
+
         public override void OnConnected(EndPoint endPoint)
         {
             Console.WriteLine($"OnConnected: {endPoint}");
+            _onConnected?.Invoke(endPoint);
         }
 
         public override void OnDisconnected(EndPoint endPoint)
         {
             Console.WriteLine($"OnDisconnected: {endPoint}");
+            _onDisconnected?.Invoke(endPoint);
         }
 
         public override void OnRecvPacket(ArraySegment<byte> buffer)

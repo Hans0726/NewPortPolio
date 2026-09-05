@@ -93,4 +93,14 @@ public class UIPopup : MonoBehaviour
                 _blockingPanel.SetActive(false);
             });
     }
+
+    public void ChangeClosedEvent(Action action = null)
+    {
+        _btnClose.onClick.RemoveAllListeners();
+        _btnClose.onClick.AddListener(() =>
+        {
+            ClosePopup();
+            action?.Invoke();
+        });
+    }
 }

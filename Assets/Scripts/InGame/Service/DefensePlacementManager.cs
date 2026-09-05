@@ -311,7 +311,7 @@ public class DefensePlacementManager : MonoBehaviour
         }
     }
 
-    public void SetPlacedUnitsCombatActive(bool active)
+    public void SetPlacedUnitsCombatActive(bool active, CombatRoundManager combatClock = null)
     {
         for (int i = _placedUnits.Count - 1; i >= 0; i--)
         {
@@ -322,6 +322,7 @@ public class DefensePlacementManager : MonoBehaviour
                 continue;
             }
 
+            if (combatClock != null) unit.SetCombatClock(combatClock);
             unit.SetCombatActive(active);
         }
     }

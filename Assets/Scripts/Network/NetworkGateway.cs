@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class NetworkGateway
 {
     private readonly NetworkMananger _networkManager;
-    public int LocalPlayerId { get; private set; }
+    public int LocalPlayerId { get; private set; } = 1;
 
     public NetworkGateway(NetworkMananger networkManager)
     {
