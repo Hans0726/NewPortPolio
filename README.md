@@ -137,7 +137,7 @@ cmd /c Server\Common\Packet\GenPackets.bat
 
 ### 직접 작업한 범위
 
-**직접 설계·작성한 기능**
+- **직접 설계·작성한 기능**
 
 - [카드 데이터 XML](Server/Server/UserData) 작성과 [서버 유저 데이터 관리](Server/Server/UserData.cs)
 - 매칭 시작부터 게임 시작 시 카드 데이터 설정과 덱 구성까지의 초기 처리 흐름
@@ -148,7 +148,7 @@ cmd /c Server\Common\Packet\GenPackets.bat
 위 기능은 직접 초기 구현했으며, 이후 리팩터링과 AI를 활용한 수정 과정에서 일부 코드가 여러 클래스로 분리되거나 변경되었습니다.
 이미지 등 리소스 제작의 AI 활용 범위는 아래에 별도로 명시했습니다.
 
-**기존 코드 또는 AI 제안을 직접 수정한 사례**
+- **기존 코드 또는 AI 제안을 직접 수정한 사례**
 
 초기에는 기능 구현에 집중하면서 한 클래스에 여러 책임이 모이고, 클래스 간 데이터 전달도 복잡해졌습니다.
 이를 개선하기 위해 Codex에 구조에 대한 조언을 구하고, 상태·진행 제어·화면 표시를 분리하는 방향을 검토했습니다.
@@ -159,7 +159,7 @@ cmd /c Server\Common\Packet\GenPackets.bat
 
 관련 코드: [로비 씬 초기화](Assets/Scripts/Lobby/LobbySceneInstaller.cs), [덱 편집 제어](Assets/Scripts/Lobby/LobbyDeckController.cs), [덱 상태](Assets/Scripts/Lobby/LobbyDeckState.cs), [매칭 제어](Assets/Scripts/Lobby/MatchingController.cs)
 
-**직접 확인한 과정**
+- **직접 확인한 과정**
 
 Unity Editor와 Windows 빌드를 각각 실행해 두 클라이언트로 테스트했습니다.
 매칭부터 카드 사용, 유닛 배치, 전투, 승패 표시와 로비 복귀까지 확인하고, 두 화면에서 유닛의 위치·타깃·체력·사망 상태를 비교했습니다.
