@@ -131,25 +131,23 @@ cmd /c Server\Common\Packet\GenPackets.bat
 - 서버는 전투 전체를 시뮬레이션하는 권한 서버가 아니라 메시지 중계와 방 진행을 담당합니다. 클라이언트 조작 방지와 다양한 지연 조건에서의 정합성을 보장하는 구조는 아닙니다.
 - 대규모 동시 접속, 장시간 부하, 재접속 복구는 검증 범위에 포함하지 않았습니다.
 - 덱 캐시는 전송한 편집 결과를 반영하지만 별도의 서버 저장 완료 응답은 받지 않습니다.
-- 인게임 덱빌딩과 카드 특수효과 확장보다 대전 한 판의 완료를 우선한 프로토타입입니다.
+- 인게임 덱빌딩과 카드 특수효과 확장보다 대전 한 판의 완료를 우선한 프로토타입입니다.<br><br>
 
 ## 제작 범위와 도구
 
 ### 직접 작업한 범위
 
-- **직접 설계·작성한 기능**
-
+`직접 설계·작성한 기능`
 - [카드 데이터 XML](Server/Server/UserData) 작성과 [서버 유저 데이터 관리](Server/Server/UserData.cs)
 - 매칭 시작부터 게임 시작 시 카드 데이터 설정과 덱 구성까지의 초기 처리 흐름
 - 팝업 공통 기능을 담당하는 [UIPopup 부모 클래스](Assets/Scripts/UIPopup/UIPopup.cs)
 - UI 화면 구성과 프리팹 제작, 게임 맵 구성
-- [카드 데이터 구조](Assets/Scripts/CardData/CardData.cs)와 [카드 정보 표시·상호작용](Assets/Scripts/CardUI.cs)
+- [카드 데이터 구조](Assets/Scripts/CardData/CardData.cs)와 [카드 정보 표시·상호작용](Assets/Scripts/CardUI.cs)<br><br>
 
 위 기능은 직접 초기 구현했으며, 이후 리팩터링과 AI를 활용한 수정 과정에서 일부 코드가 여러 클래스로 분리되거나 변경되었습니다.
-이미지 등 리소스 제작의 AI 활용 범위는 아래에 별도로 명시했습니다.
+이미지 등 리소스 제작의 AI 활용 범위는 아래에 별도로 명시했습니다.<br><br>
 
-- **기존 코드 또는 AI 제안을 직접 수정한 사례**
-
+`기존 코드 또는 AI 제안을 직접 수정한 사례`
 초기에는 기능 구현에 집중하면서 한 클래스에 여러 책임이 모이고, 클래스 간 데이터 전달도 복잡해졌습니다.
 이를 개선하기 위해 Codex에 구조에 대한 조언을 구하고, 상태·진행 제어·화면 표시를 분리하는 방향을 검토했습니다.
 
@@ -157,16 +155,15 @@ cmd /c Server\Common\Packet\GenPackets.bat
 씬 초기화와 참조 연결, 데이터 보관, UI 표시의 역할을 나누었습니다.
 인게임 리팩터링은 AI를 활용해 진행했습니다.
 
-관련 코드: [로비 씬 초기화](Assets/Scripts/Lobby/LobbySceneInstaller.cs), [덱 편집 제어](Assets/Scripts/Lobby/LobbyDeckController.cs), [덱 상태](Assets/Scripts/Lobby/LobbyDeckState.cs), [매칭 제어](Assets/Scripts/Lobby/MatchingController.cs)
+관련 코드: [로비 씬 초기화](Assets/Scripts/Lobby/LobbySceneInstaller.cs), [덱 편집 제어](Assets/Scripts/Lobby/LobbyDeckController.cs), [덱 상태](Assets/Scripts/Lobby/LobbyDeckState.cs), [매칭 제어](Assets/Scripts/Lobby/MatchingController.cs)<br><br>
 
-- **직접 확인한 과정**
-
+`직접 확인한 과정`
 Unity Editor와 Windows 빌드를 각각 실행해 두 클라이언트로 테스트했습니다.
 매칭부터 카드 사용, 유닛 배치, 전투, 승패 표시와 로비 복귀까지 확인하고, 두 화면에서 유닛의 위치·타깃·체력·사망 상태를 비교했습니다.
 
 예상과 다른 동작은 중단점과 디버그 로그로 변수 값과 함수 호출 흐름을 확인했습니다.
 수정 후에는 같은 상황을 다시 실행해 동작을 확인하고, 유닛의 이동·추격 시간과 배치 위치 등은 플레이 테스트를 통해 조정했습니다.
-
+<br><br>
 ### 학습 기반과 AI 활용
 
 서버 프레임워크와 XML 패킷 생성기는 C# Unity 게임 서버 강의의 실습에서 출발했습니다.
