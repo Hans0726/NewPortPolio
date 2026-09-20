@@ -122,7 +122,17 @@ public class InGameHUDView : MonoBehaviour
         if (_preparationTimeAndCurrentRoundText != null)
         {
             if (remainingSeconds > 0)
+            {
                 _preparationTimeAndCurrentRoundText.text = $"전투 준비 남은 시간: {remainingSeconds}";
+                if (remainingSeconds <= 10)
+                {
+                    _preparationTimeAndCurrentRoundText.color = Color.red;
+                }
+                else
+                {
+                    _preparationTimeAndCurrentRoundText.color = Color.black;
+                }
+            }
             else
                 _preparationTimeAndCurrentRoundText.text = $"현재 라운드: {_matchState.CurrentRound}";
         }
@@ -130,9 +140,19 @@ public class InGameHUDView : MonoBehaviour
 
     public void SetTurnEndInteractable(bool interactable)
     {
+        TextMeshProUGUI buttonText = _btnTurnEnd?.GetComponentInChildren<TextMeshProUGUI>();
         if (_btnTurnEnd != null)
         {
             _btnTurnEnd.interactable = interactable;
+
+            if (interactable)
+            {
+                buttonText.text = "턴 종료";
+            }
+            else
+            {
+                buttonText.text = "준비 완료";
+            }
         }
     }
 

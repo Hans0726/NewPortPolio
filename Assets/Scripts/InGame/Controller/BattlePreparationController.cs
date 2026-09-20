@@ -125,12 +125,13 @@ public class BattlePreparationController : MonoBehaviour
 
     private IEnumerator RunPreparationTimer(int duration)
     {
-        float remainingTime = Mathf.Max(0, duration);
+        int remainingTime = Mathf.Max(0, duration);
+        WaitForSeconds time = new WaitForSeconds(1f);
         while (_isPreparing && !_readyRequested && remainingTime > 0f)
         {
-            _hudView.SetPreparationTimeOrCurrentRoundText(Mathf.CeilToInt(remainingTime));
-            remainingTime -= Time.deltaTime;
-            yield return null;
+            _hudView.SetPreparationTimeOrCurrentRoundText(remainingTime);
+            remainingTime--;
+            yield return time;
         }
 
         _hudView.SetPreparationTimeOrCurrentRoundText(0);
