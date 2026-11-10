@@ -44,7 +44,10 @@ public class InGameHUDView : MonoBehaviour
     [SerializeField] private float _lerpSpeed = 10f;
 
     [Header("Battle HUD")]
-    [SerializeField] private TextMeshProUGUI _preparationTimeAndCurrentRoundText;
+    [SerializeField] private TextMeshProUGUI _currentRoundText;
+    [SerializeField] private TextMeshProUGUI _preparationTimeText;
+    [SerializeField] private TextMeshProUGUI _lifeText;
+    [SerializeField] private TextMeshProUGUI _opponentLifeText;
     [SerializeField] private TextMeshProUGUI _playerCurrentCost;
     [SerializeField] private GameObject _usedAttackCardsContent;
     [SerializeField] private GameObject _usedDefenseCardsContent;
@@ -117,25 +120,31 @@ public class InGameHUDView : MonoBehaviour
         Dispose();
     }
 
-    public void SetPreparationTimeOrCurrentRoundText(int remainingSeconds)
+    public void SetPreparationTimeText(int remainingSeconds)
     {
-        if (_preparationTimeAndCurrentRoundText != null)
+        if (_preparationTimeText != null)
         {
-            if (remainingSeconds > 0)
+            if (remainingSeconds <= 10)
             {
-                _preparationTimeAndCurrentRoundText.text = $"전투 준비 남은 시간: {remainingSeconds}";
-                if (remainingSeconds <= 10)
-                {
-                    _preparationTimeAndCurrentRoundText.color = Color.red;
-                }
-                else
-                {
-                    _preparationTimeAndCurrentRoundText.color = Color.black;
-                }
+                _preparationTimeText.color = Color.red;
             }
             else
-                _preparationTimeAndCurrentRoundText.text = $"현재 라운드: {_matchState.CurrentRound}";
+            {
+                _preparationTimeText.color = Color.white;
+            }
+            _preparationTimeText.text = $"{remainingSeconds}";
         }
+    }
+
+    public void SetCurrentRoundText()
+    {
+        _currentRoundText.text = $"라운드: {_matchState.CurrentRound}";
+    }
+
+    public void SetCurrentLifeText(int playerLife, int opponentLife)
+    {
+        _lifeText.text = $"{playerLife}";
+        _opponentLifeText.text = $"{opponentLife}";
     }
 
     public void SetTurnEndInteractable(bool interactable)
@@ -228,7 +237,7 @@ public class InGameHUDView : MonoBehaviour
         _handUI?.UpdateCardInteractableStates(currentCost);
         if (_playerCurrentCost != null)
         {
-            _playerCurrentCost.text = $"현재 코스트: {currentCost}";
+            _playerCurrentCost.text = $"{currentCost}";
         }
     }
 

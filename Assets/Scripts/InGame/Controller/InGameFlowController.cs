@@ -143,6 +143,7 @@ public class InGameFlowController : MonoBehaviour
 
     private void HandleLifeChanged(int playerLife, int opponentLife)
     {
+        _hudView.SetCurrentLifeText(playerLife, opponentLife);
         _gateway?.SendPlayerLife(playerLife);
     }
 
@@ -181,7 +182,6 @@ public class InGameFlowController : MonoBehaviour
         _combatInProgress = true;
         _matchState.SetPhase(InGamePhase.Combat);
         _hudView.HideHandForCombat();
-        _hudView.SetPreparationTimeOrCurrentRoundText(-1);
         _cardPlayController.EnterCombat();
         _combatService.StartCombatRound(
             _cardState.SelectedAttackCards,
@@ -196,6 +196,8 @@ public class InGameFlowController : MonoBehaviour
         _cardPlayController.ExitCombat();
         if (_matchState.IsGameEnded) return;
         _preparationController.NotifyCombatRoundFinished();
+        _hudView.SetPreparationTimeText(0);
+        _hudView.SetCurrentRoundText();
     }
 
     private void StartNextRoundForTest()

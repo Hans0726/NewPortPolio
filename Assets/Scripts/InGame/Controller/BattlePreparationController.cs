@@ -83,7 +83,7 @@ public class BattlePreparationController : MonoBehaviour
         _cardPlayController.SetPreparationActive(true);
         _handView.SetInteractionLocked(false);
         _hudView.SetTurnEndInteractable(true);
-        _hudView.SetPreparationTimeOrCurrentRoundText(preparationSeconds);
+        _hudView.SetPreparationTimeText(preparationSeconds);
 
         if (_timerRoutine != null)
         {
@@ -129,12 +129,10 @@ public class BattlePreparationController : MonoBehaviour
         WaitForSeconds time = new WaitForSeconds(1f);
         while (_isPreparing && !_readyRequested && remainingTime > 0f)
         {
-            _hudView.SetPreparationTimeOrCurrentRoundText(remainingTime);
+            _hudView.SetPreparationTimeText(remainingTime);
             remainingTime--;
             yield return time;
         }
-
-        _hudView.SetPreparationTimeOrCurrentRoundText(0);
         _timerRoutine = null;
 
         if (_isPreparing && !_readyRequested)
