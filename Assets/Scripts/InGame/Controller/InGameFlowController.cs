@@ -159,14 +159,16 @@ public class InGameFlowController : MonoBehaviour
     private void ApplyTurnStart(S_TurnStart packet)
     {
         if (packet == null || _matchState.IsGameEnded) return;
+        int round = packet.turnNumber;
 
-        bool isNewRound = _matchState.ApplyRound(packet.turnNumber);
+        bool isNewRound = _matchState.ApplyRound(round);
         if (isNewRound)
         {
             _cardState.PrepareNextRound();
             _cardState.DrawCards(_cardsToDrawPerRound);
             GameManager.Instance?.PlaySfx(GameSfx.CardDraw);
             _hudView.ShowHandForNewRound();
+            _hudView.SetCurrentRoundText();
         }
 
         _preparationController.BeginPreparation(
@@ -197,7 +199,6 @@ public class InGameFlowController : MonoBehaviour
         if (_matchState.IsGameEnded) return;
         _preparationController.NotifyCombatRoundFinished();
         _hudView.SetPreparationTimeText(0);
-        _hudView.SetCurrentRoundText();
     }
 
     private void StartNextRoundForTest()

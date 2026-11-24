@@ -138,7 +138,7 @@ public class InGameHUDView : MonoBehaviour
 
     public void SetCurrentRoundText()
     {
-        _currentRoundText.text = $"라운드: {_matchState.CurrentRound}";
+        _currentRoundText.text = $"라운드 {_matchState.CurrentRound}";
     }
 
     public void SetCurrentLifeText(int playerLife, int opponentLife)

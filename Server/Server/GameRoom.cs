@@ -5,7 +5,7 @@ namespace Server
 {
     class GameRoom : IJobQueue
     {
-        ClientSession[] _sessions = new ClientSession[2]; 
+        ClientSession[] _sessions = new ClientSession[2];
         JobQueue _jobQueue = new JobQueue();
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         HashSet<int> _turnStartReadySessions = new HashSet<int>();
@@ -135,12 +135,14 @@ namespace Server
 
         public void ReadyForTurn(ClientSession session, bool ready)
         {
-            if (session == null || !ready || !ContainsSession(session))
+            if (session == null || !ready || !ContainsSession(session) || _gameEnded)
                 return;
 
             _turnStartReadySessions.Add(session.SessionId);
             if (_turnStartReadySessions.Count < 2)
                 return;
+
+            PrintTraffic(_currentTurn == 0 ? "매칭~시작" : $"R{_currentTurn} 전투");
 
             _turnStartReadySessions.Clear();
             _turnEndSessions.Clear();
@@ -164,6 +166,7 @@ namespace Server
                 return;
 
             _turnEndSessions.Clear();
+            PrintTraffic($"R{_currentTurn} 준비");
             BroadCast(new S_TurnEnd().Serialize());
         }
 
@@ -301,6 +304,8 @@ namespace Server
                     winnerId = _lifeUpdateSessions[sender.SessionId] > 0 ? sender.SessionId : _sessions.First(s => s != null && s.SessionId != sender.SessionId).SessionId,
                     reason = result == GameResult.Victory ? "승리!" : "패배!"
                 };
+
+                PrintTraffic($"R{_currentTurn} 전투 (종료)");
                 BroadCast(gameEndPacket.Serialize());
             }
         }
@@ -321,21 +326,19 @@ namespace Server
                 }
             }
         }
-
-        //public void Move(ClientSession session, C_Move packet)
-        //{
-        //    // 좌표 바꾸기
-        //    session.PosX = packet.posX; 
-        //    session.PosY = packet.posY; 
-        //    session.PosZ = packet.posZ;
-
-        //    // 모두에게 알리기
-        //    S_BroadcastMove move = new S_BroadcastMove();
-        //    move.playerId = session.SessionId;
-        //    move.posX = session.PosX;
-        //    move.posY = session.PosY;
-        //    move.posZ = session.PosZ;
-        //    BroadCast(move.Serialize());
-        //}
+        void PrintTraffic(string label)
+        {
+            int rp = 0, rc = 0, sp = 0, sc = 0;
+            foreach (ClientSession s in _sessions)
+            {
+                if (s == null) continue;
+                rp += Interlocked.Exchange(ref s.RecvPacketCount, 0);
+                rc += Interlocked.Exchange(ref s.RecvCallCount, 0);
+                sp += Interlocked.Exchange(ref s.SendPacketCount, 0);
+                sc += Interlocked.Exchange(ref s.SendCallCount, 0);
+            }
+            Console.WriteLine($"[{label}] 수신 {rp}개/{rc}회 · 송신 {sp}개/{sc}회 " +
+                              $"(평균 {(sc == 0 ? 0 : (double)sp / sc):F1}개씩)");
+        }
     }
 }

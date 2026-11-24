@@ -12,6 +12,7 @@ namespace ServerCore
     public abstract class PacketSession : Session
     {
         public static readonly int HeaderSize = 2;
+        int receivedCount = 0;
 
         // [size(ushort2)[packet(2)][ ... ][size(2)][packetId(2)][ ... ]
         public sealed override int OnRecv(ArraySegment<byte> buffer)
@@ -36,9 +37,6 @@ namespace ServerCore
                 processLen += dataSize;
                 buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
             }
-
-            if (packetCount > 1)
-                Console.WriteLine($"패킷 모아보내기 : {packetCount}");
 
             return processLen;
         }

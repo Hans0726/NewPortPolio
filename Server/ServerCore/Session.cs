@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -11,6 +11,8 @@ namespace ServerCore
     public abstract class PacketSession : Session
     {
         public static readonly int HeaderSize = 2;
+        public int RecvPacketCount;
+        public int RecvCallCount;
 
         // [size(ushort2)[packet(2)][ ... ][size(2)][packetId(2)][ ... ]
         public sealed override int OnRecv(ArraySegment<byte> buffer)
@@ -31,13 +33,16 @@ namespace ServerCore
 
                 OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
                 packetCount++;
-
+                
                 processLen += dataSize;
                 buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
             }
 
-            if (packetCount > 1)
-                Console.WriteLine($"패킷 모아보내기 : {packetCount}");
+            if (packetCount > 0)
+            {
+                Interlocked.Add(ref RecvPacketCount, packetCount);
+                Interlocked.Increment(ref RecvCallCount);
+            }
 
             return processLen;
         }
@@ -49,7 +54,7 @@ namespace ServerCore
     {
         Socket _socket;
         int _disconnected = 0;
-
+        
         RecvBuffer _recvBuffer = new RecvBuffer(65535);
 
         object _lock = new object();
@@ -57,6 +62,10 @@ namespace ServerCore
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
+
+        public int SendPacketCount;
+        public int SendCallCount;
+
 
         public abstract void OnConnected(EndPoint endPoint);
         public abstract int OnRecv(ArraySegment<byte> buffer);
@@ -132,6 +141,8 @@ namespace ServerCore
             }
 
             _sendArgs.BufferList = _pendingList;
+            Interlocked.Add(ref SendPacketCount, _pendingList.Count);
+            Interlocked.Increment(ref SendCallCount);
 
             try
             {
